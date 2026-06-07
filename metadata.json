@@ -1,0 +1,6 @@
+{
+  "name": "LeadPilot-V2",
+  "description": "Multi-Industry Lead Management System supporting Configurable Pipelines for Real Estate, Insurance, Tarot Coaching, Taxi, and Custom CRM.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

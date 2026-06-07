@@ -1,0 +1,171 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Default safety net (deny all by default)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Core Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function hasUserRecord() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "super_admin";
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 2. Users Collection Rules
+    match /users/{userId} {
+      allow get: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isSuperAdmin() ||
+        (hasUserRecord() && resource.data.workspaceId == getUserData().workspaceId)
+      );
+      
+      allow list: if isSignedIn() && (
+        isSuperAdmin() ||
+        (hasUserRecord() && resource.data.workspaceId == getUserData().workspaceId)
+      );
+      
+      allow create: if isSignedIn() && (
+        (request.auth.uid == userId && (
+          request.resource.data.email is string &&
+          request.resource.data.role in ['owner', 'agent'] &&
+          request.resource.data.status == 'active' &&
+          request.resource.data.workspaceId is string
+        )) ||
+        isSuperAdmin()
+      );
+      
+      allow update: if isSignedIn() && (
+        // Self-update of non-sensitive keys (name, etc. but block role/workspace changes)
+        (request.auth.uid == userId && 
+         request.resource.data.role == resource.data.role && 
+         request.resource.data.workspaceId == resource.data.workspaceId) ||
+        // Workspace Owner edits status/role of workspace profiles
+        (hasUserRecord() && 
+         resource.data.workspaceId == getUserData().workspaceId && 
+         getUserData().role == 'owner' &&
+         request.resource.data.workspaceId == resource.data.workspaceId) ||
+        isSuperAdmin()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (hasUserRecord() && 
+         resource.data.workspaceId == getUserData().workspaceId && 
+         getUserData().role == 'owner') ||
+        isSuperAdmin()
+      );
+    }
+    
+    // 3. Workspaces Collection Rules
+    match /workspaces/{workspaceId} {
+      allow get: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId) || 
+        // Allow a user to load the workspace they are currently creating during onboarding
+        (!hasUserRecord() && request.auth.uid == resource.data.ownerUid) ||
+        isSuperAdmin()
+      );
+      
+      allow list: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId) ||
+        isSuperAdmin()
+      );
+      
+      allow create: if isSignedIn() && (
+        (request.resource.data.id == workspaceId &&
+         request.resource.data.ownerUid == request.auth.uid &&
+         request.resource.data.mode in ['solo', 'team']) ||
+        isSuperAdmin()
+      );
+      
+      allow update: if isSignedIn() && (
+        (hasUserRecord() && 
+         getUserData().workspaceId == workspaceId && 
+         getUserData().role == 'owner') ||
+        isSuperAdmin()
+      );
+                    
+      allow delete: if isSuperAdmin(); // Super Admin can delete workspaces
+    }
+    
+    // 4. Leads Sub-collection Rules under Workspaces
+    match /workspaces/{workspaceId}/leads/{leadId} {
+      allow get, list: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId && (
+          getUserData().role == 'owner' || 
+          resource.data.assignedTo == request.auth.uid
+        )) ||
+        isSuperAdmin()
+      );
+                       
+      allow create: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId && (
+          getUserData().role == 'owner' ||
+          (getUserData().role == 'agent' && request.resource.data.assignedTo == request.auth.uid)
+        )) ||
+        isSuperAdmin()
+      );
+                    
+      allow update: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId && (
+          // Owner can edit any lead data
+          getUserData().role == 'owner' || 
+          // Agent can edit only if lead is assigned to them, and they do not change the assignment itself
+          (getUserData().role == 'agent' && 
+           resource.data.assignedTo == request.auth.uid && 
+           request.resource.data.assignedTo == resource.data.assignedTo)
+        )) ||
+        isSuperAdmin()
+      );
+                    
+      allow delete: if isSignedIn() && (
+        (hasUserRecord() && getUserData().workspaceId == workspaceId && 
+         getUserData().role == 'owner') ||
+        isSuperAdmin()
+      );
+    }
+    
+    // 5. Recursive leads match for collectionGroup queries
+    match /{path=**}/leads/{leadId} {
+      allow read, write: if isSuperAdmin();
+    }
+    
+    // 6. Platform config rule
+    match /platform/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+    
+    // 7. Team Invitations Collection Rules
+    match /invitations/{email} {
+      allow get: if isSignedIn() && (request.auth.token.email.lower() == email.lower() || isSuperAdmin());
+      allow list: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        (hasUserRecord() && getUserData().role == 'owner') ||
+        isSuperAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        request.auth.token.email.lower() == email.lower() || 
+        (hasUserRecord() && getUserData().role == 'owner') ||
+        isSuperAdmin()
+      );
+    }
+  }
+}

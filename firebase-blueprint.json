@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "user": {
+      "title": "User Profile",
+      "description": "User account registration carrying identity, workspace membership, and roles.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Email address of the registeree." },
+        "workspaceId": { "type": "string", "description": "Workspace ID association." },
+        "role": { "type": "string", "enum": ["owner", "agent"], "description": "Role level inside the assigned workspace." },
+        "status": { "type": "string", "enum": ["active", "disabled"], "description": "Status state of the membership." },
+        "displayName": { "type": "string", "description": "Casual name of the member." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["email", "workspaceId", "role", "status", "displayName", "createdAt"]
+    },
+    "workspace": {
+      "title": "Business Workspace",
+      "description": "Tenant organization space details hosting individual/team pipelines.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique key identifier." },
+        "name": { "type": "string", "description": "Human-friendly workspace company name." },
+        "mode": { "type": "string", "enum": ["solo", "team"], "description": "Active operational scaling format." },
+        "industryId": { "type": "string", "description": "Initial industry target ID configuration." },
+        "ownerUid": { "type": "string", "description": "Workspace creator user authentication ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["id", "name", "mode", "industryId", "ownerUid", "createdAt"]
+    },
+    "lead": {
+      "title": "Workspace CRM Lead",
+      "description": "Consolidated client lead data record with associated notes, checklists and attachments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique record key identifier." },
+        "name": { "type": "string", "description": "Lead full name." },
+        "email": { "type": "string", "format": "email", "description": "Contact email." },
+        "phone": { "type": "string", "description": "Telephone check line." },
+        "source": { "type": "string", "description": "Inbound source path." },
+        "stageId": { "type": "string", "description": "Selected pipeline funnel stage." },
+        "createdAt": { "type": "string", "format": "date", "description": "Date of ingest." },
+        "lastContacted": { "type": "string", "format": "date", "description": "Latest engagement mark date." },
+        "status": { "type": "string", "enum": ["active", "archived", "won"], "description": "General lead standing status." },
+        "value": { "type": "number", "description": "Monetary estimation value." },
+        "assignedTo": { "type": "string", "description": "Assigned processor auth identifier." },
+        "assignedToName": { "type": "string", "description": "Human name label of assigned representative." }
+      },
+      "required": ["id", "name", "email", "phone", "source", "stageId", "createdAt", "lastContacted", "status", "value"]
+    },
+    "invitation": {
+      "title": "Team Invitation",
+      "description": "Pending invitation slot allowing designated agents to join an established enterprise team.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "Invited professional email." },
+        "workspaceId": { "type": "string", "description": "Destination workspace." },
+        "role": { "type": "string", "enum": ["agent"], "description": "Level role." },
+        "ownerEmail": { "type": "string", "description": "Authorizing inviter email." },
+        "companyName": { "type": "string", "description": "Friendly company name header for the register screen." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "ISO timestamp of pending issue state." }
+      },
+      "required": ["email", "workspaceId", "role", "ownerEmail", "companyName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Root register profiles carrying identity, assigned roles, and workspace scope references."
+    },
+    "/workspaces/{workspaceId}": {
+      "schema": "workspace",
+      "description": "Organization registries tracking active pipelines and setup operational modes."
+    },
+    "/workspaces/{workspaceId}/leads/{leadId}": {
+      "schema": "lead",
+      "description": "Workspace client contacts, including nested custom characteristics and meeting timelines."
+    },
+    "/invitations/{email}": {
+      "schema": "invitation",
+      "description": "Standby invite registrations enabling frictionless entry for invited agents."
+    }
+  }
+}
