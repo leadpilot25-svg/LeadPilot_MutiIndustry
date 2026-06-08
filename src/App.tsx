@@ -904,8 +904,28 @@ export default function App() {
       const newId = `lead-${Date.now()}`;
       const today = new Date().toISOString().split('T')[0];
 
-      const newNotes = leadData.noteText 
-        ? [{ id: `note-${Date.now()}`, content: leadData.noteText, createdAt: today, author: userProfile?.displayName || 'Advisor Agent' }]
+      // 1. Before creating newLead, remove all undefined values from leadData
+      const cleanedLeadData: any = {};
+      for (const [key, val] of Object.entries(leadData)) {
+        if (val !== undefined) {
+          cleanedLeadData[key] = val;
+        }
+      }
+
+      // 2. Ensure noteText is stored as: empty string "" OR omitted completely, never undefined
+      if ('noteText' in cleanedLeadData) {
+        if (cleanedLeadData.noteText === undefined || cleanedLeadData.noteText === null) {
+          delete cleanedLeadData.noteText;
+        } else {
+          cleanedLeadData.noteText = String(cleanedLeadData.noteText).trim();
+        }
+      }
+
+      // 3. Ensure optional email is: empty string "" and never undefined
+      cleanedLeadData.email = cleanedLeadData.email ? String(cleanedLeadData.email).trim() : "";
+
+      const newNotes = cleanedLeadData.noteText 
+        ? [{ id: `note-${Date.now()}`, content: cleanedLeadData.noteText, createdAt: today, author: userProfile?.displayName || 'Advisor Agent' }]
         : [];
 
       const newTasks = [
@@ -917,7 +937,7 @@ export default function App() {
       const assignedToNameVal = userProfile?.role === 'agent' ? (userProfile.displayName || userProfile.email || 'Agent') : '';
 
       const newLead: Lead = {
-        ...leadData,
+        ...cleanedLeadData,
         id: newId,
         createdAt: today,
         lastContacted: today,
@@ -927,6 +947,13 @@ export default function App() {
         assignedTo: assignedToVal,
         assignedToName: assignedToNameVal
       };
+
+      // Ensure no properties on newLead are undefined
+      Object.keys(newLead).forEach(key => {
+        if ((newLead as any)[key] === undefined) {
+          delete (newLead as any)[key];
+        }
+      });
 
       if (isDemoMode) {
         const updated = [newLead, ...leads];
@@ -2432,7 +2459,17 @@ export default function App() {
                           />
                         </div>
 
-                        
+                        <div className="space-y-1">
+                          <label className="text-slate-600 block">Business Operations Mode</label>
+                          <select 
+                            value={editWorkspaceMode}
+                            onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
+                            className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
+                          >
+                            <option value="solo">Solo CRM Mode ("Just Me")</option>
+                            <option value="team">Team CRM Mode ("Small Team")</option>
+                          </select>
+                        </div>
 
                         <button
                           type="submit"

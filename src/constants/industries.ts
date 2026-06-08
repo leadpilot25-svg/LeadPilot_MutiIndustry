@@ -25,15 +25,15 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         key: 'propertyType',
         label: 'Property Type Interested',
         type: 'select',
-        options: ['Single-Family Home', 'Luxury Condo', 'Townhouse Prime', 'Multi-Family Investment', 'Commercial Office Space'],
-        required: true,
+        options: ['Apartment', 'Villa', 'House', 'Plot', 'Commercial Space', 'Office', 'Warehouse'],
+        required: false,
         placeholder: 'Select a property category'
       },
       {
         key: 'preferredLocation',
         label: 'Target Location Neighborhood',
         type: 'text',
-        required: true,
+        required: false,
         placeholder: 'e.g. Westside, Downtown, Oak Creek'
       },
       {
@@ -68,7 +68,21 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         description: 'Current count of properties moving through legal closing.'
       }
     ],
-    suggestedSources: ['Trulia/Zillow Import', 'Open House signup', 'Social Media Campaign', 'Broker Referral', 'Direct Website'],
+    suggestedSources: [
+      'Website',
+      'Facebook',
+      'Instagram',
+      'WhatsApp',
+      'Google Ads',
+      'Google Search',
+      'Referral',
+      'Walk-In',
+      'Phone Call',
+      'JustDial',
+      'IndiaMART',
+      'Manual Entry',
+      'Other'
+    ],
     todayFollowupsLabel: "Today's follow-ups",
     missedFollowupsLabel: "Missed follow-ups",
     meetingsTodayLabel: "Showings scheduled",
@@ -94,13 +108,13 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Policy Term Category',
         type: 'select',
         options: ['High-Limit Term Life', 'Whole Life Premium', 'Comprehensive Auto Portfolio', 'Homeowners Shield', 'Executive Liability Plan'],
-        required: true
+        required: false
       },
       {
         key: 'coverageCapacity',
         label: 'Target Coverage Limit',
         type: 'number',
-        required: true,
+        required: false,
         placeholder: 'e.g. 500000'
       },
       {
@@ -160,14 +174,14 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Reading Spiritual Focus Area',
         type: 'select',
         options: ['Romantic Connection & Love', 'Wealth Alignment & Abundance', 'Life Transition / Path Shift', 'Ancestral Healing & Karma', 'Past Life Discovery'],
-        required: true
+        required: false
       },
       {
         key: 'cosmicZodiacSign',
         label: 'Seeker Birth Zodiac Sign',
         type: 'select',
         options: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
-        required: true
+        required: false
       },
       {
         key: 'preferredTherapeuticTool',
@@ -217,14 +231,14 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         key: 'pickupAddress',
         label: 'Pickup Coordinates Address',
         type: 'text',
-        required: true,
+        required: false,
         placeholder: 'e.g. Terminal 2, JFK Airport, NY'
       },
       {
         key: 'destinationAddress',
         label: 'Destination Exit Address',
         type: 'text',
-        required: true,
+        required: false,
         placeholder: 'e.g. Midtown Manhattan Plaza'
       },
       {
@@ -232,7 +246,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Fleet Vehicle Category Required',
         type: 'select',
         options: ['Standard Eco Hybrid', 'Business Class Executive Sedan', 'Prime VIP SUV', 'Wheelchair Lift Van Extra Space'],
-        required: true
+        required: false
       },
       {
         key: 'isRecurringSchedule',
@@ -282,7 +296,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         key: 'targetCompanyName',
         label: 'Target Entity / Corporation',
         type: 'text',
-        required: true,
+        required: false,
         placeholder: 'e.g. ACME International Corp'
       },
       {
@@ -340,7 +354,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Selected Coaching Niche',
         type: 'select',
         options: ['Executive & Business Scaling', 'Health & High-Performance Habits', 'Career Transition Strategy', 'Mindset & Mindful Leadership'],
-        required: true,
+        required: false,
         placeholder: 'Select client target focus'
       },
       {
@@ -348,7 +362,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Session Frequency Cadence',
         type: 'select',
         options: ['Weekly Accelerator Sync', 'Bi-Weekly Strategy Loop', 'Monthly Check-in Cadence'],
-        required: true
+        required: false
       },
       {
         key: 'primaryOutcome',
@@ -400,7 +414,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Desired Academic Stream',
         type: 'select',
         options: ['Advanced STEM & Coding', 'MBA Management Executive', 'Intensive Language Program', 'University Prep Placement'],
-        required: true,
+        required: false,
         placeholder: 'Select a program stream'
       },
       {
@@ -460,7 +474,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Business Sector Type',
         type: 'select',
         options: ['Graphic Design & Arts', 'Digital Ads & PPC', 'Software & UI Development', 'SEO Content Strategy', 'Social Media Management', 'E-Commerce Branding'],
-        required: true,
+        required: false,
         placeholder: 'Select target creative category'
       },
       {
@@ -468,7 +482,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         label: 'Client Billing Model Type',
         type: 'select',
         options: ['Fixed Price Package', 'Monthly Project Retainer', 'Milestone Hourly Rate', 'Value Share Option'],
-        required: true
+        required: false
       },
       {
         key: 'estimatedDays',
@@ -509,14 +523,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       name: 'Evelyn Sterling',
       email: 'evelyn.sterling@gmail.com',
       phone: '(415) 309-8802',
-      source: 'Trulia/Zillow Import',
+      source: 'Google Ads',
       stageId: 'new_inquiry',
       createdAt: '2026-06-01',
       lastContacted: '2026-06-01',
       status: 'active',
       value: 1250000,
       customFields: {
-        propertyType: 'Luxury Condo',
+        propertyType: 'Apartment',
         preferredLocation: 'Downtown Skyline Marina',
         isPreApproved: 'Pre-Approved (Verified)'
       },
@@ -533,14 +547,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       name: 'Marcus Chen',
       email: 'marcus.chen@outlook.com',
       phone: '(650) 808-1193',
-      source: 'Open House signup',
+      source: 'Walk-In',
       stageId: 'viewing_scheduled',
       createdAt: '2026-05-24',
       lastContacted: '2026-06-04',
       status: 'active',
       value: 950000,
       customFields: {
-        propertyType: 'Single-Family Home',
+        propertyType: 'House',
         preferredLocation: 'North Redwood Hills',
         isPreApproved: 'Self-Funded / Cash Buyer'
       },
@@ -557,14 +571,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       name: 'The Kensington Family Trust',
       email: 'trustees@kensington.org',
       phone: '(212) 690-3490',
-      source: 'Broker Referral',
+      source: 'Referral',
       stageId: 'offer_made',
       createdAt: '2026-05-18',
       lastContacted: '2026-06-05',
       status: 'active',
       value: 3400000,
       customFields: {
-        propertyType: 'Multi-Family Investment',
+        propertyType: 'Plot',
         preferredLocation: 'Metropolitan Historic Core',
         isPreApproved: 'Self-Funded / Cash Buyer'
       },
@@ -581,14 +595,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       name: 'Sarah & David Jenkins',
       email: 'sarah.jenkins@comcast.net',
       phone: '(510) 412-2321',
-      source: 'Direct Website',
+      source: 'Website',
       stageId: 'under_contract',
       createdAt: '2026-04-29',
       lastContacted: '2026-06-03',
       status: 'active',
       value: 680000,
       customFields: {
-        propertyType: 'Townhouse Prime',
+        propertyType: 'House',
         preferredLocation: 'Oak Creek East Reserve',
         isPreApproved: 'Pre-Approved (Verified)'
       },

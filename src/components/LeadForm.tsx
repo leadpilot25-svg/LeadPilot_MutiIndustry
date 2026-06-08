@@ -43,7 +43,10 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
     });
 
     // Handle regional default entries if India region is active
-  
+    if (marketRegion === 'IND') {
+      defaults.indiaState = 'Delhi';
+      defaults.indiaGst = 'Unregistered';
+    }
 
     // Scheduling and followups state variables
     defaults.nextFollowUpDate = '';
@@ -82,34 +85,23 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
+    if (!name.trim() || !phone.trim()) return;
 
-  if (!name.trim()) {
-    alert('Name is required');
-    return;
-  }
+    onSubmit({
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      source,
+      value: Number(value),
+      stageId,
+      status: 'active',
+      customFields,
+      noteText: noteText.trim() || ""
+    });
+  };
 
-  if (!phone.trim()) {
-    alert('Phone number is required');
-    return;
-  }
-
-  onSubmit({
-    name,
-    email: email || '',
-    phone,
-    source,
-    value: value ? Number(value) : 0,
-    stageId,
-    status: 'active',
-    customFields,
-    noteText: noteText.trim()
-  });
-};
-
-
-
-return (
+  return (
     <div id="lead-form-modal-container" className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-all overflow-y-auto">
       <div 
         id="lead-form-drawer" 
@@ -168,19 +160,15 @@ return (
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-  Phone Number *
-</label>
-
-<input
-  type="tel"
-  required
-  value={phone}
-  onChange={e => setPhone(e.target.value)}
-  placeholder="(555) 808-1234"
-  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
-/>
-                  
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="(555) 808-1234"
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  />
                 </div>
               </div>
             </div>
@@ -248,6 +236,48 @@ return (
                 </div>
               ))}
 
+              {/* Optional region-specific India localizations */}
+              {marketRegion === 'IND' && (
+                <>
+                  <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-indigo-900 mb-1">
+                      🇮🇳 India Client Client State
+                    </label>
+                    <select
+                      value={String(customFields.indiaState ?? 'Delhi')}
+                      onChange={e => handleCustomFieldChange('indiaState', e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm bg-indigo-50/50 border border-indigo-250 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                    >
+                      <option value="Delhi">Delhi NCR</option>
+                      <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
+                      <option value="Karnataka">Karnataka (Bengaluru)</option>
+                      <option value="Telangana">Telangana (Hyderabad)</option>
+                      <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
+                      <option value="Haryana">Haryana (Gurugram)</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
+                      <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
+                      <option value="West Bengal">West Bengal (Kolkata)</option>
+                    </select>
+                  </div>
+
+                  <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-indigo-900 mb-1">
+                      🇮🇳 Indian Client GST Status
+                    </label>
+                    <select
+                      value={String(customFields.indiaGst ?? 'Unregistered')}
+                      onChange={e => handleCustomFieldChange('indiaGst', e.target.value)}
+                      className="w-full px-3.5 py-2.5 text-sm bg-indigo-50/50 border border-indigo-250 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                    >
+                      <option value="Unregistered">Unregistered Business Client</option>
+                      <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
+                      <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
+                      <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
+                      <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -301,7 +331,6 @@ return (
                     <option key={src} value={src}>{src}</option>
                   ))}
                   <option value="Manual Addition">Manual Addition</option>
-                  <option value="Self Referral">Self Referral</option>
                 </select>
               </div>
             </div>

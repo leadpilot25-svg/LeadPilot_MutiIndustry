@@ -30,6 +30,7 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
   const [value, setValue] = useState<number | ''>('');
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
   
@@ -37,37 +38,37 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
+ 
   const handleCustomFieldChange = (key: string, val: any) => {
     setCustomFieldValues(prev => ({
       ...prev,
       [key]: val
     }));
   };
-
+ 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-
+ 
     if (!name.trim()) {
-      setErrorMsg("Please provide your full name so sweet conversations can start!");
+      setErrorMsg("Please provide your full name.");
       return;
     }
-    if (!email.trim() && !phone.trim()) {
-      setErrorMsg("Please provide either your Email or Phone Number so we can reach back to you.");
+    if (!phone.trim()) {
+      setErrorMsg("Please provide your Phone Number.");
       return;
     }
-
+ 
     setIsLoading(true);
-
+ 
     try {
       // Create new inbound lead object
       const newLead: Lead = {
         id: `lead-public-${Date.now()}`,
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim() || 'No Phone Registered',
-        source: 'Instagram/Facebook Ad Link',
+        phone: phone.trim(),
+        source: 'Website',
         stageId: industry.stages[0]?.id || 'new_inquiry',
         createdAt: new Date().toISOString().split('T')[0],
         lastContacted: new Date().toISOString().split('T')[0],
@@ -79,10 +80,16 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
         notes: [
           {
             id: `note-inbound-${Date.now()}`,
-            content: `✨ Leads captured securely via dynamic Public Intake Form of ${tenant.company_name} from social channel referral link.`,
+            content: `✨ Leads captured securely via dynamic Public Intake Form of ${tenant.company_name}.`,
             createdAt: new Date().toISOString().split('T')[0],
             author: 'LeadPilot Inbound Bot'
-          }
+          },
+          ...(message.trim() ? [{
+            id: `note-msg-${Date.now()}`,
+            content: `Message: ${message.trim()}`,
+            createdAt: new Date().toISOString().split('T')[0],
+            author: 'Lead'
+          }] : [])
         ],
         tasks: [
           {
@@ -92,15 +99,15 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
           }
         ]
       };
-
+ 
       // Push to corporate database
       onAddPublicLead(tenant.id, newLead);
-
+ 
       setTimeout(() => {
         setIsLoading(false);
         setIsSubmitted(true);
       }, 1000);
-
+ 
     } catch (err: any) {
       setIsLoading(false);
       setErrorMsg("Something went wrong with state persistence. Try again shortly!");
@@ -141,6 +148,7 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
                   setName('');
                   setEmail('');
                   setPhone('');
+                  setMessage('');
                   setValue('');
                   setCustomFieldValues({});
                 }}
@@ -208,7 +216,7 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
                 {/* Email */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    Email Address <span className="text-indigo-400">*</span>
+                    Email Address
                   </label>
                   <div className="relative">
                     <LucideIcons.Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
@@ -216,7 +224,6 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
                       placeholder="name@domain.com"
                       className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
                     />
@@ -226,7 +233,7 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
                 {/* Phone */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    Phone Number
+                    Phone Number <span className="text-indigo-400">*</span>
                   </label>
                   <div className="relative">
                     <LucideIcons.Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
@@ -234,10 +241,27 @@ export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLe
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      required
                       placeholder="+1 (555) 000-0000"
                       className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Message / Message Notes */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                  Message / Notes
+                </label>
+                <div className="relative">
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Enter any questions or requirements..."
+                    rows={3}
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-500 transition-all focus:outline-none resize-none"
+                  />
                 </div>
               </div>
 
