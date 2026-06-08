@@ -115,3 +115,4 @@ Unauthenticated writes are allowed by Firestore rule 8 with field validation.
   exports with no browser size limits.
 - **File uploads** are capped at 20 MB per file and restricted to images,
   PDFs, Word docs, plain text, and CSV files by `storage.rules`.
+// Deployment test
