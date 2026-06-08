@@ -35,7 +35,7 @@ export default function GoogleSheetsSync({ config, leads }: GoogleSheetsSyncProp
       try {
         await fetch(webhookUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors',
           body: JSON.stringify({
             workspace: config.name,
             timestamp: new Date().toISOString(),

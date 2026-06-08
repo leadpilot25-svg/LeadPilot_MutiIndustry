@@ -389,21 +389,31 @@ export default function App() {
         }
 
         if (inviteData) {
-          const displayName = currentUser.displayName || currentUser.email || 'Agent';
+          const invRole = inviteData.role || 'agent';
+          const displayName = currentUser.displayName || currentUser.email || (invRole === 'owner' ? 'Owner' : 'Agent');
 
           const newProfile = {
             uid: currentUser.uid,
             email: lowercaseEmail,
             workspaceId: inviteData.workspaceId,
-            role: 'agent',
+            role: invRole,
             status: 'active',
             displayName,
             createdAt: new Date().toISOString()
           };
 
-          console.log('Writing agent user record users/{uid}...');
+          console.log(`Writing ${invRole} user record users/{uid}...`);
           await setDoc(userRef, newProfile);
           console.log('User document created successfully');
+
+          if (invRole === 'owner') {
+            try {
+              const wsRef = doc(db, 'workspaces', inviteData.workspaceId);
+              await updateDoc(wsRef, { ownerUid: currentUser.uid });
+            } catch (wsErr) {
+              console.warn('Could not update ownerUid on workspace document:', wsErr);
+            }
+          }
 
           try {
             console.log('Revoking invitation document...');
@@ -923,6 +933,7 @@ export default function App() {
         setLeads(updated);
         localStorage.setItem('leadpilot_demo_leads', JSON.stringify(updated));
         setIsFormOpen(false);
+        triggerAutoSyncWebhook([newLead]);
         return;
       }
 
@@ -931,21 +942,18 @@ export default function App() {
         throw new Error("Unable to identify active workspace ID. Profile and workspace references are empty.");
       }
 
-      console.log("Current User Profile:", userProfile);
-      console.log("Workspace ID:", userProfile?.workspaceId);
-      console.log("Lead Path:", `workspaces/${userProfile?.workspaceId}/leads`);
-
       const leadDocRef = doc(db, 'workspaces', wsIdToUse, 'leads', newId);
 
       console.log("ROLE:", userProfile?.role);
-      console.log("WORKSPACE ID:", userProfile?.workspaceId);
-      console.log("LEAD DOC PATH:", leadDocRef.path);
-      console.log("LEAD PAYLOAD:", newLead);
-      console.log("ASSIGNED TO:", newLead.assignedTo);
       console.log("AUTH UID:", auth.currentUser?.uid);
+      console.log("USER PROFILE UID:", userProfile?.uid);
+      console.log("ASSIGNED TO:", newLead.assignedTo);
+      console.log("ASSIGNED TO NAME:", newLead.assignedToName);
+      console.log("LEAD PAYLOAD:", newLead);
 
       await setDoc(leadDocRef, newLead);
       setIsFormOpen(false);
+      triggerAutoSyncWebhook([newLead]);
     } catch (err) {
       console.error('Failed adding lead:', err);
       alert('Error creating lead document in Firestore.');
@@ -979,6 +987,7 @@ export default function App() {
         localStorage.setItem('leadpilot_demo_leads', JSON.stringify(updated));
         setDashboardFilter('all');
         alert(`Imported ${newLeadsList.length} leads successfully into local sandbox!`);
+        triggerAutoSyncWebhook(newLeadsList);
         return;
       }
       const wsId = userProfile?.workspaceId || userWorkspace?.id;
@@ -991,6 +1000,7 @@ export default function App() {
       await batch.commit();
       setDashboardFilter('all');
       alert(`Imported ${newLeadsList.length} leads successfully!`);
+      triggerAutoSyncWebhook(newLeadsList);
     } catch (err) {
       console.error('Batch CSV writing failed:', err);
       alert('CSV Write Mismatch: error executing batch writes in Firestore.');
@@ -998,27 +1008,50 @@ export default function App() {
   };
 
   // Google Sheets Auto Webhook Sync Trigger
-  const triggerAutoSyncWebhook = (activeLeadsList: Lead[]) => {
+  const triggerAutoSyncWebhook = (activeLeadsList: Lead[], industryId?: string, workspaceName?: string) => {
     try {
-      const webhookUrl = localStorage.getItem(`leadpilot_sheets_webhook_${activeIndustry.id}`);
-      if (webhookUrl && webhookUrl.trim()) {
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors',
-          body: JSON.stringify({
-            workspace: activeIndustry.name,
-            timestamp: new Date().toISOString(),
-            action: 'auto_sync',
-            leadsCount: activeLeadsList.length,
-            leadsData: activeLeadsList
-          })
-        }).catch(err => {
-          console.warn('Auto-sync background webhook communication error:', err);
+      const indId = industryId || activeIndustry.id;
+      const webhookUrl = localStorage.getItem(`leadpilot_sheets_webhook_${indId}`);
+      if (webhookUrl && webhookUrl.trim() && activeLeadsList.length > 0) {
+        activeLeadsList.forEach((lead) => {
+          const notesValue = lead.notes && lead.notes.length > 0 ? lead.notes[0].content : '';
+          const followupDateValue = lead.tasks && lead.tasks.length > 0 ? (lead.tasks[0].dueDate || '') : '';
+          const cityValue = lead.customFields && lead.customFields.city ? String(lead.customFields.city) : '';
+
+          const payload: Record<string, string> = {
+            row_id: lead.id,
+            date: lead.createdAt,
+            name: lead.name,
+            phone: lead.phone,
+            email: lead.email,
+            city: cityValue,
+            source: lead.source,
+            status: lead.status,
+            agent: lead.assignedToName || '',
+            notes: notesValue,
+            followup_date: followupDateValue
+          };
+
+          // Dynamically pass extra custom fields so they are mapped in custom headers on Google Sheets
+          if (lead.customFields) {
+            Object.entries(lead.customFields).forEach(([k, v]) => {
+              if (k !== 'city') {
+                payload[k] = String(v);
+              }
+            });
+          }
+
+          fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+          }).catch(err => {
+            console.warn(`Auto-sync background webhook communication error for lead ID ${lead.id}:`, err);
+          });
         });
       }
     } catch (e) {
-      console.warn('Background sync trigger omitted');
+      console.warn('Background sync trigger omitted:', e);
     }
   };
 
@@ -1399,6 +1432,7 @@ export default function App() {
                   const docRef = doc(db, 'workspaces', tenantId, 'leads', inboundLead.id);
                   await setDoc(docRef, inboundLead);
                   alert('Referral successfully captured directly in workspace cloud database!');
+                  triggerAutoSyncWebhook([inboundLead], publicFormWorkspace?.industryId, publicFormWorkspace?.name);
                 } catch (err) {
                   console.error('Failed to capture inbound lead:', err);
                   alert('Capture Error: check network rules.');
@@ -2398,7 +2432,8 @@ export default function App() {
                           />
                         </div>
 
-                       
+                        
+
                         <button
                           type="submit"
                           disabled={isSavingSettings}
