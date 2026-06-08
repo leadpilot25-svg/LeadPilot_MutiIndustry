@@ -38,7 +38,13 @@ export default function LeadDetailModal({
   const [activeTab, setActiveTab] = useState<'details' | 'tasks' | 'notes' | 'actions' | 'files'>('details');
   const [newNoteText, setNewNoteText] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  
+  const [editedLead, setEditedLead] = useState<Lead>(lead);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  React.useEffect(() => {
+    setEditedLead(lead);
+  }, [lead]);
+
   // Custom Action States
   const [tarotCard, setTarotCard] = useState<{ name: string; meaning: string; advice: string } | null>(null);
   const [underwritingResult, setUnderwritingResult] = useState<{ score: string; multiplier: number; reason: string } | null>(null);
@@ -63,6 +69,14 @@ export default function LeadDetailModal({
     }).format(val);
   };
 
+  const handleSaveChanges = () => {
+    onUpdateLead(editedLead);
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 3000);
+  };
+
   // Save communication interaction touchpoint notes
   const handleLogInteraction = (author: string, type: 'call' | 'whatsapp' | 'sms' | 'email', notes: string) => {
     const newNote: Note = {
@@ -72,8 +86,8 @@ export default function LeadDetailModal({
       author: author
     };
     onUpdateLead({
-      ...lead,
-      notes: [newNote, ...lead.notes],
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes],
       lastContacted: new Date().toISOString().split('T')[0]
     });
   };
@@ -91,8 +105,8 @@ export default function LeadDetailModal({
     };
 
     const updatedLead: Lead = {
-      ...lead,
-      notes: [newNote, ...lead.notes],
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes],
       lastContacted: new Date().toISOString().split('T')[0]
     };
 
@@ -102,7 +116,7 @@ export default function LeadDetailModal({
 
   // Toggle tasks check
   const handleToggleTask = (taskId: string) => {
-    const updatedTasks = lead.tasks.map(task => {
+    const updatedTasks = editedLead.tasks.map(task => {
       if (task.id === taskId) {
         return { ...task, completed: !task.completed };
       }
@@ -110,7 +124,7 @@ export default function LeadDetailModal({
     });
 
     const updatedLead: Lead = {
-      ...lead,
+      ...editedLead,
       tasks: updatedTasks
     };
 
@@ -129,8 +143,8 @@ export default function LeadDetailModal({
     };
 
     const updatedLead: Lead = {
-      ...lead,
-      tasks: [...lead.tasks, newTask]
+      ...editedLead,
+      tasks: [...editedLead.tasks, newTask]
     };
 
     onUpdateLead(updatedLead);
@@ -143,7 +157,7 @@ export default function LeadDetailModal({
       {
         name: 'The Magician (I)',
         meaning: 'Manifestation, creative power, alignment of intention and cosmic resources.',
-        advice: `Advise ${lead.name} to focus their daily crystal meditations on unlocking their throat chakra to express this block.`
+        advice: `Advise ${editedLead.name} to focus their daily crystal meditations on unlocking their throat chakra to express this block.`
       },
       {
         name: 'The High Priestess (II)',
@@ -158,7 +172,7 @@ export default function LeadDetailModal({
       {
         name: 'The Star (XVII)',
         meaning: 'Hope, celestial protection, rejuvenation, divine inspiration.',
-        advice: `A glowing star in their romantic house. Confirm to ${lead.name} that their spiritual twin-flame alignment is progressing beautifully.`
+        advice: `A glowing star in their romantic house. Confirm to ${editedLead.name} that their spiritual twin-flame alignment is progressing beautifully.`
       },
       {
         name: 'The Sun (XIX)',
@@ -179,8 +193,8 @@ export default function LeadDetailModal({
     };
 
     onUpdateLead({
-      ...lead,
-      notes: [newNote, ...lead.notes]
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes]
     });
   };
 
@@ -213,8 +227,8 @@ export default function LeadDetailModal({
     };
 
     onUpdateLead({
-      ...lead,
-      notes: [newNote, ...lead.notes]
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes]
     });
   };
 
@@ -227,7 +241,7 @@ export default function LeadDetailModal({
     const idx = Math.floor(Math.random() * distances.length);
     const textDist = distances[idx];
     const mult = multipliers[idx];
-    const rawVal = lead.value;
+    const rawVal = editedLead.value;
     const computedTotal = Math.round(rawVal * mult);
 
     setTaxiFareVoucher({
@@ -245,8 +259,8 @@ export default function LeadDetailModal({
     };
 
     onUpdateLead({
-      ...lead,
-      notes: [newNote, ...lead.notes],
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes],
       value: computedTotal
     });
   };
@@ -260,14 +274,14 @@ export default function LeadDetailModal({
 
     const newNote: Note = {
       id: `re-showing-note-${Date.now()}`,
-      content: `🏠 Showing confirmed for: "${lead.customFields.preferredLocation}". Date/Time: ${showingDate}. Property Category: ${lead.customFields.propertyType}.`,
+      content: `🏠 Showing confirmed for: "${editedLead.customFields.preferredLocation}". Date/Time: ${showingDate}. Property Category: ${editedLead.customFields.propertyType}.`,
       createdAt: new Date().toISOString().split('T')[0],
       author: 'Broker Steward'
     };
 
     onUpdateLead({
-      ...lead,
-      notes: [newNote, ...lead.notes]
+      ...editedLead,
+      notes: [newNote, ...editedLead.notes]
     });
   };
 
@@ -280,14 +294,14 @@ export default function LeadDetailModal({
       
       const newNote: Note = {
         id: `webhook-note-${Date.now()}`,
-        content: `🌐 JSON webhook dispatched safely to system handler endpoint: https://api.crmpilotv2.io/leads/sync?id=${lead.id}`,
+        content: `🌐 JSON webhook dispatched safely to system handler endpoint: https://api.crmpilotv2.io/leads/sync?id=${editedLead.id}`,
         createdAt: new Date().toISOString().split('T')[0],
         author: 'System API Gate'
       };
 
       onUpdateLead({
-        ...lead,
-        notes: [newNote, ...lead.notes]
+        ...editedLead,
+        notes: [newNote, ...editedLead.notes]
       });
     }, 1500);
   };
@@ -310,8 +324,8 @@ export default function LeadDetailModal({
             <span className="text-[10px] font-bold bg-white/25 text-white border border-white/20 px-2 rounded font-sans uppercase tracking-widest">
               {config.name} • Active Lead Tracker
             </span>
-            <h3 className="text-2xl font-bold font-sans tracking-tight">{lead.name}</h3>
-            <p className="text-sm text-teal-100 opacity-90">{lead.email} • {lead.phone}</p>
+            <h3 className="text-2xl font-bold font-sans tracking-tight">{editedLead.name}</h3>
+            <p className="text-sm text-teal-100 opacity-90">{editedLead.email} • {editedLead.phone}</p>
           </div>
         </div>
 
@@ -355,22 +369,109 @@ export default function LeadDetailModal({
                 <div className="space-y-4">
                   <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Standard Contact data</h4>
                   
-                  <div className="space-y-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-400">Total Pipeline Value:</span>
-                      <span className="font-bold text-gray-800 font-mono">{formatValue(lead.value)}</span>
+                  <div className="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div>
+                      <label id="lbl-edit-lead-name" htmlFor="edit-lead-name" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Full Name</label>
+                      <input
+                        id="edit-lead-name"
+                        type="text"
+                        value={editedLead.name || ''}
+                        onChange={(e) => setEditedLead({ ...editedLead, name: e.target.value })}
+                        className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                      />
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-400">Source Channel:</span>
-                      <span className="font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] uppercase font-mono">{lead.source}</span>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label id="lbl-edit-lead-phone" htmlFor="edit-lead-phone" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Phone Number</label>
+                        <input
+                          id="edit-lead-phone"
+                          type="tel"
+                          value={editedLead.phone || ''}
+                          onChange={(e) => setEditedLead({ ...editedLead, phone: e.target.value })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label id="lbl-edit-lead-email" htmlFor="edit-lead-email" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Email Address</label>
+                        <input
+                          id="edit-lead-email"
+                          type="email"
+                          value={editedLead.email || ''}
+                          onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                        />
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-400">Enrolled Date:</span>
-                      <span className="text-gray-600 font-mono text-[11px]">{lead.createdAt}</span>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label id="lbl-edit-lead-source" htmlFor="edit-lead-source" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Lead Source</label>
+                        <select
+                          id="edit-lead-source"
+                          value={editedLead.source || ''}
+                          onChange={(e) => setEditedLead({ ...editedLead, source: e.target.value })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                        >
+                          {config.suggestedSources.map(src => (
+                            <option key={src} value={src}>{src}</option>
+                          ))}
+                          <option value="Manual Addition">Manual Addition</option>
+                          <option value="Direct Website">Direct Website</option>
+                          <option value="Google Ads">Google Ads</option>
+                          <option value="Referral">Referral</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label id="lbl-edit-lead-value" htmlFor="edit-lead-value" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">
+                          Value ({marketRegion === 'IND' ? '₹' : '$'})
+                        </label>
+                        <input
+                          id="edit-lead-value"
+                          type="number"
+                          value={editedLead.value || 0}
+                          onChange={(e) => setEditedLead({ ...editedLead, value: Number(e.target.value) })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-mono font-medium"
+                        />
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-400">Last Touch Log:</span>
-                      <span className="text-gray-600 font-mono text-[11px]">{lead.lastContacted}</span>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label id="lbl-edit-lead-status" htmlFor="edit-lead-status" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Lead Status</label>
+                        <select
+                          id="edit-lead-status"
+                          value={editedLead.status || 'active'}
+                          onChange={(e) => setEditedLead({ ...editedLead, status: e.target.value as 'active' | 'archived' | 'won' })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                        >
+                          <option value="active">Active</option>
+                          <option value="won">Won (Closed Deal)</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label id="lbl-edit-lead-stage" htmlFor="edit-lead-stage" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Pipeline Stage</label>
+                        <select
+                          id="edit-lead-stage"
+                          value={editedLead.stageId || ''}
+                          onChange={(e) => setEditedLead({ ...editedLead, stageId: e.target.value })}
+                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                        >
+                          {config.stages.map(stage => (
+                            <option key={stage.id} value={stage.id}>{stage.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-[10px] text-gray-400 font-mono pt-1">
+                      <div>
+                        <span>Created: {lead.createdAt}</span>
+                      </div>
+                      <div>
+                        <span>Last Touch: {lead.lastContacted}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -381,15 +482,104 @@ export default function LeadDetailModal({
                   
                   <div className="space-y-3 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100/50">
                     {config.customFields.map((field) => {
-                      const val = lead.customFields[field.key];
+                      const val = editedLead.customFields[field.key] ?? '';
                       return (
-                        <div key={field.key} className="flex flex-col text-xs pb-1 border-b border-gray-100 last:border-0 last:pb-0">
-                          <span className="text-gray-400 font-medium mb-0.5">{field.label}:</span>
-                          <span className="font-bold text-gray-800">
-                            {field.type === 'number' && typeof val === 'number'
-                              ? `$${val.toLocaleString()}`
-                              : String(val || 'Empty / No Data')}
-                          </span>
+                        <div key={field.key} className="flex flex-col text-xs pb-1 border-b border-emerald-100/20 last:border-0 last:pb-0">
+                          <label id={`lbl-edit-custom-${field.key}`} htmlFor={`edit-custom-${field.key}`} className="block text-[10px] uppercase font-bold text-emerald-800 mb-1">
+                            {field.label} {field.required && '*'}
+                          </label>
+
+                          {field.type === 'select' && field.options && (
+                            <select
+                              id={`edit-custom-${field.key}`}
+                              required={field.required}
+                              value={String(val)}
+                              onChange={(e) => setEditedLead({
+                                ...editedLead,
+                                customFields: {
+                                  ...editedLead.customFields,
+                                  [field.key]: e.target.value
+                                }
+                              })}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                            >
+                              {field.options.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          )}
+
+                          {field.type === 'text' && (
+                            <input
+                              id={`edit-custom-${field.key}`}
+                              type="text"
+                              required={field.required}
+                              value={String(val)}
+                              onChange={(e) => setEditedLead({
+                                ...editedLead,
+                                customFields: {
+                                  ...editedLead.customFields,
+                                  [field.key]: e.target.value
+                                }
+                              })}
+                              placeholder={field.placeholder}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                            />
+                          )}
+
+                          {field.type === 'number' && (
+                            <input
+                              id={`edit-custom-${field.key}`}
+                              type="number"
+                              required={field.required}
+                              value={Number(val)}
+                              onChange={(e) => setEditedLead({
+                                ...editedLead,
+                                customFields: {
+                                  ...editedLead.customFields,
+                                  [field.key]: Number(e.target.value)
+                                }
+                              })}
+                              placeholder={field.placeholder}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium font-mono"
+                            />
+                          )}
+
+                          {field.type === 'date' && (
+                            <input
+                              id={`edit-custom-${field.key}`}
+                              type="date"
+                              required={field.required}
+                              value={String(val)}
+                              onChange={(e) => setEditedLead({
+                                ...editedLead,
+                                customFields: {
+                                  ...editedLead.customFields,
+                                  [field.key]: e.target.value
+                                }
+                              })}
+                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                            />
+                          )}
+
+                          {field.type === 'boolean' && (
+                            <div className="flex items-center gap-2 py-1">
+                              <input
+                                id={`edit-custom-${field.key}`}
+                                type="checkbox"
+                                checked={Boolean(val)}
+                                onChange={(e) => setEditedLead({
+                                  ...editedLead,
+                                  customFields: {
+                                    ...editedLead.customFields,
+                                    [field.key]: e.target.checked
+                                  }
+                                })}
+                                className="w-4.5 h-4.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+                              />
+                              <span className="text-gray-600 font-medium font-sans">Active</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -397,51 +587,124 @@ export default function LeadDetailModal({
                 </div>
 
                 {/* Regional India Client Specifications info box */}
-                {(marketRegion === 'IND' || lead.customFields.indiaState) && (
+                {(marketRegion === 'IND' || editedLead.customFields.indiaState) && (
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold uppercase text-indigo-700 tracking-wider flex items-center gap-1">
                       <span>🇮🇳 Indian Localization Records</span>
                     </h4>
                     <div className="grid grid-cols-2 gap-3 bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100/50 text-xs">
                       <div className="flex flex-col">
-                        <span className="text-gray-400 font-medium mb-0.5">Territory State:</span>
-                        <span className="font-extrabold text-indigo-950">{String(lead.customFields.indiaState || 'Delhi NCR')}</span>
+                        <span id="lbl-edit-india-state" className="text-[10px] uppercase font-bold text-indigo-700 mb-1">Territory State</span>
+                        <select
+                          id="edit-india-state"
+                          value={String(editedLead.customFields.indiaState ?? 'Delhi')}
+                          onChange={(e) => setEditedLead({
+                            ...editedLead,
+                            customFields: {
+                              ...editedLead.customFields,
+                              indiaState: e.target.value
+                            }
+                          })}
+                          className="w-full px-2 py-1 text-xs bg-white border border-indigo-200 rounded-xl text-indigo-950 font-semibold"
+                        >
+                          <option value="Delhi">Delhi NCR</option>
+                          <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
+                          <option value="Karnataka">Karnataka (Bengaluru)</option>
+                          <option value="Telangana">Telangana (Hyderabad)</option>
+                          <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
+                          <option value="Haryana">Haryana (Gurugram)</option>
+                          <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
+                          <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
+                          <option value="West Bengal">West Bengal (Kolkata)</option>
+                        </select>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-gray-400 font-medium mb-0.5">GST Identification:</span>
-                        <span className="font-extrabold text-indigo-950 text-[11px] font-mono leading-none">{String(lead.customFields.indiaGst || 'Unregistered Business')}</span>
+                        <span id="lbl-edit-india-gst" className="text-[10px] uppercase font-bold text-indigo-700 mb-1">GST Identification</span>
+                        <select
+                          id="edit-india-gst"
+                          value={String(editedLead.customFields.indiaGst ?? 'Unregistered')}
+                          onChange={(e) => setEditedLead({
+                            ...editedLead,
+                            customFields: {
+                              ...editedLead.customFields,
+                              indiaGst: e.target.value
+                            }
+                          })}
+                          className="w-full px-2 py-1 text-xs bg-white border border-indigo-200 rounded-xl text-indigo-950 font-semibold"
+                        >
+                          <option value="Unregistered">Unregistered Business Client</option>
+                          <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
+                          <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
+                          <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
+                          <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
+                        </select>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Scheduled Followups & Tasks Desk */}
-                {(lead.customFields.nextFollowUpDate || lead.customFields.followUpTaskDesc) && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
-                      <LucideIcons.Clock className="w-4 h-4 text-amber-600 animate-pulse" />
-                      <span>📅 Client Follow-up Schedule</span>
-                    </h4>
-                    <div className="bg-amber-50/40 p-4 rounded-2xl border border-amber-100/50 text-xs space-y-2">
-                      <div className="flex justify-between items-center bg-white px-2 py-1.5 rounded-xl border border-amber-100">
-                        <span className="text-gray-500 font-bold font-sans">Contact Date:</span>
-                        <span className="font-black text-amber-900 font-mono text-xs">
-                          {String(lead.customFields.nextFollowUpDate || 'Not Scheduled')}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center bg-white px-2 py-1.5 rounded-xl border border-amber-100">
-                        <span className="text-gray-500 font-bold font-sans">Time Constraint:</span>
-                        <span className="font-bold text-gray-800">{String(lead.customFields.followUpTimeSlot || 'General Hours')}</span>
-                      </div>
-                      <div className="col-span-1 md:col-span-2 pt-1.5 flex flex-col">
-                        <span className="text-gray-400 font-medium mb-0.5">Follow-up action task reminder:</span>
-                        <span className="font-semibold text-amber-950 font-sans italic bg-white p-2.5 rounded-xl border border-amber-100">
-                          - "{String(lead.customFields.followUpTaskDesc || 'Introduce current portfolio proposals')}"
-                        </span>
-                      </div>
+                <div className="space-y-3 col-span-1 md:col-span-2">
+                  <h4 className="text-xs font-bold uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
+                    <LucideIcons.Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                    <span>📅 Client Follow-up Schedule</span>
+                  </h4>
+                  <div className="bg-amber-50/40 p-4 rounded-2xl border border-amber-100/50 text-xs space-y-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <span id="lbl-edit-followup-date" className="block text-[10px] uppercase font-bold text-amber-800 mb-1">Contact Date</span>
+                      <input
+                        id="edit-followup-date"
+                        type="date"
+                        value={String(editedLead.customFields.nextFollowUpDate ?? '')}
+                        onChange={(e) => setEditedLead({
+                          ...editedLead,
+                          customFields: {
+                            ...editedLead.customFields,
+                            nextFollowUpDate: e.target.value
+                          }
+                        })}
+                        className="w-full px-2 py-1.5 text-xs bg-white border border-amber-200 rounded-xl font-medium text-gray-800"
+                      />
+                    </div>
+                    <div>
+                      <span id="lbl-edit-followup-timeslot" className="block text-[10px] uppercase font-bold text-amber-800 mb-1">Time Constraint</span>
+                      <select
+                        id="edit-followup-timeslot"
+                        value={String(editedLead.customFields.followUpTimeSlot ?? '10:00 AM - 12:00 PM')}
+                        onChange={(e) => setEditedLead({
+                          ...editedLead,
+                          customFields: {
+                            ...editedLead.customFields,
+                            followUpTimeSlot: e.target.value
+                          }
+                        })}
+                        className="w-full px-2 py-1.5 text-xs bg-white border border-amber-200 rounded-xl font-medium text-gray-800"
+                      >
+                        <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM (Early catchup)</option>
+                        <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM (Mid Morning briefing)</option>
+                        <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM (Lunch session)</option>
+                        <option value="02:00 PM - 04:50 PM">02:00 PM - 04:50 PM (Afternoon sprint)</option>
+                        <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM (Late checkout wrap-up)</option>
+                      </select>
+                    </div>
+                    <div className="col-span-1 md:col-span-2">
+                      <span id="lbl-edit-followup-taskdesc" className="block text-[10px] uppercase font-bold text-amber-800 mb-1">Follow-up action task reminder</span>
+                      <input
+                        id="edit-followup-taskdesc"
+                        type="text"
+                        value={String(editedLead.customFields.followUpTaskDesc ?? '')}
+                        onChange={(e) => setEditedLead({
+                          ...editedLead,
+                          customFields: {
+                            ...editedLead.customFields,
+                            followUpTaskDesc: e.target.value
+                          }
+                        })}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-amber-200 rounded-xl font-medium text-amber-950"
+                      />
                     </div>
                   </div>
-                )}
+                </div>
 
               </div>
 
@@ -458,22 +721,30 @@ export default function LeadDetailModal({
                   {currentUserRole === 'owner' ? (
                     <div className="w-full md:w-64 max-w-full shrink-0">
                       <select
-                        value={lead.assignedTo || ''}
+                        id="edit-lead-assignment"
+                        value={editedLead.assignedTo || ''}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val === '') {
+                            setEditedLead({
+                              ...editedLead,
+                              assignedTo: undefined,
+                              assignedToName: undefined
+                            });
                             onUpdateLead({
-                              ...lead,
+                              ...editedLead,
                               assignedTo: undefined,
                               assignedToName: undefined
                             });
                           } else {
                             const selectedAgent = teamAgents.find(a => a.uid === val);
-                            onUpdateLead({
-                              ...lead,
+                            const updated = {
+                              ...editedLead,
                               assignedTo: val,
                               assignedToName: selectedAgent ? selectedAgent.displayName : 'Unknown Agent'
-                            });
+                            };
+                            setEditedLead(updated);
+                            onUpdateLead(updated);
                           }
                         }}
                         className="w-full text-xs font-semibold border border-gray-200 rounded-xl px-3 py-2 bg-white text-slate-800 transition-all focus:outline-none focus:border-indigo-500"
@@ -489,16 +760,33 @@ export default function LeadDetailModal({
                   ) : (
                     <div className="px-4 py-2 bg-white border border-indigo-100 text-xs font-bold rounded-2xl flex items-center gap-2">
                       <span className="text-gray-400 font-sans font-medium">Assigned To:</span>
-                      <span className="text-indigo-950">{lead.assignedToName || 'Unassigned (Open Pool)'}</span>
+                      <span className="text-indigo-950">{editedLead.assignedToName || 'Unassigned (Open Pool)'}</span>
                     </div>
                   )}
                 </div>
               )}
+
+              {/* Save Button for Profile Updates */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                {saveSuccess && (
+                  <span id="save-success-indicator" className="text-xs text-emerald-600 font-bold bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-100 flex items-center gap-1.5 animate-pulse">
+                    <LucideIcons.CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>Lead profile successfully updated!</span>
+                  </span>
+                )}
+                <button
+                  id="save-lead-details-btn"
+                  onClick={handleSaveChanges}
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                >
+                  <LucideIcons.Save className="w-4 h-4" /> Save Changes
+                </button>
+              </div>
               
               {/* Quick Communication Hub - One-Tap outreach portal */}
               <QuickCommunicationHub 
                 config={config} 
-                lead={lead} 
+                lead={editedLead} 
                 onLogInteraction={handleLogInteraction} 
               />
             </div>

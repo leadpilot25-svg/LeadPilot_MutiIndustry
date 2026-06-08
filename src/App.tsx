@@ -1382,7 +1382,7 @@ export default function App() {
   );
   const meetingsCount = meetingsTodayLeads.length;
 
-  const closedDealsCount = currentLeads.filter(l => l.status === 'won').length;
+  const closedDealsCount = currentLeads.filter(l => l.status === 'won' || l.stageId === 'policy_active').length;
 
   // Final filtered array depending on Dashboard Interactive selection
   const getFilteredLeads = () => {
@@ -1399,13 +1399,13 @@ export default function App() {
       return meetingsTodayLeads;
     }
     if (dashboardFilter === 'closed_deals') {
-      return base.filter(l => l.status === 'won');
+      return base.filter(l => l.status === 'won' || l.stageId === 'policy_active');
     }
     if (dashboardFilter === 'open') {
       return base.filter(l => l.status === 'active');
     }
     if (dashboardFilter === 'closed') {
-      return base.filter(l => l.status === 'won' || l.status === 'lost');
+      return base.filter(l => l.status === 'won' || l.stageId === 'policy_active' || l.status === 'lost');
     }
     if (dashboardFilter === 'today') {
       return base.filter(l => l.createdAt === todayDateStr);

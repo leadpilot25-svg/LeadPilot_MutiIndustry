@@ -14,7 +14,7 @@ interface DashboardMetricsProps {
 
 export default function DashboardMetrics({ config, leads }: DashboardMetricsProps) {
   const activeLeads = leads.filter(l => l.status === 'active');
-  const wonLeads = leads.filter(l => l.status === 'won');
+  const wonLeads = leads.filter(l => l.status === 'won' || l.stageId === 'policy_active');
 
   const calculateMetricValue = (metric: IndustryConfig['metrics'][0]) => {
     if (metric.type === 'count') {
