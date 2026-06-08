@@ -116,11 +116,15 @@ service cloud.firestore {
       );
                        
       allow create: if isSignedIn() && (
-        (hasUserRecord() && getUserData().workspaceId == workspaceId && (
-          getUserData().role == 'owner' ||
-          (getUserData().role == 'agent' && request.resource.data.assignedTo == request.auth.uid)
-        )) ||
-        isSuperAdmin()
+        isSuperAdmin() ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.workspaceId == workspaceId && (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' ||
+            (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'agent' &&
+             request.resource.data.assignedTo == request.auth.uid)
+          )
+        )
       );
                     
       allow update: if isSignedIn() && (
