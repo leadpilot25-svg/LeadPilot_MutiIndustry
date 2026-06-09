@@ -13,7 +13,7 @@ interface LeadDetailModalProps {
   lead: Lead;
   onClose: () => void;
   onUpdateLead: (updatedLead: Lead) => void;
-  marketRegion?: 'USA' | 'IND';
+  marketRegion?: 'USA' | 'IND' | 'EUR';
   teamAgents?: { uid: string; displayName: string; email: string }[];
   currentUserRole?: 'owner' | 'agent';
   isTeamMode?: boolean;
@@ -62,11 +62,67 @@ export default function LeadDetailModal({
         maximumFractionDigits: 0
       }).format(val);
     }
+    if (marketRegion === 'EUR') {
+      return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+        maximumFractionDigits: 0
+      }).format(val);
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       maximumFractionDigits: 0
     }).format(val);
+  };
+
+  // Vehicle rate constants for Taxi auto-fill
+  const TAXI_VEHICLE_RATES: Record<string, number> = {
+    'Hatchback': 15,
+    'Sedan': 18,
+    'SUV': 25,
+    'Van': 30,
+    'Luxury': 45,
+    'Mini Bus': 50
+  };
+
+  const calculateTaxiFareDetail = (updatedFields: Record<string, any>) => {
+    const distance = updatedFields.distanceKm ?? editedLead.customFields.distanceKm;
+    const rate = updatedFields.ratePerKm ?? editedLead.customFields.ratePerKm;
+    
+    if (distance && rate && distance > 0 && rate > 0) {
+      return Math.round(distance * rate);
+    }
+    return 0;
+  };
+
+  const handleDetailCustomFieldChange = (key: string, val: string | number | boolean) => {
+    const updatedFields: Record<string, any> = { [key]: val };
+
+    // For Taxi: auto-fill ratePerKm when vehicleClass changes
+    if (config.id === 'taxi' && key === 'vehicleClass') {
+      const defaultRate = TAXI_VEHICLE_RATES[String(val)];
+      if (defaultRate) {
+        updatedFields.ratePerKm = defaultRate;
+      }
+    }
+
+    setEditedLead({
+      ...editedLead,
+      customFields: {
+        ...editedLead.customFields,
+        ...updatedFields
+      }
+    });
+
+    // For Taxi: recalculate fare when distance, rate, or vehicle type changes
+    if (config.id === 'taxi' && ['distanceKm', 'ratePerKm', 'vehicleClass'].includes(key)) {
+      const newFare = calculateTaxiFareDetail(updatedFields);
+      setEditedLead(prev => ({
+        ...prev,
+        value: newFare
+      }));
+    }
   };
 
   const handleSaveChanges = () => {
@@ -251,9 +307,10 @@ export default function LeadDetailModal({
       driverName: drivers[idx]
     });
 
+    const symbol = marketRegion === 'IND' ? '₹' : (marketRegion === 'EUR' ? '€' : '$');
     const newNote: Note = {
       id: `taxi-note-${Date.now()}`,
-      content: `🚖 Route Voucher Generated. Route distance: ${textDist} (Surge traffic factor: x${mult}). Assigned dispatch: ${drivers[idx]}. Net adjusted fare: $${computedTotal}.`,
+      content: `🚖 Route Voucher Generated. Route distance: ${textDist} (Surge traffic factor: x${mult}). Assigned dispatch: ${drivers[idx]}. Net adjusted fare: ${symbol}${computedTotal}.`,
       createdAt: new Date().toISOString().split('T')[0],
       author: 'Logistics Dispatcher'
     };
@@ -424,7 +481,7 @@ export default function LeadDetailModal({
                       </div>
                       <div>
                         <label id="lbl-edit-lead-value" htmlFor="edit-lead-value" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">
-                          Value ({marketRegion === 'IND' ? '₹' : '$'})
+                          Value ({marketRegion === 'IND' ? '₹' : (marketRegion === 'EUR' ? '€' : '$')})
                         </label>
                         <input
                           id="edit-lead-value"
@@ -494,13 +551,7 @@ export default function LeadDetailModal({
                               id={`edit-custom-${field.key}`}
                               required={field.required}
                               value={String(val)}
-                              onChange={(e) => setEditedLead({
-                                ...editedLead,
-                                customFields: {
-                                  ...editedLead.customFields,
-                                  [field.key]: e.target.value
-                                }
-                              })}
+                              onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
                               className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             >
                               {field.options.map(opt => (
@@ -515,13 +566,7 @@ export default function LeadDetailModal({
                               type="text"
                               required={field.required}
                               value={String(val)}
-                              onChange={(e) => setEditedLead({
-                                ...editedLead,
-                                customFields: {
-                                  ...editedLead.customFields,
-                                  [field.key]: e.target.value
-                                }
-                              })}
+                              onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
                               placeholder={field.placeholder}
                               className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             />
@@ -533,13 +578,7 @@ export default function LeadDetailModal({
                               type="number"
                               required={field.required}
                               value={Number(val)}
-                              onChange={(e) => setEditedLead({
-                                ...editedLead,
-                                customFields: {
-                                  ...editedLead.customFields,
-                                  [field.key]: Number(e.target.value)
-                                }
-                              })}
+                              onChange={(e) => handleDetailCustomFieldChange(field.key, Number(e.target.value))}
                               placeholder={field.placeholder}
                               className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium font-mono"
                             />
@@ -551,13 +590,7 @@ export default function LeadDetailModal({
                               type="date"
                               required={field.required}
                               value={String(val)}
-                              onChange={(e) => setEditedLead({
-                                ...editedLead,
-                                customFields: {
-                                  ...editedLead.customFields,
-                                  [field.key]: e.target.value
-                                }
-                              })}
+                              onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
                               className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             />
                           )}
@@ -568,13 +601,7 @@ export default function LeadDetailModal({
                                 id={`edit-custom-${field.key}`}
                                 type="checkbox"
                                 checked={Boolean(val)}
-                                onChange={(e) => setEditedLead({
-                                  ...editedLead,
-                                  customFields: {
-                                    ...editedLead.customFields,
-                                    [field.key]: e.target.checked
-                                  }
-                                })}
+                                onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.checked)}
                                 className="w-4.5 h-4.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
                               />
                               <span className="text-gray-600 font-medium font-sans">Active</span>
@@ -586,8 +613,8 @@ export default function LeadDetailModal({
                   </div>
                 </div>
 
-                {/* Regional India Client Specifications info box */}
-                {(marketRegion === 'IND' || editedLead.customFields.indiaState) && (
+                {/* Regional India Client Specifications info box (exclude Taxi) */}
+                {(marketRegion === 'IND' || editedLead.customFields.indiaState) && config.id !== 'taxi' && (
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold uppercase text-indigo-700 tracking-wider flex items-center gap-1">
                       <span>🇮🇳 Indian Localization Records</span>
@@ -787,6 +814,7 @@ export default function LeadDetailModal({
               <QuickCommunicationHub 
                 config={config} 
                 lead={editedLead} 
+                marketRegion={marketRegion}
                 onLogInteraction={handleLogInteraction} 
               />
             </div>
@@ -1057,7 +1085,7 @@ export default function LeadDetailModal({
                         </div>
                         <div className="flex justify-between text-xs pt-1.5 border-t border-gray-100">
                           <span className="font-bold text-gray-900">Total Charged Fare:</span>
-                          <span className="font-extrabold text-emerald-700 text-sm font-mono">${taxiFareVoucher.totalFare}</span>
+                          <span className="font-extrabold text-emerald-700 text-sm font-mono">{formatValue(taxiFareVoucher.totalFare)}</span>
                         </div>
                       </div>
                     )}

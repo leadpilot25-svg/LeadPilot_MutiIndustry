@@ -6,13 +6,14 @@
 import React, { useState, useMemo } from 'react';
 import { IndustryConfig, Lead } from '../types';
 import * as LucideIcons from 'lucide-react';
+import { getCurrencySymbol } from '../lib/currencyUtils';
 
 interface LeadTableProps {
   config: IndustryConfig;
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
   onDeleteLead: (leadId: string) => void;
-  marketRegion?: 'USA' | 'IND';
+  marketRegion?: 'USA' | 'IND' | 'EUR';
   onAddMultiLeads?: (leads: Lead[]) => void;
 }
 
@@ -72,7 +73,7 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
           whatsapp: "Hi {name}! 🛡️ Your customized rate quote for {policyCategory} is prepared. Coverage limit: {coverageCapacity}. Let's secure your policy today. - ShieldGuard",
           sms: "Hi {name}, ShieldGuard quote for {policyCategory} is ready. Premium estimate can be locked in today! - ShieldGuard",
           emailSubject: "Your Requested Insurance Quote: {policyCategory}",
-          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: ${coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
+          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: {coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
         },
         'tarot-coaching': {
           call: "Conduct birth sign intuitive review and align connection oracle tools.",
@@ -123,9 +124,18 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
       res = res.replace(/{phone}/g, lead.phone || '');
       res = res.replace(/{email}/g, lead.email || '');
       res = res.replace(/{source}/g, lead.source || '');
-      res = res.replace(/{value}/g, lead.value 
-        ? (marketRegion === 'IND' ? `₹${lead.value.toLocaleString('en-IN')}` : `$${lead.value.toLocaleString('en-US')}`) 
-        : (marketRegion === 'IND' ? '₹0' : '$0')
+      res = res.replace(/{value}/g, 
+        lead.value 
+          ? (marketRegion === 'IND' 
+              ? `₹${lead.value.toLocaleString('en-IN')}` 
+              : marketRegion === 'EUR' 
+                ? `€${lead.value.toLocaleString('de-DE')}` 
+                : `$${lead.value.toLocaleString('en-US')}`)
+          : (marketRegion === 'IND' 
+              ? '₹0' 
+              : marketRegion === 'EUR' 
+                ? '€0' 
+                : '$0')
       );
       
       if (lead.customFields) {
@@ -638,7 +648,7 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
                       <td className="px-6 py-4 text-sm text-gray-600 font-sans">{lead.customFields.policyCategory || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600 font-sans">
                         {lead.customFields.coverageCapacity 
-                          ? `$${Number(lead.customFields.coverageCapacity).toLocaleString()}` 
+                          ? `${getCurrencySymbol(marketRegion)}${Number(lead.customFields.coverageCapacity).toLocaleString()}` 
                           : 'N/A'}
                       </td>
                     </>

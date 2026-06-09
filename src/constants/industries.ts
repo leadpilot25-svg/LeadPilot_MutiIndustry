@@ -216,9 +216,9 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     id: 'taxi',
     name: 'Taxi & Shuttle Logistics',
     iconName: 'Car',
-    tagline: 'Manage chauffeur bookings, executive shuttles, passenger profiles, and dispatcher dispatch routing.',
+    tagline: 'Manage chauffeur bookings, executive shuttles, passenger profiles, and dispatched ride pipelines.',
     leadLabel: 'Passenger Booking',
-    valueLabel: 'Quoted Fair Value',
+    valueLabel: 'Estimated Fare',
     stages: [
       { id: 'ride_inquiry', label: 'Ride Inquiries / Routes', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
       { id: 'fare_dispatched', label: 'Dispatches Broadcast', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
@@ -229,30 +229,58 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     customFields: [
       {
         key: 'pickupAddress',
-        label: 'Pickup Coordinates Address',
+        label: 'Pickup Location',
         type: 'text',
         required: false,
-        placeholder: 'e.g. Terminal 2, JFK Airport, NY'
+        placeholder: 'e.g. Kochi Airport'
       },
       {
         key: 'destinationAddress',
-        label: 'Destination Exit Address',
+        label: 'Drop Location',
         type: 'text',
         required: false,
-        placeholder: 'e.g. Midtown Manhattan Plaza'
+        placeholder: 'e.g. Infopark Kakkanad'
       },
       {
         key: 'vehicleClass',
-        label: 'Fleet Vehicle Category Required',
+        label: 'Vehicle Type',
         type: 'select',
-        options: ['Standard Eco Hybrid', 'Business Class Executive Sedan', 'Prime VIP SUV', 'Wheelchair Lift Van Extra Space'],
+        options: ['Hatchback', 'Sedan', 'SUV', 'Van', 'Luxury', 'Mini Bus'],
         required: false
       },
       {
-        key: 'isRecurringSchedule',
-        label: 'Recurring Commute Plan Holder',
-        type: 'select',
-        options: ['Daily Commuter', 'Weekly Corporate account', 'One-Off Tourist Booker']
+        key: 'ratePerKm',
+        label: 'Rate Per KM',
+        type: 'number',
+        required: false,
+        placeholder: 'e.g. 25'
+      },
+      {
+        key: 'driverAssigned',
+        label: 'Driver Assigned',
+        type: 'text',
+        required: false,
+        placeholder: 'e.g. Rajesh'
+      },
+      {
+        key: 'tripDate',
+        label: 'Trip Date',
+        type: 'date',
+        required: false
+      },
+      {
+        key: 'distanceKm',
+        label: 'Distance KM',
+        type: 'number',
+        required: false,
+        placeholder: 'e.g. 32'
+      },
+      {
+        key: 'actualFare',
+        label: 'Actual Fare',
+        type: 'number',
+        required: false,
+        placeholder: 'e.g. 1350'
       }
     ],
     metrics: [
@@ -754,8 +782,12 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       customFields: {
         pickupAddress: 'The Carlyle Hotel, 35 E 76th St',
         destinationAddress: 'John F. Kennedy Airport, Terminal 4',
-        vehicleClass: 'Prime VIP SUV',
-        isRecurringSchedule: 'Weekly Corporate account'
+        vehicleClass: 'SUV',
+        driverAssigned: 'Chauffeur Carlos',
+        tripDate: '2026-06-10',
+        distanceKm: 25,
+        ratePerKm: 25,
+        actualFare: 250
       },
       notes: [
         { id: 'n-10', content: 'Demanding full-service black car with cell chargers, sparkling water, and cold towels.', createdAt: '2026-06-05', author: 'Lead Dispatcher' }
@@ -779,8 +811,12 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       customFields: {
         pickupAddress: 'Vessel Plaza Hudson Yards',
         destinationAddress: 'LaGuardia Executive Jet Terminal',
-        vehicleClass: 'Business Class Executive Sedan',
-        isRecurringSchedule: 'One-Off Tourist Booker'
+        vehicleClass: 'Sedan',
+        driverAssigned: 'Chauffeur Sophia',
+         ratePerKm: 18,
+        tripDate: '2026-06-11',
+        distanceKm: 15,
+        actualFare: 120
       },
       notes: [
         { id: 'n-11', content: 'Luggage count: 4 heavy items. Assist requested. Chauffeur assigned.', createdAt: '2026-06-04', author: 'Lead Dispatcher' }

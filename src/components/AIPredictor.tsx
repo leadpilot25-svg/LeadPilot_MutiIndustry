@@ -6,14 +6,16 @@
 import React, { useState, useEffect } from 'react';
 import { IndustryConfig, Lead } from '../types';
 import * as LucideIcons from 'lucide-react';
+import { getCurrencySymbol } from '../lib/currencyUtils';
 
 interface AIPredictorProps {
   config: IndustryConfig;
   leads: Lead[];
   onAddSimulatedLead: (simulatedLead: Lead) => void;
+  marketRegion?: 'USA' | 'IND' | 'EUR';
 }
 
-export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPredictorProps) {
+export default function AIPredictor({ config, leads, onAddSimulatedLead, marketRegion = 'USA' }: AIPredictorProps) {
   const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<{
@@ -71,10 +73,11 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPre
       
       else if (config.id === 'insurance') {
         const coverage = Number(selectedLead.customFields.coverageCapacity || 500000);
+        const symbol = getCurrencySymbol(marketRegion);
         qualityScore = coverage >= 1000000 ? 91 : 78;
         urgencyLabel = coverage >= 1000000 ? 'EXECUTIVE PRIORITY • High-Premium target' : 'STANDARD PRIORITY';
         
-        suggestedProductMatch = `${selectedLead.customFields.policyCategory || 'Premium Life Policy'} with $${coverage.toLocaleString()} coverage limit`;
+        suggestedProductMatch = `${selectedLead.customFields.policyCategory || 'Premium Life Policy'} with ${symbol}${coverage.toLocaleString()} coverage limit`;
         
         actionPlan = [
           `Trigger underwriting file review and run early diagnostic health ratings checklist.`,
@@ -82,7 +85,7 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPre
           `Offer a corporate premium package discount combining multiple liability forms.`
         ];
         
-        pitchHook = `"Hello ${selectedLead.name}, I've finalized a customized draft policy model for your ${selectedLead.customFields.policyCategory} covering up to $${coverage.toLocaleString()}. We managed to squeeze an additional 12% off the standard premium rate. Can we do a quick review?"`;
+        pitchHook = `"Hello ${selectedLead.name}, I've finalized a customized draft policy model for your ${selectedLead.customFields.policyCategory} covering up to ${symbol}${coverage.toLocaleString()}. We managed to squeeze an additional 12% off the standard premium rate. Can we do a quick review?"`;
       } 
       
       else if (config.id === 'tarot-coaching') {
@@ -101,19 +104,28 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPre
       } 
       
       else if (config.id === 'taxi') {
-        const isRecurring = selectedLead.customFields.isRecurringSchedule === 'Daily Commuter' || selectedLead.customFields.isRecurringSchedule === 'Weekly Corporate account';
-        qualityScore = isRecurring ? 92 : 72;
-        urgencyLabel = isRecurring ? 'VIP RECURRING DISPATCH • Account contract' : 'ONE-OFF BOOKER • Standard speed';
-        
-        suggestedProductMatch = `Fleet Logistics Class: "${selectedLead.customFields.vehicleClass || 'Sedan'}"; Pickup: ${selectedLead.customFields.pickupAddress}`;
+        const symbol = marketRegion === 'IND' ? '₹' : (marketRegion === 'EUR' ? '€' : '$');
+        const nameVal = selectedLead.name || 'Not Specified';
+        const pickupVal = selectedLead.customFields.pickupAddress || 'Not Specified';
+        const dropVal = selectedLead.customFields.destinationAddress || 'Not Specified';
+        const vehicleVal = selectedLead.customFields.vehicleClass || 'Not Specified';
+        const driverVal = selectedLead.customFields.driverAssigned || 'Not Specified';
+        const distVal = selectedLead.customFields.distanceKm ? `${selectedLead.customFields.distanceKm} KM` : 'Not Specified';
+        const dateVal = selectedLead.customFields.tripDate || 'Not Specified';
+        const estFare = selectedLead.value ? `${symbol}${selectedLead.value}` : 'Not Specified';
+        const actFare = selectedLead.customFields.actualFare ? `${symbol}${selectedLead.customFields.actualFare}` : 'Not Specified';
+
+        qualityScore = selectedLead.customFields.actualFare ? 100 : 85;
+        urgencyLabel = selectedLead.customFields.actualFare ? 'TRIP COMPLETED' : 'TRIP CONFIRMED • ACTIVE';
+        suggestedProductMatch = `Active Dispatch Order #${selectedLead.id.substring(0, 6).toUpperCase()}`;
         
         actionPlan = [
-          `Deploy Chauffeur vehicle matching class: "${selectedLead.customFields.vehicleClass || 'VIP SUV'}".`,
-          `Verify real-time flight telemetry or transit arrival schedules at ${selectedLead.customFields.pickupAddress}.`,
-          `Offer passenger a corporate custom recurrence rate coupon to lock in monthly schedule.`
+          `Confirm route distance (${distVal}) with assigned driver ${driverVal}.`,
+          `Verify drop-off location and actual fare calculations on completion.`,
+          `Sync transit voucher details directly to the connected Google Spreadsheet.`
         ];
-        
-        pitchHook = `"Dear Passengers, your requested ${selectedLead.customFields.vehicleClass} driver has been placed on high-standby for pickup at ${selectedLead.customFields.pickupAddress}. Your flat-rate fare route voucher is locked in at $${selectedLead.value}. Click to activate dispatch."`;
+
+        pitchHook = `Passenger: ${nameVal}\n\nPickup:\n${pickupVal}\n\nDrop:\n${dropVal}\n\nVehicle:\n${vehicleVal}\n\nDriver:\n${driverVal}\n\nDistance:\n${distVal}\n\nTrip Date:\n${dateVal}\n\nEstimated Fare:\n${estFare}\n\nActual Fare:\n${actFare}`;
       } 
       
       else {
@@ -191,14 +203,17 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPre
         email: 'chiefofstaff@govoffice.state.gov',
         phone: '(518) 555-9001',
         source: 'Concierge Phone Line',
-        value: 320,
+        value: 1250,
         stageId: 'ride_inquiry',
         status: 'active',
         customFields: {
-          pickupAddress: 'Executive Heliport Manhattan',
-          destinationAddress: 'Statehouse Residence Albany',
-          vehicleClass: 'Prime VIP SUV',
-          isRecurringSchedule: 'Daily Commuter'
+          pickupAddress: 'Kochi Airport',
+          destinationAddress: 'Infopark Kakkanad',
+          vehicleClass: 'Sedan',
+          driverAssigned: 'Rajesh',
+          distanceKm: 32,
+          tripDate: '2026-06-10',
+          actualFare: 1350
         }
       },
       'custom-crm': {
@@ -284,7 +299,7 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead }: AIPre
             <option value="" disabled>-- Choose a seeker/prospect --</option>
             {activeLeads.map(lead => (
               <option key={lead.id} value={lead.id}>
-                {lead.name} (${lead.value.toLocaleString()})
+                {lead.name} ({getCurrencySymbol(marketRegion)}{lead.value.toLocaleString()})
               </option>
             ))}
           </select>

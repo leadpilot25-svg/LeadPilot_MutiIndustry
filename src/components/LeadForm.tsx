@@ -12,7 +12,7 @@ interface LeadFormProps {
   initialStageId: string;
   onClose: () => void;
   onSubmit: (leadData: Omit<Lead, 'id' | 'createdAt' | 'lastContacted' | 'notes' | 'tasks'> & { noteText?: string }) => void;
-  marketRegion?: 'USA' | 'IND';
+  marketRegion?: 'USA' | 'IND' | 'EUR';
 }
 
 export default function LeadForm({ config, initialStageId, onClose, onSubmit, marketRegion = 'USA' }: LeadFormProps) {
@@ -20,14 +20,32 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [source, setSource] = useState(config.suggestedSources[0] || 'Direct Website');
-  const [value, setValue] = useState<number>(1000); // monetary estimator value
+  const [value, setValue] = useState<number>(1000);
   const [stageId, setStageId] = useState(initialStageId);
   const [noteText, setNoteText] = useState('');
   
-  // Custom fields dictionary state
   const [customFields, setCustomFields] = useState<Record<string, string | number | boolean>>({});
 
-    // Reset custom fields when industry config changes or initial state changes
+  // Vehicle rate constants for Taxi auto-fill
+  const TAXI_VEHICLE_RATES: Record<string, number> = {
+    'Hatchback': 15,
+    'Sedan': 18,
+    'SUV': 25,
+    'Van': 30,
+    'Luxury': 45,
+    'Mini Bus': 50
+  };
+
+  const calculateTaxiFare = (updatedFields: Record<string, any>) => {
+    const distance = updatedFields.distanceKm ?? customFields.distanceKm;
+    const rate = updatedFields.ratePerKm ?? customFields.ratePerKm;
+    
+    if (distance && rate && distance > 0 && rate > 0) {
+      return Math.round(distance * rate);
+    }
+    return 0;
+  };
+
   useEffect(() => {
     const defaults: Record<string, string | number | boolean> = {};
     config.customFields.forEach(field => {
@@ -42,8 +60,8 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       }
     });
 
-    // Handle regional default entries if India region is active
-    if (marketRegion === 'IND') {
+    // Handle regional default entries if India region is active (exclude Taxi)
+    if (marketRegion === 'IND' && config.id !== 'taxi') {
       defaults.indiaState = 'Delhi';
       defaults.indiaGst = 'Unregistered';
     }
@@ -53,7 +71,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
     defaults.followUpTimeSlot = '10:00 AM - 12:00 PM';
     defaults.followUpTaskDesc = 'Corporate client feedback review';
 
-    // Provide premium default values depending on mock scenarios
+    // Provide default values depending on industry
     if (config.id === 'real-estate') {
       setValue(750000);
       defaults.preferredLocation = 'Grandview Heights';
@@ -64,9 +82,9 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       setValue(250);
       defaults.cosmicZodiacSign = 'Leo';
     } else if (config.id === 'taxi') {
-      setValue(85);
-      defaults.pickupAddress = 'Downtown Union Terminal';
-      defaults.destinationAddress = 'Northside Residential Park';
+      setValue(0);
+      defaults.pickupAddress = '';
+      defaults.destinationAddress = '';
     } else if (config.id === 'creative-agency') {
       setValue(120000);
     } else {
@@ -78,10 +96,26 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
   }, [config, initialStageId, marketRegion]);
 
   const handleCustomFieldChange = (key: string, val: string | number | boolean) => {
+    const updatedFields: Record<string, any> = { [key]: val };
+
+    // For Taxi: auto-fill ratePerKm when vehicleClass changes
+    if (config.id === 'taxi' && key === 'vehicleClass') {
+      const defaultRate = TAXI_VEHICLE_RATES[String(val)];
+      if (defaultRate) {
+        updatedFields.ratePerKm = defaultRate;
+      }
+    }
+
     setCustomFields(prev => ({
       ...prev,
-      [key]: val
+      ...updatedFields
     }));
+
+    // For Taxi: recalculate fare when distance, rate, or vehicle type changes
+    if (config.id === 'taxi' && ['distanceKm', 'ratePerKm', 'vehicleClass'].includes(key)) {
+      const newFare = calculateTaxiFare(updatedFields);
+      setValue(newFare);
+    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -236,8 +270,8 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                 </div>
               ))}
 
-              {/* Optional region-specific India localizations */}
-              {marketRegion === 'IND' && (
+              {/* Optional region-specific India localizations (exclude Taxi) */}
+              {marketRegion === 'IND' && config.id !== 'taxi' && (
                 <>
                   <div className="col-span-1">
                     <label className="block text-xs font-semibold text-indigo-900 mb-1">

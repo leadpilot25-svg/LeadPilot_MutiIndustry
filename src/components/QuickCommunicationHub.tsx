@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { IndustryConfig, Lead } from '../types';
 import * as LucideIcons from 'lucide-react';
+import { getCurrencySymbol } from '../lib/currencyUtils';
 
 interface QuickCommunicationHubProps {
   config: IndustryConfig;
   lead: Lead;
+  marketRegion?: 'USA' | 'IND' | 'EUR';
   onLogInteraction?: (author: string, type: 'call' | 'whatsapp' | 'sms' | 'email', notes: string) => void;
 }
 
@@ -29,7 +31,7 @@ const DEFAULT_TEMPLATES_BY_INDUSTRY: Record<string, OutreachTemplates> = {
     whatsapp: "Hi {name}! 🛡️ Your customized rate quote for {policyCategory} is prepared. Coverage limit: {coverageCapacity}. Let's secure your policy today. - ShieldGuard",
     sms: "Hi {name}, ShieldGuard quote for {policyCategory} is ready. Premium estimate can be locked in today! - ShieldGuard",
     emailSubject: "Your Requested Insurance Quote: {policyCategory}",
-    emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: ${coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
+    emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: {coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
   },
   'tarot-coaching': {
     call: "Conduct birth sign intuitive review and align connection oracle tools.",
@@ -68,7 +70,7 @@ const DEFAULT_TEMPLATES_BY_INDUSTRY: Record<string, OutreachTemplates> = {
   }
 };
 
-export default function QuickCommunicationHub({ config, lead, onLogInteraction }: QuickCommunicationHubProps) {
+export default function QuickCommunicationHub({ config, lead, marketRegion = 'USA', onLogInteraction }: QuickCommunicationHubProps) {
   const [activeChannel, setActiveChannel] = useState<'call' | 'whatsapp' | 'sms' | 'email'>('whatsapp');
   const [templates, setTemplates] = useState<OutreachTemplates>({
     call: '',
@@ -120,7 +122,19 @@ export default function QuickCommunicationHub({ config, lead, onLogInteraction }
       res = res.replace(/{phone}/g, lead.phone || '');
       res = res.replace(/{email}/g, lead.email || '');
       res = res.replace(/{source}/g, lead.source || '');
-      res = res.replace(/{value}/g, lead.value ? `$${lead.value.toLocaleString()}` : '$0');
+      res = res.replace(/{value}/g, 
+        lead.value 
+          ? (marketRegion === 'IND' 
+              ? `₹${lead.value.toLocaleString('en-IN')}` 
+              : marketRegion === 'EUR' 
+                ? `€${lead.value.toLocaleString('de-DE')}` 
+                : `$${lead.value.toLocaleString('en-US')}`)
+          : (marketRegion === 'IND' 
+              ? '₹0' 
+              : marketRegion === 'EUR' 
+                ? '€0' 
+                : '$0')
+      );
       
       // Hydrate custom fields
       if (lead.customFields) {

@@ -1445,6 +1445,7 @@ export default function App() {
                 status: 'active',
                 assignedOwner: publicFormWorkspace.ownerUid
               }]}
+              marketRegion={marketRegion}
               onAddPublicLead={async (tenantId, inboundLead) => {
                 try {
                   const docRef = doc(db, 'workspaces', tenantId, 'leads', inboundLead.id);
@@ -2337,12 +2338,14 @@ export default function App() {
               <GoogleSheetsSync 
                 config={activeIndustry}
                 leads={currentLeads}
+                marketRegion={marketRegion}
               />
 
               {/* Section C: AIPredictor Model Panel */}
               <AIPredictor 
                 config={activeIndustry} 
                 leads={currentLeads} 
+                marketRegion={marketRegion}
                 onAddSimulatedLead={async (simulatedLead) => {
                   try {
                     const leadDocRef = doc(db, 'workspaces', userWorkspace.id, 'leads', simulatedLead.id);

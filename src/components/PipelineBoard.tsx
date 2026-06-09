@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { IndustryConfig, Lead, PipelineStage } from '../types';
 import * as LucideIcons from 'lucide-react';
+import { getCurrencySymbol } from '../lib/currencyUtils';
 
 interface PipelineBoardProps {
   config: IndustryConfig;
@@ -13,7 +14,7 @@ interface PipelineBoardProps {
   onMoveLead: (leadId: string, targetStageId: string) => void;
   onSelectLead: (lead: Lead) => void;
   onQuickAdd: (stageId: string) => void;
-  marketRegion?: 'USA' | 'IND';
+  marketRegion?: 'USA' | 'IND' | 'EUR';
 }
 
 export default function PipelineBoard({ config, leads, onMoveLead, onSelectLead, onQuickAdd, marketRegion = 'USA' }: PipelineBoardProps) {
@@ -63,7 +64,7 @@ export default function PipelineBoard({ config, leads, onMoveLead, onSelectLead,
           whatsapp: "Hi {name}! 🛡️ Your customized rate quote for {policyCategory} is prepared. Coverage limit: {coverageCapacity}. Let's secure your policy today. - ShieldGuard",
           sms: "Hi {name}, ShieldGuard quote for {policyCategory} is ready. Premium estimate can be locked in today! - ShieldGuard",
           emailSubject: "Your Requested Insurance Quote: {policyCategory}",
-          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: ${coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
+          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: {coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
         },
         'tarot-coaching': {
           call: "Conduct birth sign intuitive review and align connection oracle tools.",
@@ -114,9 +115,18 @@ export default function PipelineBoard({ config, leads, onMoveLead, onSelectLead,
       res = res.replace(/{phone}/g, lead.phone || '');
       res = res.replace(/{email}/g, lead.email || '');
       res = res.replace(/{source}/g, lead.source || '');
-      res = res.replace(/{value}/g, lead.value 
-        ? (marketRegion === 'IND' ? `₹${lead.value.toLocaleString('en-IN')}` : `$${lead.value.toLocaleString('en-US')}`) 
-        : (marketRegion === 'IND' ? '₹0' : '$0')
+      res = res.replace(/{value}/g, 
+        lead.value 
+          ? (marketRegion === 'IND' 
+              ? `₹${lead.value.toLocaleString('en-IN')}` 
+              : marketRegion === 'EUR' 
+                ? `€${lead.value.toLocaleString('de-DE')}` 
+                : `$${lead.value.toLocaleString('en-US')}`)
+          : (marketRegion === 'IND' 
+              ? '₹0' 
+              : marketRegion === 'EUR' 
+                ? '€0' 
+                : '$0')
       );
       
       if (lead.customFields) {
@@ -168,7 +178,7 @@ export default function PipelineBoard({ config, leads, onMoveLead, onSelectLead,
       return `${lead.customFields.propertyType || ''} • 📍 ${lead.customFields.preferredLocation || ''}`;
     }
     if (config.id === 'insurance') {
-      return `${lead.customFields.policyCategory || ''} • 🛡️ Limit: $${Number(lead.customFields.coverageCapacity || 0).toLocaleString()}`;
+      return `${lead.customFields.policyCategory || ''} • 🛡️ Limit: ${getCurrencySymbol(marketRegion)}${Number(lead.customFields.coverageCapacity || 0).toLocaleString()}`;
     }
     if (config.id === 'tarot-coaching') {
       return `✨ Focus: ${lead.customFields.divineFocus || ''} (${lead.customFields.cosmicZodiacSign || ''})`;
