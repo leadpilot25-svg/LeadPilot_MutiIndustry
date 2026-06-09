@@ -1335,54 +1335,45 @@ export default function App() {
   // Isolated row-level secured leads loaded for the active tenant
   const currentLeads = leads;
 
+  const todayDateStr = new Date().toLocaleDateString('en-CA');
+
   const totalLeadsCount = currentLeads.length;
   const openLeadsCount = currentLeads.filter(l => l.status === 'active').length;
-  const todayCreatedCount = currentLeads.filter(l => l.createdAt === new Date().toISOString().split('T')[0]).length;
+  const todayCreatedCount = currentLeads.filter(l => l.createdAt === todayDateStr).length;
 
-  const todayDateStr = new Date().toISOString().split('T')[0];
+  const finalStageId = activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
 
-  // REAL CALCULATION: Active leads with incomplete tasks set for today
-  const todayFollowupLeadsReal = currentLeads.filter(l => {
-    return l.status === 'active' && l.tasks && l.tasks.some(t => {
-      if (t.completed) return false;
-      return t.dueDate === todayDateStr || l.createdAt === todayDateStr || l.lastContacted === todayDateStr;
-    });
-  });
+  const isCompletedLead = (l: Lead) => l.stageId === finalStageId || l.status === 'won';
 
-  const getTodayFollowupLeads = () => {
-    if (todayFollowupLeadsReal.length > 0) return todayFollowupLeadsReal;
-    const activeWithTasks = currentLeads.filter(l => l.status === 'active' && l.tasks && l.tasks.some(t => !t.completed));
-    if (activeWithTasks.length > 0) return [activeWithTasks[0]];
-    return [];
-  };
+  // TODAY KPI: Count leads where nextFollowUpDate equals today's date.
+  const todayFollowupLeads = currentLeads.filter(l => 
+    l.status === 'active' && 
+    !isCompletedLead(l) &&
+    l.customFields?.nextFollowUpDate === todayDateStr
+  );
+  const todayFollowupsCount = todayFollowupLeads.length;
 
-  const finalTodayFollowupLeads = getTodayFollowupLeads();
-  const todayFollowupsCount = finalTodayFollowupLeads.length;
-
-  // OVERDUE CALCULATION: Active leads with overdue tasks (dueDate earlier than todayDateStr, incomplete)
+  // OVERDUE KPI: Count leads where nextFollowUpDate is before today AND lead is not completed/closed.
   const missedFollowupLeads = currentLeads.filter(l => 
     l.status === 'active' && 
-    l.tasks && 
-    l.tasks.some(t => {
-      if (t.completed || !t.dueDate) return false;
-      return t.dueDate < todayDateStr;
-    })
+    !isCompletedLead(l) &&
+    l.customFields?.nextFollowUpDate && 
+    l.customFields.nextFollowUpDate < todayDateStr
   );
   const missedFollowupsCount = missedFollowupLeads.length;
 
-  // Meetings count
-  const meetingsTodayLeads = currentLeads.filter(l => 
-    l.status === 'active' &&
-    l.tasks && 
-    l.tasks.some(t => {
-      if (t.completed) return false;
-      const title = (t.title || '').toLowerCase();
-      return title.includes('meeting') || title.includes('show') || title.includes('call') || title.includes('session') || title.includes('reading') || title.includes('consult');
-    })
+  // UPCOMING KPI: Count leads where nextFollowUpDate is after today.
+  const upcomingFollowupLeads = currentLeads.filter(l => 
+    l.status === 'active' && 
+    !isCompletedLead(l) &&
+    l.customFields?.nextFollowUpDate && 
+    l.customFields.nextFollowUpDate > todayDateStr
   );
-  const meetingsCount = meetingsTodayLeads.length;
+  const meetingsCount = upcomingFollowupLeads.length;
 
-  const closedDealsCount = currentLeads.filter(l => l.status === 'won' || l.stageId === 'policy_active').length;
+  // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
+  const closedDealsLeads = currentLeads.filter(l => isCompletedLead(l));
+  const closedDealsCount = closedDealsLeads.length;
 
   // Final filtered array depending on Dashboard Interactive selection
   const getFilteredLeads = () => {
@@ -1390,22 +1381,22 @@ export default function App() {
     
     // Dynamic tab state filtering integration
     if (dashboardFilter === 'today_followups') {
-      return finalTodayFollowupLeads;
+      return upcomingFollowupLeads;
     }
     if (dashboardFilter === 'missed_followups') {
       return missedFollowupLeads;
     }
     if (dashboardFilter === 'meetings_today') {
-      return meetingsTodayLeads;
+      return todayFollowupLeads;
     }
     if (dashboardFilter === 'closed_deals') {
-      return base.filter(l => l.status === 'won' || l.stageId === 'policy_active');
+      return closedDealsLeads;
     }
     if (dashboardFilter === 'open') {
-      return base.filter(l => l.status === 'active');
+      return base.filter(l => l.status === 'active' && !isCompletedLead(l));
     }
     if (dashboardFilter === 'closed') {
-      return base.filter(l => l.status === 'won' || l.stageId === 'policy_active' || l.status === 'lost');
+      return base.filter(l => isCompletedLead(l) || l.status === 'lost');
     }
     if (dashboardFilter === 'today') {
       return base.filter(l => l.createdAt === todayDateStr);
@@ -1816,41 +1807,7 @@ export default function App() {
       )}
 
       {/* Primary Header Frame Layout */}
-      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0 shadow-xs relative">
-        {userProfile.role === 'super_admin' ? (
-          <div className="flex items-center gap-3">
-            <span className="text-2xl p-2 bg-slate-900 border border-slate-800 rounded-xl select-none shrink-0 shadow-3xs text-white">🛠️</span>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="font-bold text-base text-slate-900 tracking-tight leading-tight">Super Control Center</h1>
-                <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-red-100 text-red-950 border border-red-200 font-mono">
-                  Super Admin
-                </span>
-                <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
-                  Global Access
-                </span>
-              </div>
-              <p className="text-xs text-gray-400 font-medium">Platform Management Portal: <strong>{platformConfig.appBranding || 'LeadPilot'}</strong> • Region: Global Control</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-2xl p-2 bg-slate-50 border border-slate-100 rounded-xl select-none shrink-0 shadow-3xs">{activeTenant.logoEmoji}</span>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h1 className="font-bold text-base text-slate-900 tracking-tight leading-tight">{activeTenant.company_name}</h1>
-                <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border font-mono">
-                  {activeTenant.subscription_plan}
-                </span>
-                <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                  {userProfile.role === 'owner' ? 'Workspace Owner' : 'Allocated Agent'}
-                </span>
-              </div>
-              <p className="text-xs text-gray-400 font-medium font-sans">Running secure framework for <strong className="text-slate-600 font-semibold">{activeIndustry.name}</strong> • Region: {marketRegion}</p>
-            </div>
-          </div>
-        )}
-
+      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-center shrink-0 shadow-xs relative">
         {/* Global Nav Elements */}
         <div className="flex flex-wrap items-center gap-2">
           {userProfile.role === 'super_admin' ? (
@@ -2030,7 +1987,7 @@ export default function App() {
               {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
                 
-                {/* Card 1: Today's follow-ups */}
+                {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
                 <div 
                   onClick={() => handleDashboardFilterClick('today_followups')}
                   className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
@@ -2041,7 +1998,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {todayFollowupsCount}
+                      {meetingsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
@@ -2068,7 +2025,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Card 3: Meetings today */}
+                {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
                 <div 
                   onClick={() => handleDashboardFilterClick('meetings_today')}
                   className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
@@ -2079,7 +2036,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {meetingsCount}
+                      {todayFollowupsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.meetingsTodayLabel || "Meetings today"}

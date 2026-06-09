@@ -83,9 +83,9 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
       'Manual Entry',
       'Other'
     ],
-    todayFollowupsLabel: "Today's follow-ups",
-    missedFollowupsLabel: "Missed follow-ups",
-    meetingsTodayLabel: "Showings scheduled",
+    todayFollowupsLabel: "Site Visits Scheduled",
+    missedFollowupsLabel: "Overdue Follow-ups",
+    meetingsTodayLabel: "Site Visits Today",
     closedDealsLabel: "Closed sales"
   },
   {
@@ -149,9 +149,9 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
       }
     ],
     suggestedSources: ['Comparison Engine', 'Quote Request Form', 'Corporate Health Benefit Campaign', 'Cold Lead Re-engagement'],
-    todayFollowupsLabel: "Outstanding quotes",
-    missedFollowupsLabel: "Overdue reviews",
-    meetingsTodayLabel: "Consults today",
+    todayFollowupsLabel: "Consults Scheduled",
+    missedFollowupsLabel: "Missed Follow-ups",
+    meetingsTodayLabel: "Consults Today",
     closedDealsLabel: "Policies issued"
   },
   {
@@ -272,9 +272,9 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
       }
     ],
     suggestedSources: ['Corporate Travel Desk Referral', 'Airport Terminal Concierge', 'Mobile App Booking Log', 'Concierge Phone Line'],
-    todayFollowupsLabel: "Trips scheduled",
-    missedFollowupsLabel: "Missed dispatches",
-    meetingsTodayLabel: "Trips today",
+    todayFollowupsLabel: "Trips Scheduled",
+    missedFollowupsLabel: "Missed Dispatches",
+    meetingsTodayLabel: "Trips Today",
     closedDealsLabel: "Journeys finished"
   },
   {
