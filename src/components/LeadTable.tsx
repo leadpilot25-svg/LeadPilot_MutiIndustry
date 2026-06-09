@@ -15,9 +15,10 @@ interface LeadTableProps {
   onDeleteLead: (leadId: string) => void;
   marketRegion?: 'USA' | 'IND' | 'EUR';
   onAddMultiLeads?: (leads: Lead[]) => void;
+  dashboardFilter?: string; // Filter context for conditional columns
 }
 
-export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, marketRegion = 'USA', onAddMultiLeads }: LeadTableProps) {
+export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, marketRegion = 'USA', onAddMultiLeads, dashboardFilter }: LeadTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'name' | 'value' | 'createdAt'>('createdAt');
@@ -43,6 +44,49 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
       currency: 'USD',
       maximumFractionDigits: 0
     }).format(val);
+  };
+
+  // Helper: Get Next Action label with emoji
+  const getNextActionLabel = (followUpType: string | undefined): string => {
+    if (!followUpType) return '❓ Not Set';
+    
+    const map: Record<string, string> = {
+      'Call': '📞 Call',
+      'WhatsApp': '💬 WhatsApp',
+      'Email': '📧 Email',
+      'Meeting': '📅 Meeting',
+      'Task': '✅ Task'
+    };
+    
+    return map[followUpType] || '❓ Not Set';
+  };
+
+  // Helper: Calculate Due Status
+  const getDueStatus = (nextFollowUpDate: string | undefined): string => {
+    if (!nextFollowUpDate) return 'No Date';
+    
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    
+    if (nextFollowUpDate === today) return 'Today';
+    if (nextFollowUpDate === tomorrow) return 'Tomorrow';
+    
+    if (nextFollowUpDate < today) {
+      const days = Math.floor(
+        (new Date(today).getTime() - new Date(nextFollowUpDate).getTime()) / 86400000
+      );
+      return `Overdue ${days} Day${days > 1 ? 's' : ''}`;
+    }
+    
+    return 'Scheduled';
+  };
+
+  // Helper: Get color for Due Status
+  const getDueStatusColor = (status: string): string => {
+    if (status === 'Today') return 'text-amber-600';
+    if (status === 'Tomorrow') return 'text-blue-600';
+    if (status.includes('Overdue')) return 'text-red-600';
+    return 'text-gray-600';
   };
 
   const triggerQuickCommunication = (lead: Lead, channel: 'call' | 'whatsapp' | 'sms' | 'email') => {
@@ -73,7 +117,7 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
           whatsapp: "Hi {name}! 🛡️ Your customized rate quote for {policyCategory} is prepared. Coverage limit: {coverageCapacity}. Let's secure your policy today. - ShieldGuard",
           sms: "Hi {name}, ShieldGuard quote for {policyCategory} is ready. Premium estimate can be locked in today! - ShieldGuard",
           emailSubject: "Your Requested Insurance Quote: {policyCategory}",
-          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: {coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
+          emailBody: "Dear {name},\n\nOur underwriters have processed your request for {policyCategory}.\n\nEstimated Annual Premium: {value}\nTotal Coverage Limit: ${coverageCapacity}\n\nLet's schedule a brief 5-minute review to complete your coverage shield activation.\n\nBest regards,\nShieldGuard Underwriting Group"
         },
         'tarot-coaching': {
           call: "Conduct birth sign intuitive review and align connection oracle tools.",
@@ -587,6 +631,20 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
                 </>
               )}
 
+              {/* Next Action & Due Date Columns - Show only on follow-up filters */}
+              {(dashboardFilter === 'today_followups' || 
+                dashboardFilter === 'scheduled_followups' || 
+                dashboardFilter === 'missed_followups') && (
+                <>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest font-sans">
+                    Next Action
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest font-sans">
+                    Due
+                  </th>
+                </>
+              )}
+
               <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-widest font-sans">
                 Quick Touch
               </th>
@@ -648,7 +706,7 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
                       <td className="px-6 py-4 text-sm text-gray-600 font-sans">{lead.customFields.policyCategory || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600 font-sans">
                         {lead.customFields.coverageCapacity 
-                          ? `${getCurrencySymbol(marketRegion)}${Number(lead.customFields.coverageCapacity).toLocaleString()}` 
+                          ? `$${Number(lead.customFields.coverageCapacity).toLocaleString()}` 
                           : 'N/A'}
                       </td>
                     </>
@@ -678,11 +736,33 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
                     </>
                   )}
 
+                  {/* Next Action & Due Date Cells - Show only on follow-up filters */}
+                  {(dashboardFilter === 'today_followups' || 
+                    dashboardFilter === 'scheduled_followups' || 
+                    dashboardFilter === 'missed_followups') && (
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {getNextActionLabel(lead.customFields?.followUpType)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm font-semibold ${getDueStatusColor(getDueStatus(lead.customFields?.nextFollowUpDate))}`}>
+                          {getDueStatus(lead.customFields?.nextFollowUpDate)}
+                        </span>
+                      </td>
+                    </>
+                  )}
+
                   <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => triggerQuickCommunication(lead, 'call')}
-                        className="p-1 rounded-sm text-[9px] font-bold bg-amber-50 hover:bg-amber-100 border border-amber-250 text-amber-800 transition-all flex items-center gap-0.5"
+                        className={`p-1 rounded-sm text-[9px] font-bold bg-amber-50 hover:bg-amber-100 border border-amber-250 text-amber-800 transition-all flex items-center gap-0.5 ${
+                          lead.customFields?.followUpType === 'Call' 
+                            ? 'ring-2 ring-amber-300 scale-105 font-bold' 
+                            : ''
+                        }`}
                         title="Simulate Call"
                       >
                         <LucideIcons.PhoneCall className="w-2.5 h-2.5 text-amber-600" />
@@ -691,7 +771,11 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
                       
                       <button
                         onClick={() => triggerQuickCommunication(lead, 'whatsapp')}
-                        className="p-1 rounded-sm text-[9px] font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-250 text-emerald-800 transition-all flex items-center gap-0.5"
+                        className={`p-1 rounded-sm text-[9px] font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-250 text-emerald-800 transition-all flex items-center gap-0.5 ${
+                          lead.customFields?.followUpType === 'WhatsApp' 
+                            ? 'ring-2 ring-emerald-300 scale-105 font-bold' 
+                            : ''
+                        }`}
                         title="One-Tap WhatsApp"
                       >
                         <LucideIcons.Compass className="w-2.5 h-2.5 text-emerald-600" />
@@ -709,7 +793,11 @@ export default function LeadTable({ config, leads, onSelectLead, onDeleteLead, m
 
                       <button
                         onClick={() => triggerQuickCommunication(lead, 'email')}
-                        className="p-1 rounded-sm text-[9px] font-bold bg-sky-50 hover:bg-sky-100 border border-sky-250 text-sky-800 transition-all flex items-center gap-0.5"
+                        className={`p-1 rounded-sm text-[9px] font-bold bg-sky-50 hover:bg-sky-100 border border-sky-250 text-sky-800 transition-all flex items-center gap-0.5 ${
+                          lead.customFields?.followUpType === 'Email' 
+                            ? 'ring-2 ring-sky-300 scale-105 font-bold' 
+                            : ''
+                        }`}
                         title="Draft Email outreach"
                       >
                         <LucideIcons.Mail className="w-2.5 h-2.5 text-sky-600" />

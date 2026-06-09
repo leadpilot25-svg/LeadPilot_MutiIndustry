@@ -60,16 +60,12 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       }
     });
 
-    // Handle regional default entries if India region is active (exclude Taxi)
-    if (marketRegion === 'IND' && config.id !== 'taxi') {
-      defaults.indiaState = 'Delhi';
-      defaults.indiaGst = 'Unregistered';
+    // Scheduling and followups state variables (exclude tarot-coaching)
+    if (config.id !== 'tarot-coaching') {
+      defaults.followUpTimeSlot = '10:00 AM - 12:00 PM';
+      defaults.followUpTaskDesc = 'Corporate client feedback review';
     }
-
-    // Scheduling and followups state variables
     defaults.nextFollowUpDate = '';
-    defaults.followUpTimeSlot = '10:00 AM - 12:00 PM';
-    defaults.followUpTaskDesc = 'Corporate client feedback review';
 
     // Provide default values depending on industry
     if (config.id === 'real-estate') {
@@ -80,7 +76,6 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       defaults.coverageCapacity = 1000000;
     } else if (config.id === 'tarot-coaching') {
       setValue(250);
-      defaults.cosmicZodiacSign = 'Leo';
     } else if (config.id === 'taxi') {
       setValue(0);
       defaults.pickupAddress = '';
@@ -270,48 +265,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                 </div>
               ))}
 
-              {/* Optional region-specific India localizations (exclude Taxi) */}
-              {marketRegion === 'IND' && config.id !== 'taxi' && (
-                <>
-                  <div className="col-span-1">
-                    <label className="block text-xs font-semibold text-indigo-900 mb-1">
-                      🇮🇳 India Client Client State
-                    </label>
-                    <select
-                      value={String(customFields.indiaState ?? 'Delhi')}
-                      onChange={e => handleCustomFieldChange('indiaState', e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-indigo-50/50 border border-indigo-250 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
-                    >
-                      <option value="Delhi">Delhi NCR</option>
-                      <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
-                      <option value="Karnataka">Karnataka (Bengaluru)</option>
-                      <option value="Telangana">Telangana (Hyderabad)</option>
-                      <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
-                      <option value="Haryana">Haryana (Gurugram)</option>
-                      <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
-                      <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
-                      <option value="West Bengal">West Bengal (Kolkata)</option>
-                    </select>
-                  </div>
-
-                  <div className="col-span-1">
-                    <label className="block text-xs font-semibold text-indigo-900 mb-1">
-                      🇮🇳 Indian Client GST Status
-                    </label>
-                    <select
-                      value={String(customFields.indiaGst ?? 'Unregistered')}
-                      onChange={e => handleCustomFieldChange('indiaGst', e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-indigo-50/50 border border-indigo-250 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
-                    >
-                      <option value="Unregistered">Unregistered Business Client</option>
-                      <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
-                      <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
-                      <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
-                      <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
-                    </select>
-                  </div>
-                </>
-              )}
+              {/* Optional region-specific India localizations (exclude Taxi & Tarot) */}
             </div>
           </div>
 
@@ -407,6 +361,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                 />
               </div>
 
+              {config.id !== 'tarot-coaching' && (
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Scheduled Action Time Slot
@@ -423,7 +378,9 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                   <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM (Late checkout wrap-up)</option>
                 </select>
               </div>
+              )}
 
+              {config.id !== 'tarot-coaching' && (
               <div className="col-span-1 md:col-span-2">
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Short Follow-up action task reminder
@@ -436,6 +393,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                   className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
                 />
               </div>
+              )}
             </div>
           </div>
 

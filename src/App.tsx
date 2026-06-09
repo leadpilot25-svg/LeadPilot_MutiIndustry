@@ -180,7 +180,8 @@ export default function App() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   // Interactive Dashboard Click/Filter state
-  const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today'>('all');
+  const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today' | 'new_lead' | 'discovery_call' | 'proposal_sent' | 'follow_up' | 'won_client' | 'project_delivered' | 'lost_client'>('all');
+  const [activeFunnelStage, setActiveFunnelStage] = useState<string | null>(null);
 
   // Intake Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1304,6 +1305,19 @@ export default function App() {
     setActiveTab('leads');
   };
 
+  const handleFunnelFilterClick = (stageId: string) => {
+    if (activeFunnelStage === stageId) {
+      // Toggle: click same stage = remove filter
+      setActiveFunnelStage(null);
+      setDashboardFilter('all');
+    } else {
+      // Apply or switch filter
+      setActiveFunnelStage(stageId);
+      setDashboardFilter(stageId as typeof dashboardFilter);
+    }
+    setActiveTab('leads');
+  };
+
   // Dynamic colors highlighted for current industry config
   const getIndustryThemeColor = (id: string) => {
     switch (id) {
@@ -1371,8 +1385,10 @@ export default function App() {
   );
   const meetingsCount = upcomingFollowupLeads.length;
 
-  // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
-  const closedDealsLeads = currentLeads.filter(l => isCompletedLead(l));
+  // CLOSED DEALS KPI: Option B - Client Won + Project Delivered (not Lost Client)
+  const closedDealsLeads = currentLeads.filter(l => 
+    l.stageId === 'won_client' || l.stageId === 'project_delivered'
+  );
   const closedDealsCount = closedDealsLeads.length;
 
   // Final filtered array depending on Dashboard Interactive selection
@@ -1381,13 +1397,16 @@ export default function App() {
     
     // Dynamic tab state filtering integration
     if (dashboardFilter === 'today_followups') {
-      return upcomingFollowupLeads;
+      return todayFollowupLeads;
     }
     if (dashboardFilter === 'missed_followups') {
       return missedFollowupLeads;
     }
     if (dashboardFilter === 'meetings_today') {
-      return todayFollowupLeads;
+      return upcomingFollowupLeads;
+    }
+    if (dashboardFilter === 'scheduled_followups') {
+      return upcomingFollowupLeads;
     }
     if (dashboardFilter === 'closed_deals') {
       return closedDealsLeads;
@@ -1400,6 +1419,28 @@ export default function App() {
     }
     if (dashboardFilter === 'today') {
       return base.filter(l => l.createdAt === todayDateStr);
+    }
+    // Funnel stage filters
+    if (dashboardFilter === 'new_lead') {
+      return base.filter(l => l.stageId === 'new_lead');
+    }
+    if (dashboardFilter === 'discovery_call') {
+      return base.filter(l => l.stageId === 'discovery_call');
+    }
+    if (dashboardFilter === 'proposal_sent') {
+      return base.filter(l => l.stageId === 'proposal_sent');
+    }
+    if (dashboardFilter === 'follow_up') {
+      return base.filter(l => l.stageId === 'follow_up');
+    }
+    if (dashboardFilter === 'won_client') {
+      return base.filter(l => l.stageId === 'won_client');
+    }
+    if (dashboardFilter === 'project_delivered') {
+      return base.filter(l => l.stageId === 'project_delivered');
+    }
+    if (dashboardFilter === 'lost_client') {
+      return base.filter(l => l.stageId === 'lost_client');
     }
     return base;
   };
@@ -1988,7 +2029,7 @@ export default function App() {
               {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
                 
-                {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
+                {/* Card 1: Follow-ups Today */}
                 <div 
                   onClick={() => handleDashboardFilterClick('today_followups')}
                   className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
@@ -1999,7 +2040,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {meetingsCount}
+                      {todayFollowupsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
@@ -2026,9 +2067,9 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
+                {/* Card 3: Follow-ups Scheduled */}
                 <div 
-                  onClick={() => handleDashboardFilterClick('meetings_today')}
+                  onClick={() => handleDashboardFilterClick('scheduled_followups')}
                   className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-meetings-today"
                 >
@@ -2037,7 +2078,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {todayFollowupsCount}
+                      {meetingsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.meetingsTodayLabel || "Meetings today"}
@@ -2181,15 +2222,26 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Dynamic selection helper note if active */}
-              {dashboardFilter !== 'all' && (
+              {/* Dynamic filter banner */}
+              {(dashboardFilter !== 'all' || activeFunnelStage) && (
                 <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
                   <div className="flex items-center gap-2">
                     <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
-                    <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
+                    <span>
+                      Interactive filter active: 
+                      <strong className="font-bold text-indigo-950 uppercase ml-1">
+                        {activeFunnelStage 
+                          ? activeIndustry.stages.find(s => s.id === activeFunnelStage)?.label 
+                          : dashboardFilter.replace(/_/g, ' ')
+                        }
+                      </strong>
+                    </span>
                   </div>
                   <button 
-                    onClick={() => setDashboardFilter('all')}
+                    onClick={() => {
+                      setActiveFunnelStage(null);
+                      setDashboardFilter('all');
+                    }}
                     className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
                   >
                     Clear Filter
@@ -2233,30 +2285,43 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Funnel chart simulation */}
+              {/* Clickable Funnel */}
               <div className="bg-white p-6 rounded-3xl border border-gray-150/40 shadow-3xs space-y-4">
-                <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics</span>
+                <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics (Click to filter)</span>
                 <div className="space-y-4">
                   {activeIndustry.stages.map((stage, idx) => {
                     const stageLeads = currentLeads.filter(l => l.stageId === stage.id);
                     const percentOfTotal = totalLeadsCount > 0 ? (stageLeads.length / totalLeadsCount) * 100 : 0;
                     const stageValue = stageLeads.reduce((acc, lead) => acc + (lead.value || 0), 0);
+                    const isActive = activeFunnelStage === stage.id;
                     
                     return (
-                      <div key={stage.id} className="space-y-1.5">
+                      <button
+                        key={stage.id}
+                        onClick={() => handleFunnelFilterClick(stage.id)}
+                        className={`w-full text-left space-y-1.5 p-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                          isActive 
+                            ? 'ring-2 ring-indigo-500 scale-105 bg-indigo-50' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
                         <div className="flex justify-between text-xs font-medium">
-                          <span className="font-bold text-slate-800">{idx + 1}. {stage.label}</span>
-                          <span className="text-slate-500 font-bold">
+                          <span className={`font-bold ${isActive ? 'text-indigo-900' : 'text-slate-800'}`}>
+                            {idx + 1}. {stage.label}
+                          </span>
+                          <span className={`font-bold ${isActive ? 'text-indigo-700' : 'text-slate-500'}`}>
                             {stageLeads.length} leads • {marketRegion === 'USA' ? '$' : '₹'}{stageValue.toLocaleString()}
                           </span>
                         </div>
                         <div className="w-full bg-slate-50 border border-slate-100 rounded-full h-4 relative overflow-hidden">
                           <div 
-                            className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isActive ? 'bg-indigo-500' : 'bg-indigo-600'
+                            }`}
                             style={{ width: `${Math.max(percentOfTotal, 3)}%` }}
                           />
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

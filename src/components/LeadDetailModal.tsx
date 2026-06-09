@@ -389,10 +389,10 @@ export default function LeadDetailModal({
         {/* Navigation Tabs */}
         <div className="flex border-b border-gray-100 bg-gray-50/50 overflow-x-auto no-scrollbar">
           {[
-            { id: 'details', label: 'Client Profile', icon: LucideIcons.User },
-            { id: 'tasks', label: 'Tasks & Followups', icon: LucideIcons.CheckSquare },
-            { id: 'notes', label: 'History Feed', icon: LucideIcons.ClipboardList },
-            { id: 'actions', label: `${config.leadLabel} Actions`, icon: LucideIcons.Sparkles },
+            { id: 'details', label: config.id === 'tarot-coaching' ? 'Profile' : 'Client Profile', icon: LucideIcons.User },
+            ...(config.id !== 'tarot-coaching' ? [{ id: 'tasks', label: 'Tasks & Followups', icon: LucideIcons.CheckSquare }] : []),
+            { id: 'notes', label: config.id === 'tarot-coaching' ? 'Notes' : 'History Feed', icon: LucideIcons.ClipboardList },
+            ...(config.id !== 'tarot-coaching' ? [{ id: 'actions', label: `${config.leadLabel} Actions`, icon: LucideIcons.Sparkles }] : []),
             { id: 'files', label: 'Attachments', icon: LucideIcons.Paperclip }
           ].map((tab) => {
             const Icon = tab.icon;
@@ -533,9 +533,9 @@ export default function LeadDetailModal({
                   </div>
                 </div>
 
-                {/* Industry Specific Fields */}
+                {/* Industry Specific Fields / Reading Details */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Industry specific configurations</h4>
+                  <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{config.id === 'tarot-coaching' ? 'Reading Details' : config.id === 'creative-agency' ? 'Agency Details' : 'Industry specific configurations'}</h4>
                   
                   <div className="space-y-3 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100/50">
                     {config.customFields.map((field) => {
@@ -613,63 +613,6 @@ export default function LeadDetailModal({
                   </div>
                 </div>
 
-                {/* Regional India Client Specifications info box (exclude Taxi) */}
-                {(marketRegion === 'IND' || editedLead.customFields.indiaState) && config.id !== 'taxi' && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold uppercase text-indigo-700 tracking-wider flex items-center gap-1">
-                      <span>🇮🇳 Indian Localization Records</span>
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3 bg-indigo-50/40 p-4 rounded-2xl border border-indigo-100/50 text-xs">
-                      <div className="flex flex-col">
-                        <span id="lbl-edit-india-state" className="text-[10px] uppercase font-bold text-indigo-700 mb-1">Territory State</span>
-                        <select
-                          id="edit-india-state"
-                          value={String(editedLead.customFields.indiaState ?? 'Delhi')}
-                          onChange={(e) => setEditedLead({
-                            ...editedLead,
-                            customFields: {
-                              ...editedLead.customFields,
-                              indiaState: e.target.value
-                            }
-                          })}
-                          className="w-full px-2 py-1 text-xs bg-white border border-indigo-200 rounded-xl text-indigo-950 font-semibold"
-                        >
-                          <option value="Delhi">Delhi NCR</option>
-                          <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
-                          <option value="Karnataka">Karnataka (Bengaluru)</option>
-                          <option value="Telangana">Telangana (Hyderabad)</option>
-                          <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
-                          <option value="Haryana">Haryana (Gurugram)</option>
-                          <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
-                          <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
-                          <option value="West Bengal">West Bengal (Kolkata)</option>
-                        </select>
-                      </div>
-                      <div className="flex flex-col">
-                        <span id="lbl-edit-india-gst" className="text-[10px] uppercase font-bold text-indigo-700 mb-1">GST Identification</span>
-                        <select
-                          id="edit-india-gst"
-                          value={String(editedLead.customFields.indiaGst ?? 'Unregistered')}
-                          onChange={(e) => setEditedLead({
-                            ...editedLead,
-                            customFields: {
-                              ...editedLead.customFields,
-                              indiaGst: e.target.value
-                            }
-                          })}
-                          className="w-full px-2 py-1 text-xs bg-white border border-indigo-200 rounded-xl text-indigo-950 font-semibold"
-                        >
-                          <option value="Unregistered">Unregistered Business Client</option>
-                          <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
-                          <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
-                          <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
-                          <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Scheduled Followups & Tasks Desk */}
                 <div className="space-y-3 col-span-1 md:col-span-2">
                   <h4 className="text-xs font-bold uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
@@ -735,8 +678,8 @@ export default function LeadDetailModal({
 
               </div>
 
-              {/* Lead Assignment Section (Team Mode Only) */}
-              {isTeamMode && (
+              {/* Lead Assignment Section (Team Mode Only) - exclude Tarot */}
+              {isTeamMode && config.id !== 'tarot-coaching' && (
                 <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <h4 className="text-xs font-bold uppercase text-indigo-700 tracking-wider flex items-center gap-1.5">
@@ -820,8 +763,8 @@ export default function LeadDetailModal({
             </div>
           )}
 
-          {/* TAB 2: TASKS */}
-          {activeTab === 'tasks' && (
+          {/* TAB 2: TASKS - exclude Tarot */}
+          {activeTab === 'tasks' && config.id !== 'tarot-coaching' && (
             <div id="tasks-tab-panel" className="space-y-6 font-sans">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Process Checklist pipeline tasks</h4>
@@ -923,8 +866,8 @@ export default function LeadDetailModal({
             </div>
           )}
 
-          {/* TAB 4: ACTIONS */}
-          {activeTab === 'actions' && (
+          {/* TAB 4: ACTIONS - exclude Tarot */}
+          {activeTab === 'actions' && config.id !== 'tarot-coaching' && (
             <div id="actions-tab-panel" className="space-y-6 font-sans">
               <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">
                 Industry-Specific Quick Action Tools
@@ -1290,10 +1233,16 @@ export default function LeadDetailModal({
         </div>
 
         {/* Footer info lock */}
-        <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-[10px] text-gray-400 font-mono flex justify-between items-center">
-          <span>PIPELINE CLIENT ID: {lead.id}</span>
-          <span>CREATIVE ENGINE PILOT V2</span>
-        </div>
+        {config.id === 'tarot-coaching' ? (
+          <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-[10px] text-gray-400 font-mono flex justify-center items-center">
+            <span>Last saved at {new Date().toLocaleTimeString()}</span>
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-50/50 border-t border-gray-100 text-[10px] text-gray-400 font-mono flex justify-between items-center">
+            <span>PIPELINE CLIENT ID: {lead.id}</span>
+            <span>CREATIVE ENGINE PILOT V2</span>
+          </div>
+        )}
 
       </div>
     </div>

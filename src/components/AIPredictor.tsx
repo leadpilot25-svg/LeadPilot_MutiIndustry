@@ -47,6 +47,9 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead, marketR
     if (!selectedLead) return;
     setAnalyzing(true);
     
+    // Define today's date in YYYY-MM-DD format (matches lastContacted format)
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    
     setTimeout(() => {
       // Heuristic custom analysis specific to industry and lead customFields
       let qualityScore = 75;
@@ -127,6 +130,36 @@ export default function AIPredictor({ config, leads, onAddSimulatedLead, marketR
 
         pitchHook = `Passenger: ${nameVal}\n\nPickup:\n${pickupVal}\n\nDrop:\n${dropVal}\n\nVehicle:\n${vehicleVal}\n\nDriver:\n${driverVal}\n\nDistance:\n${distVal}\n\nTrip Date:\n${dateVal}\n\nEstimated Fare:\n${estFare}\n\nActual Fare:\n${actFare}`;
       } 
+      
+      else if (config.id === 'creative-agency') {
+        const serviceType = selectedLead.customFields?.serviceType || 'creative services';
+        const daysElapsed = Math.ceil((new Date(todayDateStr).getTime() - new Date(selectedLead.lastContacted).getTime()) / (1000 * 60 * 60 * 24));
+        
+        qualityScore = selectedLead.value >= 200000 ? 92 : selectedLead.value >= 100000 ? 85 : 75;
+        
+        // Service-specific urgency
+        const serviceUrgencyMap: { [key: string]: string } = {
+          'Logo Design': daysElapsed > 7 ? 'URGENT: Follow up on Logo Design proposal' : 'SCHEDULE: Design kickoff needed',
+          'Web Design': daysElapsed > 5 ? 'URGENT: Website project timeline' : 'SCHEDULE: Discovery call',
+          'Branding': daysElapsed > 10 ? 'OVERDUE: Brand strategy alignment' : 'SEND: Branding deck',
+          'SEO': daysElapsed > 7 ? 'URGENT: SEO strategy review' : 'DISCOVERY: Market analysis needed',
+          'Social Media Management': daysElapsed > 5 ? 'URGENT: Content calendar proposal' : 'CALL: Social strategy session',
+          'Video Editing': daysElapsed > 4 ? 'URGENT: Post-production timeline' : 'PROPOSAL: Video edit rates',
+          'Animation': daysElapsed > 7 ? 'URGENT: Animation storyboard' : 'CALL: Animation feasibility',
+          'Motion Graphics': daysElapsed > 6 ? 'URGENT: Motion design timeline' : 'PROPOSAL: Design samples'
+        };
+        
+        urgencyLabel = serviceUrgencyMap[serviceType as string] || `FOLLOW-UP: ${serviceType} discussion`;
+        suggestedProductMatch = `${serviceType} for ${selectedLead.customFields?.companyName || selectedLead.name}`;
+        
+        actionPlan = [
+          `Send proposal summary: ${serviceType} deliverables, timeline, and pricing.`,
+          `Schedule discovery call to discuss project scope and client objectives.`,
+          `Follow up with personalized message addressing their specific needs.`
+        ];
+        
+        pitchHook = `Hi ${selectedLead.name}, following up on our ${serviceType.toLowerCase()} discussion. I've prepared a proposal tailored to your needs. When can we review it?`;
+      }
       
       else {
         qualityScore = selectedLead.value >= 100000 ? 89 : 70;
