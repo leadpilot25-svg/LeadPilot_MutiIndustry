@@ -8,7 +8,7 @@ import { IndustryConfig, Lead } from '../types';
 export const INDUSTRY_CONFIGS: IndustryConfig[] = [
   {
     id: 'real-estate',
-    name: 'Real Estate CRM',
+    name: 'Real Estate',
     iconName: 'Home',
     tagline: 'Connect buyers with their dream properties, manage showings, and close listings.',
     leadLabel: 'Client Prospect',
@@ -288,7 +288,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
   },
   {
     id: 'creative-agency',
-    name: '🎨 Agency CRM',
+    name: '🎨 Creative Agency',
     iconName: 'Briefcase',
     tagline: 'Manage leads and conversions for creative agencies.',
     leadLabel: 'Agency Lead',

@@ -271,7 +271,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
 
           <hr className="border-gray-100" />
 
-          {/* Section 3: CRM pipeline values & notes */}
+          {/* Section 3: Lead pipeline values & notes */}
           <div className="space-y-4">
             <h5 className="text-xs font-semibold uppercase text-gray-400 tracking-wider">
               3. Channel & Estimated Pipeline

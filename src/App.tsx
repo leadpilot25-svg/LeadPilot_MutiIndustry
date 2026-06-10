@@ -174,6 +174,9 @@ export default function App() {
 
   // Navigation state (home, leads, funnel, business, settings, checklist)
   const [activeTab, setActiveTab] = useState<string>('home');
+  
+  // Mobile navigation state
+  const [showMobileMore, setShowMobileMore] = useState(false);
 
   // Leads sub-view state
   const [currentView, setCurrentView] = useState<'kanban' | 'table'>('kanban');
@@ -839,7 +842,7 @@ export default function App() {
 
   const handleRemoveAgent = async (agentUid: string) => {
     try {
-      if (confirm('Delete member? They will lose access to this CRM environment.')) {
+      if (confirm('Delete member? They will lose access to this LeadPilot workspace.')) {
         if (isDemoMode) {
           setWorkspaceMembers(prev => prev.filter(m => m.uid !== agentUid));
           alert('Agent removed from workspace successfully.');
@@ -1454,7 +1457,7 @@ export default function App() {
         {publicFormLoading ? (
           <div className="text-white text-center space-y-3 font-mono">
             <LucideIcons.Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
-            <span>Resolving custom CRM referral capturing terminal...</span>
+            <span>Resolving custom lead management integration...</span>
           </div>
         ) : !publicFormWorkspace ? (
           <div className="bg-white p-8 rounded-3xl text-center max-w-sm border border-gray-100 shadow-xl space-y-4 font-sans">
@@ -1539,7 +1542,7 @@ export default function App() {
             <div>
               <h2 className="text-2xl font-black text-white tracking-tight">LeadPilot V2</h2>
               <p className="text-zinc-400 text-xs mt-1 max-w-xs mx-auto">
-                The Ultra-Fast AI-Assisted CRM for High-Performing Teams & Solo Entrepreneurs.
+                The Ultra-Fast AI-Powered Lead Management System for High-Performing Teams & Solo Entrepreneurs.
               </p>
             </div>
           </div>
@@ -1716,7 +1719,7 @@ export default function App() {
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${!onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
                   <LucideIcons.User className="w-5 h-5 mb-1.5" />
-                  <span className="text-xs font-bold block">Solo CRM Mode</span>
+                  <span className="text-xs font-bold block">Solo Workspace Mode</span>
                   <span className="text-[9px] text-zinc-500 block leading-normal mt-0.5">Streamlined format. Ideal for sole operators.</span>
                 </div>
 
@@ -1726,7 +1729,7 @@ export default function App() {
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
                   <LucideIcons.Users className="w-5 h-5 mb-1.5" />
-                  <span className="text-xs font-bold block">Team CRM Mode</span>
+                  <span className="text-xs font-bold block">Team Workspace Mode</span>
                   <span className="text-[9px] text-zinc-500 block leading-normal mt-0.5">Role allocations. Invite up to 10 agents safely.</span>
                 </div>
 
@@ -1746,7 +1749,7 @@ export default function App() {
               ) : (
                 <>
                   <LucideIcons.Layers className="w-4 h-4" />
-                  <span>Initialize My CRM Workspace</span>
+                  <span>Create New Workspace</span>
                 </>
               )}
             </button>
@@ -1821,7 +1824,7 @@ export default function App() {
     );
   }
 
-  // ACTIVE CRM FULL VIEW WORKSPACE PORTAL SCREEN
+  // ACTIVE LEADPILOT WORKSPACE VIEW
   return (
     <div id="saas-corporate-frame" className="min-h-screen bg-slate-50 flex flex-col font-sans transition-colors duration-250 relative">
       
@@ -1849,9 +1852,22 @@ export default function App() {
       )}
 
       {/* Primary Header Frame Layout */}
-      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-center shrink-0 shadow-xs relative">
-        {/* Global Nav Elements */}
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-between shrink-0 shadow-xs relative">
+        
+        {/* LEFT: Logo and LeadPilot Branding */}
+        <div className="flex items-center gap-3 shrink-0">
+          <img
+            src="/logo.png"
+            alt="LeadPilot"
+            className="h-10 w-auto"
+          />
+          <span className="text-xl font-bold text-slate-900">
+            LeadPilot
+          </span>
+        </div>
+
+        {/* CENTER: Navigation Buttons (Hidden on mobile, shown on tablet+) */}
+        <div className="hidden md:flex flex-wrap items-center gap-2 flex-1 justify-center px-4">
           {userProfile.role === 'super_admin' ? (
             <>
               <button 
@@ -1861,7 +1877,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'super_admin_dash' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldAlert className="w-4 h-4" />
-                <span>Super Admin Dash</span>
+                <span className="hidden sm:inline">Super Admin Dash</span>
               </button>
 
               <button 
@@ -1871,7 +1887,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'checklist' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>System Readiness</span>
+                <span className="hidden sm:inline">System Readiness</span>
               </button>
             </>
           ) : (
@@ -1884,7 +1900,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5  ${activeTab === 'home' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
+                <span className="hidden sm:inline">Dashboard</span>
               </button>
 
               <button 
@@ -1895,7 +1911,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'leads' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Kanban className="w-4 h-4" />
-                <span>Pipelines</span>
+                <span className="hidden sm:inline">Pipelines</span>
               </button>
 
               <button 
@@ -1906,7 +1922,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'funnel' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.PieChart className="w-4 h-4" />
-                <span>Conversion Funnel</span>
+                <span className="hidden md:inline">Conversion Funnel</span>
               </button>
 
               <button 
@@ -1917,10 +1933,9 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'business' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Flame className="w-4 h-4" />
-                <span>Copilot & AI Tools</span>
+                <span className="hidden md:inline">Copilot & AI</span>
               </button>
 
-              {/* Settings replaces Admin for Owners. Visible for Lead Allocation settings */}
               <button 
                 onClick={() => {
                   setDashboardFilter('all');
@@ -1929,7 +1944,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'settings' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Settings className="w-4 h-4" />
-                <span>Team & Settings</span>
+                <span className="hidden md:inline">Team & Settings</span>
               </button>
 
               <button 
@@ -1940,28 +1955,29 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'checklist' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span>Readiness Checklist</span>
+                <span className="hidden lg:inline">Readiness</span>
               </button>
 
-              <div className="h-6 w-px bg-gray-200 mx-1" />
+              <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block" />
 
-              {/* Region Toggle selector */}
               <button
                 onClick={() => {
                   const targetRegion = marketRegion === 'USA' ? 'IND' : 'USA';
                   setMarketRegion(targetRegion);
                   localStorage.setItem('leadpilot_market_region', targetRegion);
                 }}
-                className="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
+                className="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center hidden md:flex"
                 title="Switch Regional currency / format parameters"
               >
                 <span>{marketRegion === 'USA' ? '🇺🇸 USD' : '🇮🇳 INR'}</span>
               </button>
             </>
           )}
+        </div>
 
-          <div className="h-6 w-px bg-gray-200 mx-1" />
-
+        {/* RIGHT: Logout Button (desktop only) */}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-fit">
+          <div className="h-6 w-px bg-gray-200" />
           <button
             onClick={handleLogout}
             className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex items-center justify-center shrink-0"
@@ -2338,7 +2354,7 @@ export default function App() {
               <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl space-y-4">
                 <div className="space-y-2">
                   <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#10b981] bg-emerald-950/40 border border-emerald-900/30 px-3 py-1 rounded-full inline-block">
-                    🎯 CRM Business Management Hub
+                    🎯 Lead Management Hub
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
                     AI Advisor & Client Growth Ecosystem
@@ -2377,7 +2393,7 @@ export default function App() {
                       Social Growth Tool
                     </span>
                     <h4 className="text-base font-bold text-slate-900">Facebook & Instagram Public Capture Page</h4>
-                    <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into CRM!</p>
+                    <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into LeadPilot!</p>
                   </div>
 
                   <button
@@ -2491,8 +2507,8 @@ export default function App() {
                             onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
                             className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
                           >
-                            <option value="solo">Solo CRM Mode ("Just Me")</option>
-                            <option value="team">Team CRM Mode ("Small Team")</option>
+                            <option value="solo">Solo Workspace Mode ("Just Me")</option>
+                            <option value="team">Team Workspace Mode ("Small Team")</option>
                           </select>
                         </div>
 
@@ -2512,7 +2528,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in TEAM CRM mode) */}
+                {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in Team Workspace mode) */}
                 <div className="lg:col-span-2 space-y-5">
                   {userWorkspace?.mode === 'team' ? (
                     <div className="space-y-5">
@@ -2642,9 +2658,9 @@ export default function App() {
                     <div className="bg-white rounded-3xl p-8 border border-gray-150/40 text-center shadow-3xs space-y-4">
                       <LucideIcons.Users className="w-12 h-12 text-gray-300 mx-auto" />
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled under Solo CRM</h4>
+                        <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled in Solo mode</h4>
                         <p className="text-xs text-gray-450 leading-relaxed max-w-sm mx-auto mt-1">
-                          Your workspace is currently set to <strong className="text-slate-800">Solo CRM mode</strong>. Agent tracking, security isolates, 
+                          Your workspace is currently set to <strong className="text-slate-800">Solo mode</strong>. Agent tracking, security isolates, 
                           members allocations settings, and invitations controls are locked out.
                         </p>
                       </div>
@@ -2652,7 +2668,7 @@ export default function App() {
                         <button 
                           onClick={() => {
                             setEditWorkspaceMode('team');
-                            alert('Operations format set to Team CRM. Click "Update Workspace Specs" to apply instantly.');
+                            alert('Operations format set to Team Workspace. Click "Update Workspace Specs" to apply instantly.');
                           }}
                           className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-xs"
                         >
@@ -2732,6 +2748,151 @@ export default function App() {
         </span>
         <span className="tracking-tight">LeadPilot AI Workspace Engine v3 • Signed in as: <strong className="font-extrabold text-[#4f46e5]">{user.email}</strong></span>
       </footer>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR (Hidden on desktop, shown on mobile) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg">
+        <div className="flex items-center justify-around px-2 py-2.5">
+          
+          {/* Dashboard Button */}
+          <button
+            onClick={() => {
+              setDashboardFilter('all');
+              setActiveTab('home');
+              setShowMobileMore(false);
+            }}
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'home' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+            title="Dashboard"
+          >
+            <LucideIcons.LayoutDashboard className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Dashboard</span>
+          </button>
+
+          {/* Leads Button */}
+          <button
+            onClick={() => {
+              setDashboardFilter('all');
+              setActiveTab('leads');
+              setShowMobileMore(false);
+            }}
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'leads' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+            title="Leads"
+          >
+            <LucideIcons.Kanban className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Leads</span>
+          </button>
+
+          {/* Funnel Button */}
+          <button
+            onClick={() => {
+              setDashboardFilter('all');
+              setActiveTab('funnel');
+              setShowMobileMore(false);
+            }}
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'funnel' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+            title="Funnel"
+          >
+            <LucideIcons.PieChart className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Funnel</span>
+          </button>
+
+          {/* More Button */}
+          <button
+            onClick={() => setShowMobileMore(!showMobileMore)}
+            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all relative ${showMobileMore ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
+            title="More options"
+          >
+            <LucideIcons.MoreVertical className="w-6 h-6" />
+            <span className="text-[10px] font-bold">More</span>
+          </button>
+        </div>
+
+        {/* Mobile "More" Menu */}
+        <AnimatePresence>
+          {showMobileMore && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-16 right-4 bg-white border border-gray-150 rounded-2xl shadow-xl overflow-hidden w-56"
+            >
+              <div className="divide-y divide-gray-100">
+                
+                {/* Copilot & AI */}
+                <button
+                  onClick={() => {
+                    setDashboardFilter('all');
+                    setActiveTab('business');
+                    setShowMobileMore(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'business' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
+                >
+                  <LucideIcons.Flame className="w-4 h-4" />
+                  Copilot & AI
+                </button>
+
+                {/* Team & Settings */}
+                <button
+                  onClick={() => {
+                    setDashboardFilter('all');
+                    setActiveTab('settings');
+                    setShowMobileMore(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
+                >
+                  <LucideIcons.Settings className="w-4 h-4" />
+                  Team & Settings
+                </button>
+
+                {/* Readiness */}
+                <button
+                  onClick={() => {
+                    setDashboardFilter('all');
+                    setActiveTab('checklist');
+                    setShowMobileMore(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'checklist' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
+                >
+                  <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  Readiness
+                </button>
+
+                <div className="h-px bg-gray-100" />
+
+                {/* Region Selector */}
+                <button
+                  onClick={() => {
+                    const targetRegion = marketRegion === 'USA' ? 'IND' : 'USA';
+                    setMarketRegion(targetRegion);
+                    localStorage.setItem('leadpilot_market_region', targetRegion);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm font-bold flex items-center justify-between text-slate-900 hover:bg-slate-50 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <LucideIcons.Globe className="w-4 h-4" />
+                    <span>{marketRegion === 'USA' ? '🇺🇸 USD' : '🇮🇳 INR'}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">Switch</span>
+                </button>
+
+                <div className="h-px bg-gray-100" />
+
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                >
+                  <LucideIcons.LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+
+      {/* Spacer for mobile bottom navigation */}
+      <div className="md:hidden h-24" />
 
     </div>
   );

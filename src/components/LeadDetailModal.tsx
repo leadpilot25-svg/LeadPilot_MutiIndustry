@@ -240,7 +240,7 @@ export default function LeadDetailModal({
     const randomCard = cards[Math.floor(Math.random() * cards.length)];
     setTarotCard(randomCard);
 
-    // Auto append as note inside CRM
+    // Auto append as note to lead record
     const newNote: Note = {
       id: `tarot-note-${Date.now()}`,
       content: `🔮 Oracle Reading Drawn: "${randomCard.name}". Guidance: ${randomCard.advice}`,
@@ -342,7 +342,7 @@ export default function LeadDetailModal({
     });
   };
 
-  // Quick Action: CRM webhook sync
+  // Quick Action: External system sync
   const triggerCrmWebhookSync = () => {
     setCrmSyncStatus('syncing');
     
@@ -351,7 +351,7 @@ export default function LeadDetailModal({
       
       const newNote: Note = {
         id: `webhook-note-${Date.now()}`,
-        content: `🌐 JSON webhook dispatched safely to system handler endpoint: https://api.crmpilotv2.io/leads/sync?id=${editedLead.id}`,
+        content: `🌐 JSON webhook dispatched safely to external system handler endpoint?id=${editedLead.id}`,
         createdAt: new Date().toISOString().split('T')[0],
         author: 'System API Gate'
       };
