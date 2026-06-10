@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { IndustryConfig, Lead, FieldDefinition } from '../types';
 import * as LucideIcons from 'lucide-react';
+import { getCurrencySymbol } from '../lib/currencyUtils';
 
 interface LeadFormProps {
   config: IndustryConfig;
@@ -20,32 +21,14 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [source, setSource] = useState(config.suggestedSources[0] || 'Direct Website');
-  const [value, setValue] = useState<number>(1000);
+  const [value, setValue] = useState<number>(1000); // monetary estimator value
   const [stageId, setStageId] = useState(initialStageId);
   const [noteText, setNoteText] = useState('');
   
+  // Custom fields dictionary state
   const [customFields, setCustomFields] = useState<Record<string, string | number | boolean>>({});
 
-  // Vehicle rate constants for Taxi auto-fill
-  const TAXI_VEHICLE_RATES: Record<string, number> = {
-    'Hatchback': 15,
-    'Sedan': 18,
-    'SUV': 25,
-    'Van': 30,
-    'Luxury': 45,
-    'Mini Bus': 50
-  };
-
-  const calculateTaxiFare = (updatedFields: Record<string, any>) => {
-    const distance = updatedFields.distanceKm ?? customFields.distanceKm;
-    const rate = updatedFields.ratePerKm ?? customFields.ratePerKm;
-    
-    if (distance && rate && distance > 0 && rate > 0) {
-      return Math.round(distance * rate);
-    }
-    return 0;
-  };
-
+    // Reset custom fields when industry config changes or initial state changes
   useEffect(() => {
     const defaults: Record<string, string | number | boolean> = {};
     config.customFields.forEach(field => {
@@ -60,14 +43,18 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       }
     });
 
-    // Scheduling and followups state variables (exclude tarot-coaching)
-    if (config.id !== 'tarot-coaching') {
-      defaults.followUpTimeSlot = '10:00 AM - 12:00 PM';
-      defaults.followUpTaskDesc = 'Corporate client feedback review';
+    // Handle regional default entries if India region is active
+    if (marketRegion === 'IND') {
+      defaults.indiaState = 'Delhi';
+      defaults.indiaGst = 'Unregistered';
     }
-    defaults.nextFollowUpDate = '';
 
-    // Provide default values depending on industry
+    // Scheduling and followups state variables
+    defaults.nextFollowUpDate = '';
+    defaults.followUpTimeSlot = '10:00 AM - 12:00 PM';
+    defaults.followUpTaskDesc = 'Corporate client feedback review';
+
+    // Provide premium default values depending on mock scenarios
     if (config.id === 'real-estate') {
       setValue(750000);
       defaults.preferredLocation = 'Grandview Heights';
@@ -76,6 +63,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
       defaults.coverageCapacity = 1000000;
     } else if (config.id === 'tarot-coaching') {
       setValue(250);
+      defaults.cosmicZodiacSign = 'Leo';
     } else if (config.id === 'taxi') {
       setValue(0);
       defaults.pickupAddress = '';
@@ -91,26 +79,10 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
   }, [config, initialStageId, marketRegion]);
 
   const handleCustomFieldChange = (key: string, val: string | number | boolean) => {
-    const updatedFields: Record<string, any> = { [key]: val };
-
-    // For Taxi: auto-fill ratePerKm when vehicleClass changes
-    if (config.id === 'taxi' && key === 'vehicleClass') {
-      const defaultRate = TAXI_VEHICLE_RATES[String(val)];
-      if (defaultRate) {
-        updatedFields.ratePerKm = defaultRate;
-      }
-    }
-
     setCustomFields(prev => ({
       ...prev,
-      ...updatedFields
+      [key]: val
     }));
-
-    // For Taxi: recalculate fare when distance, rate, or vehicle type changes
-    if (config.id === 'taxi' && ['distanceKm', 'ratePerKm', 'vehicleClass'].includes(key)) {
-      const newFare = calculateTaxiFare(updatedFields);
-      setValue(newFare);
-    }
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -134,10 +106,10 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
     <div id="lead-form-modal-container" className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-all overflow-y-auto">
       <div 
         id="lead-form-drawer" 
-        className="bg-white rounded-3xl max-w-lg w-full shadow-2xl relative border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white rounded-2xl max-w-2xl w-full shadow-lg relative border border-gray-200 overflow-hidden flex flex-col max-h-[95vh]"
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div className="p-4 md:p-5 border-b border-gray-200 flex items-center justify-between bg-white">
           <div>
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider block w-fit mb-1">
               Add New {config.leadLabel}
@@ -156,49 +128,47 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-6 space-y-5 font-sans">
+        <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 font-sans">
           
           {/* Section 1: Standard Contact Identity */}
-          <div className="space-y-4">
-            <h5 className="text-xs font-semibold uppercase text-gray-400 tracking-wider">
-              1. Basic Identity details
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
+              1. Basic Identity Details
             </h5>
             
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Full Name *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">Full Name *</label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Johnathan Wilde"
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="(555) 808-1234"
-                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
-                  />
-                </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="(555) 808-1234"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+                />
               </div>
             </div>
           </div>
@@ -206,15 +176,15 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
           <hr className="border-gray-100" />
 
           {/* Section 2: Industry Specific Fields */}
-          <div className="space-y-4">
-            <h5 className="text-xs font-semibold uppercase text-gray-400 tracking-wider">
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
               2. Industry Custom Fields ({config.name})
             </h5>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {config.customFields.map((field) => (
-                <div key={field.key} className={field.type === 'text' ? 'col-span-1 md:col-span-2' : 'col-span-1'}>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                <div key={field.key} className={field.type === 'text' ? 'col-span-1 md:col-span-2' : ''}>
+                  <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                     {field.label} {field.required && '*'}
                   </label>
 
@@ -223,7 +193,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                       required={field.required}
                       value={String(customFields[field.key] ?? '')}
                       onChange={e => handleCustomFieldChange(field.key, e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                     >
                       {field.options.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -238,7 +208,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                       value={String(customFields[field.key] ?? '')}
                       onChange={e => handleCustomFieldChange(field.key, e.target.value)}
                       placeholder={field.placeholder}
-                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                     />
                   )}
 
@@ -249,7 +219,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                       value={Number(customFields[field.key] ?? 0)}
                       onChange={e => handleCustomFieldChange(field.key, Number(e.target.value))}
                       placeholder={field.placeholder}
-                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                     />
                   )}
 
@@ -259,33 +229,74 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                       required={field.required}
                       value={String(customFields[field.key] ?? '')}
                       onChange={e => handleCustomFieldChange(field.key, e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                     />
                   )}
                 </div>
               ))}
 
-              {/* Optional region-specific India localizations (exclude Taxi & Tarot) */}
+              {/* Optional region-specific India localizations */}
+              {marketRegion === 'IND' && (
+                <>
+                  <div className="">
+                    <label className="block text-[11px] font-semibold text-indigo-900 mb-1.5">
+                      🇮🇳 India State
+                    </label>
+                    <select
+                      value={String(customFields.indiaState ?? 'Delhi')}
+                      onChange={e => handleCustomFieldChange('indiaState', e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-indigo-50/50 border border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+                    >
+                      <option value="Delhi">Delhi NCR</option>
+                      <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
+                      <option value="Karnataka">Karnataka (Bengaluru)</option>
+                      <option value="Telangana">Telangana (Hyderabad)</option>
+                      <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
+                      <option value="Haryana">Haryana (Gurugram)</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
+                      <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
+                      <option value="West Bengal">West Bengal (Kolkata)</option>
+                    </select>
+                  </div>
+
+                  <div className="">
+                    <label className="block text-[11px] font-semibold text-indigo-900 mb-1.5">
+                      🇮🇳 GST Status
+                    </label>
+                    <select
+                      value={String(customFields.indiaGst ?? 'Unregistered')}
+                      onChange={e => handleCustomFieldChange('indiaGst', e.target.value)}
+                      className="w-full px-3 py-2 text-sm bg-indigo-50/50 border border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+                    >
+                      <option value="Unregistered">Unregistered Business Client</option>
+                      <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
+                      <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
+                      <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
+                      <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
           <hr className="border-gray-100" />
 
-          {/* Section 3: Lead pipeline values & notes */}
-          <div className="space-y-4">
-            <h5 className="text-xs font-semibold uppercase text-gray-400 tracking-wider">
+          {/* Section 3: CRM pipeline values & notes */}
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
               3. Channel & Estimated Pipeline
             </h5>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                   Target Pipeline Stage
                 </label>
                 <select
                   value={stageId}
                   onChange={e => setStageId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 >
                   {config.stages.map(st => (
                     <option key={st.id} value={st.id}>{st.label}</option>
@@ -294,26 +305,26 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  {config.valueLabel} ({marketRegion === 'IND' ? '₹' : '$'})
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
+                  {config.valueLabel} ({getCurrencySymbol(marketRegion)})
                 </label>
                 <input
                   type="number"
                   value={value}
                   onChange={e => setValue(Number(e.target.value))}
                   placeholder="Projected numeric value"
-                  className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-mono"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-mono font-medium"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                   Lead Referrer / Source
                 </label>
                 <select
                   value={source}
                   onChange={e => setSource(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 >
                   {config.suggestedSources.map(src => (
                     <option key={src} value={src}>{src}</option>
@@ -324,7 +335,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                 Initial Consultant Notes
               </label>
               <textarea
@@ -332,7 +343,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                 onChange={e => setNoteText(e.target.value)}
                 placeholder="Write any background notes, customer demands, or initial conversations..."
                 rows={3}
-                className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium resize-none"
               />
             </div>
           </div>
@@ -340,36 +351,35 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
           <hr className="border-gray-100" />
 
           {/* Section 4: Scheduling & client follow-up */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-1.5">
-              <LucideIcons.CalendarClock className="w-4 h-4 text-emerald-600" />
-              <h5 className="text-xs font-semibold uppercase text-gray-400 tracking-wider">
+              <LucideIcons.CalendarClock className="w-4 h-4 text-indigo-600" />
+              <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
                 4. Scheduling & Follow-up Agenda
               </h5>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 font-sans">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                   Next Scheduled Contact Date
                 </label>
                 <input
                   type="date"
                   value={String(customFields.nextFollowUpDate ?? '')}
                   onChange={e => handleCustomFieldChange('nextFollowUpDate', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 />
               </div>
 
-              {config.id !== 'tarot-coaching' && (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                   Scheduled Action Time Slot
                 </label>
                 <select
                   value={String(customFields.followUpTimeSlot ?? '10:00 AM - 12:00 PM')}
                   onChange={e => handleCustomFieldChange('followUpTimeSlot', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 >
                   <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM (Early catchup)</option>
                   <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM (Mid Morning briefing)</option>
@@ -378,11 +388,9 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                   <option value="05:00 PM - 07:00 PM">05:00 PM - 07:00 PM (Late checkout wrap-up)</option>
                 </select>
               </div>
-              )}
 
-              {config.id !== 'tarot-coaching' && (
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
                   Short Follow-up action task reminder
                 </label>
                 <input
@@ -390,27 +398,26 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                   value={String(customFields.followUpTaskDesc ?? '')}
                   placeholder="e.g. Present digital marketing SOW options / draft graphic brief review"
                   onChange={e => handleCustomFieldChange('followUpTaskDesc', e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
                 />
               </div>
-              )}
             </div>
           </div>
 
           {/* Footer Action Buttons */}
-          <div className="pt-4 flex items-center justify-end gap-3 sticky bottom-0 bg-white border-t border-gray-50 mt-6">
+          <div className="pt-4 flex items-center justify-end gap-3 sticky bottom-0 bg-white border-t border-gray-200 mt-4 px-4 md:px-5">
             <button
               id="cancel-form-btn"
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-100 hover:text-gray-700 transition-colors text-sm font-semibold"
+              className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition-colors text-sm font-semibold"
             >
               Cancel
             </button>
             <button
               id="submit-form-btn"
               type="submit"
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-semibold shadow-sm text-sm"
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all font-semibold shadow-sm text-sm"
             >
               Confirm Lead Intake
             </button>

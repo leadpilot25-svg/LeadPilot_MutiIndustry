@@ -365,35 +365,31 @@ export default function LeadDetailModal({
 
   return (
     <div id="lead-detail-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl relative border border-gray-100 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-lg relative border border-gray-200 overflow-hidden flex flex-col max-h-[95vh]">
         
-        {/* Banner Section */}
-        <div className="bg-gradient-to-r from-teal-500 via-indigo-600 to-violet-700 p-6 text-white relative">
+        {/* Header Section */}
+        <div className="bg-white border-b border-gray-200 p-3 flex items-center justify-between relative">
+          <div className="space-y-0.5 flex-1">
+            <h3 className="text-xl font-bold text-gray-900">{editedLead.name}</h3>
+            <p className="text-sm text-gray-600">{editedLead.email} • {editedLead.phone}</p>
+          </div>
           <button 
             id="close-detail-modal-btn"
             onClick={onClose}
-            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full text-white transition-colors"
+            className="flex-shrink-0 ml-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
           >
-            <LucideIcons.Plus className="w-5 h-5 rotate-45" />
+            <LucideIcons.X className="w-5 h-5" />
           </button>
-
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold bg-white/25 text-white border border-white/20 px-2 rounded font-sans uppercase tracking-widest">
-              {config.name} • Active Lead Tracker
-            </span>
-            <h3 className="text-2xl font-bold font-sans tracking-tight">{editedLead.name}</h3>
-            <p className="text-sm text-teal-100 opacity-90">{editedLead.email} • {editedLead.phone}</p>
-          </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-100 bg-gray-50/50 overflow-x-auto no-scrollbar">
+        <div className="flex border-b border-gray-200 bg-white overflow-x-auto no-scrollbar">
           {[
-            { id: 'details', label: config.id === 'tarot-coaching' ? 'Profile' : 'Client Profile', icon: LucideIcons.User },
-            ...(config.id !== 'tarot-coaching' ? [{ id: 'tasks', label: 'Tasks & Followups', icon: LucideIcons.CheckSquare }] : []),
-            { id: 'notes', label: config.id === 'tarot-coaching' ? 'Notes' : 'History Feed', icon: LucideIcons.ClipboardList },
-            ...(config.id !== 'tarot-coaching' ? [{ id: 'actions', label: `${config.leadLabel} Actions`, icon: LucideIcons.Sparkles }] : []),
-            { id: 'files', label: 'Attachments', icon: LucideIcons.Paperclip }
+            { id: 'details', label: config.id === 'tarot-coaching' ? 'Profile' : 'Details', icon: LucideIcons.User },
+            ...(config.id !== 'tarot-coaching' ? [{ id: 'tasks', label: 'Tasks', icon: LucideIcons.CheckSquare }] : []),
+            { id: 'notes', label: 'Notes', icon: LucideIcons.ClipboardList },
+            ...(config.id !== 'tarot-coaching' ? [{ id: 'actions', label: 'Actions', icon: LucideIcons.Sparkles }] : []),
+            { id: 'files', label: 'Files', icon: LucideIcons.Paperclip }
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -401,34 +397,34 @@ export default function LeadDetailModal({
                 key={tab.id}
                 id={`tab-${tab.id}`}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 py-4 text-center text-sm font-semibold border-b-2 flex items-center justify-center gap-2 transition-all ${
+                className={`flex-1 py-2 text-center text-sm font-medium border-b-2 flex items-center justify-center gap-1.5 transition-all px-2 ${
                   activeTab === tab.id 
-                    ? 'border-emerald-600 text-emerald-700 bg-white' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                    ? 'border-indigo-600 text-indigo-700 bg-indigo-50/30' 
+                    : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}
         </div>
 
         {/* Scrollable Tab Content Container */}
-        <div className="flex-1 overflow-y-auto p-6 min-h-[350px] max-h-[50vh]">
+        <div className="flex-1 overflow-y-auto p-4 min-h-[350px]">
           
           {/* TAB 1: DETAILS */}
           {activeTab === 'details' && (
-            <div id="details-tab-panel" className="space-y-6 font-sans">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="details-tab-panel" className="space-y-4 font-sans">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Standard Card Details */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Standard Contact data</h4>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase text-gray-500 tracking-wider">Contact Info</h4>
                   
-                  <div className="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="space-y-2 bg-gray-50 p-3 rounded-2xl border border-gray-200">
                     <div>
-                      <label id="lbl-edit-lead-name" htmlFor="edit-lead-name" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Full Name</label>
+                      <label id="lbl-edit-lead-name" htmlFor="edit-lead-name" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Full Name</label>
                       <input
                         id="edit-lead-name"
                         type="text"
@@ -438,37 +434,37 @@ export default function LeadDetailModal({
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label id="lbl-edit-lead-phone" htmlFor="edit-lead-phone" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Phone Number</label>
+                        <label id="lbl-edit-lead-phone" htmlFor="edit-lead-phone" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Phone Number</label>
                         <input
                           id="edit-lead-phone"
                           type="tel"
                           value={editedLead.phone || ''}
                           onChange={(e) => setEditedLead({ ...editedLead, phone: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
                         />
                       </div>
                       <div>
-                        <label id="lbl-edit-lead-email" htmlFor="edit-lead-email" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Email Address</label>
+                        <label id="lbl-edit-lead-email" htmlFor="edit-lead-email" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Email Address</label>
                         <input
                           id="edit-lead-email"
                           type="email"
                           value={editedLead.email || ''}
                           onChange={(e) => setEditedLead({ ...editedLead, email: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label id="lbl-edit-lead-source" htmlFor="edit-lead-source" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Lead Source</label>
+                        <label id="lbl-edit-lead-source" htmlFor="edit-lead-source" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Lead Source</label>
                         <select
                           id="edit-lead-source"
                           value={editedLead.source || ''}
                           onChange={(e) => setEditedLead({ ...editedLead, source: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
                         >
                           {config.suggestedSources.map(src => (
                             <option key={src} value={src}>{src}</option>
@@ -480,7 +476,7 @@ export default function LeadDetailModal({
                         </select>
                       </div>
                       <div>
-                        <label id="lbl-edit-lead-value" htmlFor="edit-lead-value" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">
+                        <label id="lbl-edit-lead-value" htmlFor="edit-lead-value" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">
                           Value ({marketRegion === 'IND' ? '₹' : (marketRegion === 'EUR' ? '€' : '$')})
                         </label>
                         <input
@@ -488,19 +484,19 @@ export default function LeadDetailModal({
                           type="number"
                           value={editedLead.value || 0}
                           onChange={(e) => setEditedLead({ ...editedLead, value: Number(e.target.value) })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-mono font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-mono font-medium"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label id="lbl-edit-lead-status" htmlFor="edit-lead-status" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Lead Status</label>
+                        <label id="lbl-edit-lead-status" htmlFor="edit-lead-status" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Lead Status</label>
                         <select
                           id="edit-lead-status"
                           value={editedLead.status || 'active'}
                           onChange={(e) => setEditedLead({ ...editedLead, status: e.target.value as 'active' | 'archived' | 'won' })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
                         >
                           <option value="active">Active</option>
                           <option value="won">Won (Closed Deal)</option>
@@ -508,12 +504,12 @@ export default function LeadDetailModal({
                         </select>
                       </div>
                       <div>
-                        <label id="lbl-edit-lead-stage" htmlFor="edit-lead-stage" className="block text-[10px] uppercase font-bold text-gray-400 mb-1">Pipeline Stage</label>
+                        <label id="lbl-edit-lead-stage" htmlFor="edit-lead-stage" className="block text-[11px] uppercase font-bold text-gray-500 mb-1">Pipeline Stage</label>
                         <select
                           id="edit-lead-stage"
                           value={editedLead.stageId || ''}
                           onChange={(e) => setEditedLead({ ...editedLead, stageId: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
+                          className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 text-gray-800 font-medium"
                         >
                           {config.stages.map(stage => (
                             <option key={stage.id} value={stage.id}>{stage.label}</option>
@@ -534,15 +530,15 @@ export default function LeadDetailModal({
                 </div>
 
                 {/* Industry Specific Fields / Reading Details */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{config.id === 'tarot-coaching' ? 'Reading Details' : config.id === 'creative-agency' ? 'Agency Details' : 'Industry specific configurations'}</h4>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase text-gray-500 tracking-wider">{config.id === 'tarot-coaching' ? 'Reading Details' : config.id === 'creative-agency' ? 'Agency Details' : 'Industry Details'}</h4>
                   
-                  <div className="space-y-3 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100/50">
+                  <div className="space-y-2 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-200/60">
                     {config.customFields.map((field) => {
                       const val = editedLead.customFields[field.key] ?? '';
                       return (
-                        <div key={field.key} className="flex flex-col text-xs pb-1 border-b border-emerald-100/20 last:border-0 last:pb-0">
-                          <label id={`lbl-edit-custom-${field.key}`} htmlFor={`edit-custom-${field.key}`} className="block text-[10px] uppercase font-bold text-emerald-800 mb-1">
+                        <div key={field.key} className="flex flex-col text-xs pb-0.5 border-b border-emerald-100/30 last:border-0 last:pb-0">
+                          <label id={`lbl-edit-custom-${field.key}`} htmlFor={`edit-custom-${field.key}`} className="block text-[11px] uppercase font-bold text-emerald-900 mb-1">
                             {field.label} {field.required && '*'}
                           </label>
 
@@ -552,7 +548,7 @@ export default function LeadDetailModal({
                               required={field.required}
                               value={String(val)}
                               onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
-                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                              className="w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             >
                               {field.options.map(opt => (
                                 <option key={opt} value={opt}>{opt}</option>
@@ -568,7 +564,7 @@ export default function LeadDetailModal({
                               value={String(val)}
                               onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
                               placeholder={field.placeholder}
-                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                              className="w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             />
                           )}
 
@@ -580,7 +576,7 @@ export default function LeadDetailModal({
                               value={Number(val)}
                               onChange={(e) => handleDetailCustomFieldChange(field.key, Number(e.target.value))}
                               placeholder={field.placeholder}
-                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium font-mono"
+                              className="w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium font-mono"
                             />
                           )}
 
@@ -591,7 +587,7 @@ export default function LeadDetailModal({
                               required={field.required}
                               value={String(val)}
                               onChange={(e) => handleDetailCustomFieldChange(field.key, e.target.value)}
-                              className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
+                              className="w-full px-2.5 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 text-gray-800 font-medium"
                             />
                           )}
 

@@ -2009,18 +2009,18 @@ export default function App() {
 
           {/* ================= tab: HOME (METRICS & ACTIVE PANELS) ================= */}
           {activeTab === 'home' && (
-            <div className="space-y-6 animate-fade-in" id="home-tab-content">
+            <div className="space-y-4 animate-fade-in" id="home-tab-content">
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-150/40 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-150/40 shadow-sm max-h-[50px] sm:max-h-[60px] md:max-h-[70px] overflow-hidden">
                 <div>
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
+                  <h3 className="text-xl font-bold tracking-tight text-gray-900 leading-tight">
                     {greeting}, {userProfile.displayName}!
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">Here is a diagnostics brief of your active portfolio pipelines synchronized real-time in cloud storage.</p>
+                  <p className="text-sm text-gray-600 mt-0.5 leading-snug"></p>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(true)}
-                  className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer"
+                  className="px-2.5 py-1 sm:px-4 sm:py-2 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer whitespace-nowrap"
                 >
                   <LucideIcons.Plus className="w-4 h-4 text-indigo-400 stroke-[3]" />
                   <span>Onboard New {activeIndustry.leadLabel}</span>
@@ -2029,7 +2029,7 @@ export default function App() {
 
               {/* Follow-up Clearance banner card (matching original) */}
               {missedFollowupsCount === 0 && todayFollowupsCount === 0 && (
-                <div className="bg-emerald-50 border border-emerald-150/60 p-4 rounded-3xl" id="clean-followups-clear-banner">
+                <div className="bg-emerald-50 border border-emerald-150/60 p-5 rounded-2xl" id="clean-followups-clear-banner">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-full text-emerald-600 shrink-0">
                       <LucideIcons.CheckCircle2 className="w-5 h-5" />
@@ -2043,22 +2043,22 @@ export default function App() {
               )}
 
               {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4" id="dashboard-large-clickable-metrics">
                 
                 {/* Card 1: Follow-ups Today */}
                 <div 
                   onClick={() => handleDashboardFilterClick('today_followups')}
-                  className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
                   id="kpi-today-followups"
                 >
-                  <div className="text-amber-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
+                  <div className="text-amber-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <LucideIcons.Clock className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                  <div className="min-w-0 flex-shrink-0">
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
                       {todayFollowupsCount}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
                       {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
                     </span>
                   </div>
@@ -2067,17 +2067,17 @@ export default function App() {
                 {/* Card 2: Missed follow-ups */}
                 <div 
                   onClick={() => handleDashboardFilterClick('missed_followups')}
-                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
                   id="kpi-missed-followups"
                 >
-                  <div className="text-red-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
+                  <div className="text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <LucideIcons.ShieldAlert className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                  <div className="min-w-0 flex-shrink-0">
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
                       {missedFollowupsCount}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
                       {activeIndustry.missedFollowupsLabel || "Expired tasks"}
                     </span>
                   </div>
@@ -2086,17 +2086,17 @@ export default function App() {
                 {/* Card 3: Follow-ups Scheduled */}
                 <div 
                   onClick={() => handleDashboardFilterClick('scheduled_followups')}
-                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
                   id="kpi-meetings-today"
                 >
-                  <div className="text-orange-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Calendar className="w-6 h-6 stroke-[2.2]" />
+                  <div className="text-orange-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <LucideIcons.Calendar className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                  <div className="min-w-0 flex-shrink-0">
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
                       {meetingsCount}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
                       {activeIndustry.meetingsTodayLabel || "Meetings today"}
                     </span>
                   </div>
@@ -2105,17 +2105,17 @@ export default function App() {
                 {/* Card 4: Closed deals */}
                 <div 
                   onClick={() => handleDashboardFilterClick('closed_deals')}
-                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
                   id="kpi-closed-deals"
                 >
-                  <div className="text-emerald-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
+                  <div className="text-emerald-500 group-hover:scale-110 transition-transform flex-shrink-0">
+                    <LucideIcons.Trophy className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
                   </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                  <div className="min-w-0 flex-shrink-0">
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
                       {closedDealsCount}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
                       {activeIndustry.closedDealsLabel || "Closed deals"}
                     </span>
                   </div>
@@ -2124,51 +2124,51 @@ export default function App() {
               </div>
 
               {/* Section: LEAD OVERVIEW Breakdown parameters */}
-              <div className="space-y-3 pt-2" id="lead-overview-block">
-                <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2 pt-0" id="lead-overview-block">
+                <span className="text-xs font-semibold text-gray-600 tracking-wide block font-sans uppercase">LEAD OVERVIEW</span>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
                   
                   {/* Total */}
                   <div 
                     onClick={() => handleDashboardFilterClick('total')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
                   >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{totalLeadsCount}</span>
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Total</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{totalLeadsCount}</span>
                   </div>
 
                   {/* Open */}
                   <div 
                     onClick={() => handleDashboardFilterClick('open')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
                   >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Open</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{openLeadsCount}</span>
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Open</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{openLeadsCount}</span>
                   </div>
 
                   {/* Closed */}
                   <div 
                     onClick={() => handleDashboardFilterClick('closed')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
                   >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Closed</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{closedDealsCount}</span>
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Closed</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{closedDealsCount}</span>
                   </div>
 
                   {/* Today */}
                   <div 
                     onClick={() => handleDashboardFilterClick('today')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
                   >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Today</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{todayCreatedCount}</span>
+                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Today</span>
+                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{todayCreatedCount}</span>
                   </div>
 
                 </div>
               </div>
 
               {/* Quick Industry Summary Card */}
-              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-6 rounded-3xl text-white my-4 relative overflow-hidden shadow-md">
+              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-5 rounded-2xl text-white relative overflow-hidden shadow-md mt-4 mb-0">
                 <div className="absolute right-0 bottom-0 select-none opacity-10 font-black text-8xl -mr-6 -mb-6">
                   {activeIndustry.leadLabel[0]}
                 </div>
