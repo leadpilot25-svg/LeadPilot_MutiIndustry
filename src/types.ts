@@ -1,99 +1,64 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * PHASE 10D - EXTEND src/types.ts WITH THESE TYPES
+ * 
+ * Add these to the end of your existing types.ts file
  */
 
-export interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  dueDate?: string;
+// ============================================================================
+// AUTOMATION SETTINGS
+// ============================================================================
+
+export interface AutomationSettings {
+  followUp1Delay: number; // days until follow-up #1
+  followUp2Delay: number; // days until follow-up #2
+  finalFollowUpDelay: number; // days until final follow-up
+  lostReviewDelay: number; // days until lost review
 }
 
-export interface Note {
-  id: string;
-  content: string;
-  createdAt: string;
-  author: string;
+// Default automation settings
+export const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
+  followUp1Delay: 3,
+  followUp2Delay: 3,
+  finalFollowUpDelay: 5,
+  lostReviewDelay: 7,
+};
+
+// ============================================================================
+// FOLLOW-UP METRICS
+// ============================================================================
+
+export interface FollowUpMetrics {
+  newLeads: number;
+  followUp1Due: number;
+  followUp2Due: number;
+  finalFollowUpDue: number;
+  lostReviewDue: number;
+  overdueCount: number;
+  dueToday: number;
+  totalFollowUpsDue: number;
 }
 
-export interface LeadFile {
-  name: string;
-  url: string;
-  type: string;
-  size: number;
-  uploadedAt: string;
-  uploadedBy: string;
+// ============================================================================
+// FOLLOW-UP UPDATE
+// ============================================================================
+
+export interface FollowUpUpdate {
+  stage: number;
+  nextFollowUpDate: string;
+  lastContactDate: string;
 }
 
-export interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  source: string;
-  stageId: string;
-  createdAt: string;
-  lastContacted: string;
-  status: 'active' | 'archived' | 'won';
-  value: number; // Potential monetary value
-  customFields: Record<string, string | number | boolean>;
-  notes: Note[];
-  tasks: Task[];
-  assignedTo?: string;
-  assignedToName?: string;
-  files?: LeadFile[];
-}
+// ============================================================================
+// FOLLOW-UP STATUS
+// ============================================================================
 
-export interface FieldDefinition {
-  key: string;
-  label: string;
-  type: 'text' | 'number' | 'select' | 'boolean' | 'date';
-  options?: string[];
-  placeholder?: string;
-  required?: boolean;
+export interface FollowUpStatus {
+  stage: number;
+  stageName: string;
+  lastContactDate?: string;
+  nextFollowUpDate?: string;
+  daysUntilFollowUp?: number;
+  isOverdue: boolean;
+  daysOverdue?: number;
+  communicationCount: number;
 }
-
-export interface PipelineStage {
-  id: string;
-  label: string;
-  color: string; // Tailwind color class or hex, e.g. 'bg-emerald-500'
-}
-
-export interface MetricDefinition {
-  key: string;
-  label: string;
-  prefix?: string;
-  suffix?: string;
-  type: 'sum' | 'count' | 'average';
-  sourceField?: 'value' | string; // Field to aggregate on
-  description: string;
-}
-
-export interface IndustryConfig {
-  id: string;
-  name: string;
-  iconName: string; // Identifier for Lucide icon
-  tagline: string;
-  leadLabel: string; // e.g. "Buyer", "Prospect", "Querent", "Rider"
-  valueLabel: string; // e.g. "Estimated Value", "Estimated Premium", "Coaching Budget", "Fare"
-  stages: PipelineStage[];
-  customFields: FieldDefinition[];
-  metrics: MetricDefinition[];
-  suggestedSources: string[];
-  todayFollowupsLabel?: string;
-  missedFollowupsLabel?: string;
-  meetingsTodayLabel?: string;
-  closedDealsLabel?: string;
-}
-
-export interface Tenant {
-  id: string;
-  company_name: string;
-  industryId: string;
-  logoEmoji: string;
-  subscription_plan: 'Starter' | 'Professional' | 'Enterprise';
-  status: 'active' | 'suspended';
-  assignedOwner: string;
-}
-

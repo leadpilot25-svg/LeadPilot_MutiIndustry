@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { IndustryConfig, Lead, PipelineStage, Tenant, Note, LeadFile } from './types';
 import { INDUSTRY_CONFIGS, INITIAL_LEADS_BY_INDUSTRY } from './constants/industries';
 import PipelineBoard from './components/PipelineBoard';
 import LeadTable from './components/LeadTable';
 import LeadForm from './components/LeadForm';
 import LeadDetailModal from './components/LeadDetailModal';
+import DashboardMetrics from './components/DashboardMetrics';
 import AIPredictor from './components/AIPredictor';
 import GoogleSheetsSync from './components/GoogleSheetsSync';
 import PublicLeadCaptureForm from './components/PublicLeadCaptureForm';
@@ -174,17 +175,16 @@ export default function App() {
 
   // Navigation state (home, leads, funnel, business, settings, checklist)
   const [activeTab, setActiveTab] = useState<string>('home');
-  
-  // Mobile navigation state
-  const [showMobileMore, setShowMobileMore] = useState(false);
 
   // Leads sub-view state
   const [currentView, setCurrentView] = useState<'kanban' | 'table'>('kanban');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   // Interactive Dashboard Click/Filter state
-  const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today' | 'new_lead' | 'discovery_call' | 'proposal_sent' | 'follow_up' | 'won_client' | 'project_delivered' | 'lost_client'>('all');
-  const [activeFunnelStage, setActiveFunnelStage] = useState<string | null>(null);
+  const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today'>('all');
+
+  // Search query state
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Intake Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -842,7 +842,7 @@ export default function App() {
 
   const handleRemoveAgent = async (agentUid: string) => {
     try {
-      if (confirm('Delete member? They will lose access to this LeadPilot workspace.')) {
+      if (confirm('Delete member? They will lose access to this CRM environment.')) {
         if (isDemoMode) {
           setWorkspaceMembers(prev => prev.filter(m => m.uid !== agentUid));
           alert('Agent removed from workspace successfully.');
@@ -1308,19 +1308,6 @@ export default function App() {
     setActiveTab('leads');
   };
 
-  const handleFunnelFilterClick = (stageId: string) => {
-    if (activeFunnelStage === stageId) {
-      // Toggle: click same stage = remove filter
-      setActiveFunnelStage(null);
-      setDashboardFilter('all');
-    } else {
-      // Apply or switch filter
-      setActiveFunnelStage(stageId);
-      setDashboardFilter(stageId as typeof dashboardFilter);
-    }
-    setActiveTab('leads');
-  };
-
   // Dynamic colors highlighted for current industry config
   const getIndustryThemeColor = (id: string) => {
     switch (id) {
@@ -1388,10 +1375,8 @@ export default function App() {
   );
   const meetingsCount = upcomingFollowupLeads.length;
 
-  // CLOSED DEALS KPI: Option B - Client Won + Project Delivered (not Lost Client)
-  const closedDealsLeads = currentLeads.filter(l => 
-    l.stageId === 'won_client' || l.stageId === 'project_delivered'
-  );
+  // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
+  const closedDealsLeads = currentLeads.filter(l => isCompletedLead(l));
   const closedDealsCount = closedDealsLeads.length;
 
   // Final filtered array depending on Dashboard Interactive selection
@@ -1400,16 +1385,13 @@ export default function App() {
     
     // Dynamic tab state filtering integration
     if (dashboardFilter === 'today_followups') {
-      return todayFollowupLeads;
+      return upcomingFollowupLeads;
     }
     if (dashboardFilter === 'missed_followups') {
       return missedFollowupLeads;
     }
     if (dashboardFilter === 'meetings_today') {
-      return upcomingFollowupLeads;
-    }
-    if (dashboardFilter === 'scheduled_followups') {
-      return upcomingFollowupLeads;
+      return todayFollowupLeads;
     }
     if (dashboardFilter === 'closed_deals') {
       return closedDealsLeads;
@@ -1423,28 +1405,6 @@ export default function App() {
     if (dashboardFilter === 'today') {
       return base.filter(l => l.createdAt === todayDateStr);
     }
-    // Funnel stage filters
-    if (dashboardFilter === 'new_lead') {
-      return base.filter(l => l.stageId === 'new_lead');
-    }
-    if (dashboardFilter === 'discovery_call') {
-      return base.filter(l => l.stageId === 'discovery_call');
-    }
-    if (dashboardFilter === 'proposal_sent') {
-      return base.filter(l => l.stageId === 'proposal_sent');
-    }
-    if (dashboardFilter === 'follow_up') {
-      return base.filter(l => l.stageId === 'follow_up');
-    }
-    if (dashboardFilter === 'won_client') {
-      return base.filter(l => l.stageId === 'won_client');
-    }
-    if (dashboardFilter === 'project_delivered') {
-      return base.filter(l => l.stageId === 'project_delivered');
-    }
-    if (dashboardFilter === 'lost_client') {
-      return base.filter(l => l.stageId === 'lost_client');
-    }
     return base;
   };
 
@@ -1457,7 +1417,7 @@ export default function App() {
         {publicFormLoading ? (
           <div className="text-white text-center space-y-3 font-mono">
             <LucideIcons.Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
-            <span>Resolving custom lead management integration...</span>
+            <span>Resolving custom CRM referral capturing terminal...</span>
           </div>
         ) : !publicFormWorkspace ? (
           <div className="bg-white p-8 rounded-3xl text-center max-w-sm border border-gray-100 shadow-xl space-y-4 font-sans">
@@ -1489,7 +1449,6 @@ export default function App() {
                 status: 'active',
                 assignedOwner: publicFormWorkspace.ownerUid
               }]}
-              marketRegion={marketRegion}
               onAddPublicLead={async (tenantId, inboundLead) => {
                 try {
                   const docRef = doc(db, 'workspaces', tenantId, 'leads', inboundLead.id);
@@ -1542,7 +1501,7 @@ export default function App() {
             <div>
               <h2 className="text-2xl font-black text-white tracking-tight">LeadPilot V2</h2>
               <p className="text-zinc-400 text-xs mt-1 max-w-xs mx-auto">
-                The Ultra-Fast AI-Powered Lead Management System for High-Performing Teams & Solo Entrepreneurs.
+                The Ultra-Fast AI-Assisted CRM for High-Performing Teams & Solo Entrepreneurs.
               </p>
             </div>
           </div>
@@ -1719,7 +1678,7 @@ export default function App() {
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${!onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
                   <LucideIcons.User className="w-5 h-5 mb-1.5" />
-                  <span className="text-xs font-bold block">Solo Workspace Mode</span>
+                  <span className="text-xs font-bold block">Solo CRM Mode</span>
                   <span className="text-[9px] text-zinc-500 block leading-normal mt-0.5">Streamlined format. Ideal for sole operators.</span>
                 </div>
 
@@ -1729,7 +1688,7 @@ export default function App() {
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
                   <LucideIcons.Users className="w-5 h-5 mb-1.5" />
-                  <span className="text-xs font-bold block">Team Workspace Mode</span>
+                  <span className="text-xs font-bold block">Team CRM Mode</span>
                   <span className="text-[9px] text-zinc-500 block leading-normal mt-0.5">Role allocations. Invite up to 10 agents safely.</span>
                 </div>
 
@@ -1749,7 +1708,7 @@ export default function App() {
               ) : (
                 <>
                   <LucideIcons.Layers className="w-4 h-4" />
-                  <span>Create New Workspace</span>
+                  <span>Initialize My CRM Workspace</span>
                 </>
               )}
             </button>
@@ -1824,7 +1783,7 @@ export default function App() {
     );
   }
 
-  // ACTIVE LEADPILOT WORKSPACE VIEW
+  // ACTIVE CRM FULL VIEW WORKSPACE PORTAL SCREEN
   return (
     <div id="saas-corporate-frame" className="min-h-screen bg-slate-50 flex flex-col font-sans transition-colors duration-250 relative">
       
@@ -1852,22 +1811,9 @@ export default function App() {
       )}
 
       {/* Primary Header Frame Layout */}
-      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-between shrink-0 shadow-xs relative">
-        
-        {/* LEFT: Logo and LeadPilot Branding */}
-        <div className="flex items-center gap-3 shrink-0">
-          <img
-            src="/logo.png"
-            alt="LeadPilot"
-            className="h-10 w-auto"
-          />
-          <span className="text-xl font-bold text-slate-900">
-            LeadPilot
-          </span>
-        </div>
-
-        {/* CENTER: Navigation Buttons (Hidden on mobile, shown on tablet+) */}
-        <div className="hidden md:flex flex-wrap items-center gap-2 flex-1 justify-center px-4">
+      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-center shrink-0 shadow-xs relative">
+        {/* Global Nav Elements */}
+        <div className="flex flex-wrap items-center gap-2">
           {userProfile.role === 'super_admin' ? (
             <>
               <button 
@@ -1877,7 +1823,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'super_admin_dash' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldAlert className="w-4 h-4" />
-                <span className="hidden sm:inline">Super Admin Dash</span>
+                <span>Super Admin Dash</span>
               </button>
 
               <button 
@@ -1887,7 +1833,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'checklist' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span className="hidden sm:inline">System Readiness</span>
+                <span>System Readiness</span>
               </button>
             </>
           ) : (
@@ -1900,7 +1846,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5  ${activeTab === 'home' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.LayoutDashboard className="w-4 h-4" />
-                <span className="hidden sm:inline">Dashboard</span>
+                <span>Dashboard</span>
               </button>
 
               <button 
@@ -1911,7 +1857,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'leads' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Kanban className="w-4 h-4" />
-                <span className="hidden sm:inline">Pipelines</span>
+                <span>Pipelines</span>
               </button>
 
               <button 
@@ -1922,7 +1868,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'funnel' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.PieChart className="w-4 h-4" />
-                <span className="hidden md:inline">Conversion Funnel</span>
+                <span>Conversion Funnel</span>
               </button>
 
               <button 
@@ -1933,9 +1879,10 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'business' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Flame className="w-4 h-4" />
-                <span className="hidden md:inline">Copilot & AI</span>
+                <span>Copilot & AI Tools</span>
               </button>
 
+              {/* Settings replaces Admin for Owners. Visible for Lead Allocation settings */}
               <button 
                 onClick={() => {
                   setDashboardFilter('all');
@@ -1944,7 +1891,7 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'settings' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.Settings className="w-4 h-4" />
-                <span className="hidden md:inline">Team & Settings</span>
+                <span>Team & Settings</span>
               </button>
 
               <button 
@@ -1955,29 +1902,28 @@ export default function App() {
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${activeTab === 'checklist' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-500 hover:bg-gray-100 hover:text-slate-800'}`}
               >
                 <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
-                <span className="hidden lg:inline">Readiness</span>
+                <span>Readiness Checklist</span>
               </button>
 
-              <div className="h-6 w-px bg-gray-200 mx-1 hidden md:block" />
+              <div className="h-6 w-px bg-gray-200 mx-1" />
 
+              {/* Region Toggle selector */}
               <button
                 onClick={() => {
                   const targetRegion = marketRegion === 'USA' ? 'IND' : 'USA';
                   setMarketRegion(targetRegion);
                   localStorage.setItem('leadpilot_market_region', targetRegion);
                 }}
-                className="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center hidden md:flex"
+                className="px-2.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
                 title="Switch Regional currency / format parameters"
               >
                 <span>{marketRegion === 'USA' ? '🇺🇸 USD' : '🇮🇳 INR'}</span>
               </button>
             </>
           )}
-        </div>
 
-        {/* RIGHT: Logout Button (desktop only) */}
-        <div className="hidden md:flex items-center gap-2 flex-shrink-0 min-w-fit">
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-gray-200 mx-1" />
+
           <button
             onClick={handleLogout}
             className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-colors flex items-center justify-center shrink-0"
@@ -2009,18 +1955,18 @@ export default function App() {
 
           {/* ================= tab: HOME (METRICS & ACTIVE PANELS) ================= */}
           {activeTab === 'home' && (
-            <div className="space-y-4 animate-fade-in" id="home-tab-content">
+            <div className="space-y-6 animate-fade-in" id="home-tab-content">
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-gray-150/40 shadow-sm max-h-[50px] sm:max-h-[60px] md:max-h-[70px] overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-150/40 shadow-2xs">
                 <div>
-                  <h3 className="text-xl font-bold tracking-tight text-gray-900 leading-tight">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
                     {greeting}, {userProfile.displayName}!
                   </h3>
-                  <p className="text-sm text-gray-600 mt-0.5 leading-snug"></p>
+                  <p className="text-xs text-slate-500 mt-1">Here is a diagnostics brief of your active portfolio pipelines synchronized real-time in cloud storage.</p>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(true)}
-                  className="px-2.5 py-1 sm:px-4 sm:py-2 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer whitespace-nowrap"
+                  className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer"
                 >
                   <LucideIcons.Plus className="w-4 h-4 text-indigo-400 stroke-[3]" />
                   <span>Onboard New {activeIndustry.leadLabel}</span>
@@ -2029,7 +1975,7 @@ export default function App() {
 
               {/* Follow-up Clearance banner card (matching original) */}
               {missedFollowupsCount === 0 && todayFollowupsCount === 0 && (
-                <div className="bg-emerald-50 border border-emerald-150/60 p-5 rounded-2xl" id="clean-followups-clear-banner">
+                <div className="bg-emerald-50 border border-emerald-150/60 p-4 rounded-3xl" id="clean-followups-clear-banner">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-full text-emerald-600 shrink-0">
                       <LucideIcons.CheckCircle2 className="w-5 h-5" />
@@ -2043,22 +1989,22 @@ export default function App() {
               )}
 
               {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4" id="dashboard-large-clickable-metrics">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
                 
-                {/* Card 1: Follow-ups Today */}
+                {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
                 <div 
                   onClick={() => handleDashboardFilterClick('today_followups')}
-                  className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
+                  className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-today-followups"
                 >
-                  <div className="text-amber-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <LucideIcons.Clock className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
+                  <div className="text-amber-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
                   </div>
-                  <div className="min-w-0 flex-shrink-0">
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
-                      {todayFollowupsCount}
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {meetingsCount}
                     </span>
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
                     </span>
                   </div>
@@ -2067,36 +2013,36 @@ export default function App() {
                 {/* Card 2: Missed follow-ups */}
                 <div 
                   onClick={() => handleDashboardFilterClick('missed_followups')}
-                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
+                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-missed-followups"
                 >
-                  <div className="text-red-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <LucideIcons.ShieldAlert className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
+                  <div className="text-red-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
                   </div>
-                  <div className="min-w-0 flex-shrink-0">
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
                       {missedFollowupsCount}
                     </span>
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.missedFollowupsLabel || "Expired tasks"}
                     </span>
                   </div>
                 </div>
 
-                {/* Card 3: Follow-ups Scheduled */}
+                {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
                 <div 
-                  onClick={() => handleDashboardFilterClick('scheduled_followups')}
-                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
+                  onClick={() => handleDashboardFilterClick('meetings_today')}
+                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-meetings-today"
                 >
-                  <div className="text-orange-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <LucideIcons.Calendar className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
+                  <div className="text-orange-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.Calendar className="w-6 h-6 stroke-[2.2]" />
                   </div>
-                  <div className="min-w-0 flex-shrink-0">
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
-                      {meetingsCount}
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {todayFollowupsCount}
                     </span>
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.meetingsTodayLabel || "Meetings today"}
                     </span>
                   </div>
@@ -2105,17 +2051,17 @@ export default function App() {
                 {/* Card 4: Closed deals */}
                 <div 
                   onClick={() => handleDashboardFilterClick('closed_deals')}
-                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-4 md:p-5 rounded-2xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] md:h-[140px] shadow-xs hover:shadow-md relative overflow-visible group"
+                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-closed-deals"
                 >
-                  <div className="text-emerald-500 group-hover:scale-110 transition-transform flex-shrink-0">
-                    <LucideIcons.Trophy className="w-6 h-6 md:w-7 md:h-7 stroke-[2]" />
+                  <div className="text-emerald-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
                   </div>
-                  <div className="min-w-0 flex-shrink-0">
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 block font-sans focus:outline-none leading-tight">
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
                       {closedDealsCount}
                     </span>
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-tight leading-tight block whitespace-nowrap">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.closedDealsLabel || "Closed deals"}
                     </span>
                   </div>
@@ -2124,51 +2070,51 @@ export default function App() {
               </div>
 
               {/* Section: LEAD OVERVIEW Breakdown parameters */}
-              <div className="space-y-2 pt-0" id="lead-overview-block">
-                <span className="text-xs font-semibold text-gray-600 tracking-wide block font-sans uppercase">LEAD OVERVIEW</span>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              <div className="space-y-3 pt-2" id="lead-overview-block">
+                <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   
                   {/* Total */}
                   <div 
                     onClick={() => handleDashboardFilterClick('total')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Total</span>
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{totalLeadsCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
+                    <span className="text-2xl font-black text-slate-900 mt-1">{totalLeadsCount}</span>
                   </div>
 
                   {/* Open */}
                   <div 
                     onClick={() => handleDashboardFilterClick('open')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Open</span>
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{openLeadsCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Open</span>
+                    <span className="text-2xl font-black text-slate-900 mt-1">{openLeadsCount}</span>
                   </div>
 
                   {/* Closed */}
                   <div 
                     onClick={() => handleDashboardFilterClick('closed')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Closed</span>
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{closedDealsCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Closed</span>
+                    <span className="text-2xl font-black text-slate-900 mt-1">{closedDealsCount}</span>
                   </div>
 
                   {/* Today */}
                   <div 
                     onClick={() => handleDashboardFilterClick('today')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-200/50 p-4 md:p-5 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-center h-[110px] md:h-[130px]"
+                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
-                    <span className="text-xs font-medium text-gray-700 uppercase tracking-wide block">Today</span>
-                    <span className="text-3xl md:text-4xl font-black text-gray-900 mt-1 md:mt-1.5">{todayCreatedCount}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Today</span>
+                    <span className="text-2xl font-black text-slate-900 mt-1">{todayCreatedCount}</span>
                   </div>
 
                 </div>
               </div>
 
               {/* Quick Industry Summary Card */}
-              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-5 rounded-2xl text-white relative overflow-hidden shadow-md mt-4 mb-0">
+              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-6 rounded-3xl text-white my-4 relative overflow-hidden shadow-md">
                 <div className="absolute right-0 bottom-0 select-none opacity-10 font-black text-8xl -mr-6 -mb-6">
                   {activeIndustry.leadLabel[0]}
                 </div>
@@ -2238,26 +2184,15 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Dynamic filter banner */}
-              {(dashboardFilter !== 'all' || activeFunnelStage) && (
+              {/* Dynamic selection helper note if active */}
+              {dashboardFilter !== 'all' && (
                 <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
                   <div className="flex items-center gap-2">
                     <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
-                    <span>
-                      Interactive filter active: 
-                      <strong className="font-bold text-indigo-950 uppercase ml-1">
-                        {activeFunnelStage 
-                          ? activeIndustry.stages.find(s => s.id === activeFunnelStage)?.label 
-                          : dashboardFilter.replace(/_/g, ' ')
-                        }
-                      </strong>
-                    </span>
+                    <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
                   </div>
                   <button 
-                    onClick={() => {
-                      setActiveFunnelStage(null);
-                      setDashboardFilter('all');
-                    }}
+                    onClick={() => setDashboardFilter('all')}
                     className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
                   >
                     Clear Filter
@@ -2301,43 +2236,30 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Clickable Funnel */}
+              {/* Funnel chart simulation */}
               <div className="bg-white p-6 rounded-3xl border border-gray-150/40 shadow-3xs space-y-4">
-                <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics (Click to filter)</span>
+                <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics</span>
                 <div className="space-y-4">
                   {activeIndustry.stages.map((stage, idx) => {
                     const stageLeads = currentLeads.filter(l => l.stageId === stage.id);
                     const percentOfTotal = totalLeadsCount > 0 ? (stageLeads.length / totalLeadsCount) * 100 : 0;
                     const stageValue = stageLeads.reduce((acc, lead) => acc + (lead.value || 0), 0);
-                    const isActive = activeFunnelStage === stage.id;
                     
                     return (
-                      <button
-                        key={stage.id}
-                        onClick={() => handleFunnelFilterClick(stage.id)}
-                        className={`w-full text-left space-y-1.5 p-3 rounded-lg transition-all duration-200 cursor-pointer ${
-                          isActive 
-                            ? 'ring-2 ring-indigo-500 scale-105 bg-indigo-50' 
-                            : 'hover:bg-gray-50'
-                        }`}
-                      >
+                      <div key={stage.id} className="space-y-1.5">
                         <div className="flex justify-between text-xs font-medium">
-                          <span className={`font-bold ${isActive ? 'text-indigo-900' : 'text-slate-800'}`}>
-                            {idx + 1}. {stage.label}
-                          </span>
-                          <span className={`font-bold ${isActive ? 'text-indigo-700' : 'text-slate-500'}`}>
+                          <span className="font-bold text-slate-800">{idx + 1}. {stage.label}</span>
+                          <span className="text-slate-500 font-bold">
                             {stageLeads.length} leads • {marketRegion === 'USA' ? '$' : '₹'}{stageValue.toLocaleString()}
                           </span>
                         </div>
                         <div className="w-full bg-slate-50 border border-slate-100 rounded-full h-4 relative overflow-hidden">
                           <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              isActive ? 'bg-indigo-500' : 'bg-indigo-600'
-                            }`}
+                            className="bg-indigo-600 h-full rounded-full transition-all duration-500"
                             style={{ width: `${Math.max(percentOfTotal, 3)}%` }}
                           />
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -2354,7 +2276,7 @@ export default function App() {
               <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl space-y-4">
                 <div className="space-y-2">
                   <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#10b981] bg-emerald-950/40 border border-emerald-900/30 px-3 py-1 rounded-full inline-block">
-                    🎯 Lead Management Hub
+                    🎯 CRM Business Management Hub
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
                     AI Advisor & Client Growth Ecosystem
@@ -2393,7 +2315,7 @@ export default function App() {
                       Social Growth Tool
                     </span>
                     <h4 className="text-base font-bold text-slate-900">Facebook & Instagram Public Capture Page</h4>
-                    <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into LeadPilot!</p>
+                    <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into CRM!</p>
                   </div>
 
                   <button
@@ -2419,14 +2341,12 @@ export default function App() {
               <GoogleSheetsSync 
                 config={activeIndustry}
                 leads={currentLeads}
-                marketRegion={marketRegion}
               />
 
               {/* Section C: AIPredictor Model Panel */}
               <AIPredictor 
                 config={activeIndustry} 
                 leads={currentLeads} 
-                marketRegion={marketRegion}
                 onAddSimulatedLead={async (simulatedLead) => {
                   try {
                     const leadDocRef = doc(db, 'workspaces', userWorkspace.id, 'leads', simulatedLead.id);
@@ -2507,8 +2427,8 @@ export default function App() {
                             onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
                             className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
                           >
-                            <option value="solo">Solo Workspace Mode ("Just Me")</option>
-                            <option value="team">Team Workspace Mode ("Small Team")</option>
+                            <option value="solo">Solo CRM Mode ("Just Me")</option>
+                            <option value="team">Team CRM Mode ("Small Team")</option>
                           </select>
                         </div>
 
@@ -2528,7 +2448,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in Team Workspace mode) */}
+                {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in TEAM CRM mode) */}
                 <div className="lg:col-span-2 space-y-5">
                   {userWorkspace?.mode === 'team' ? (
                     <div className="space-y-5">
@@ -2658,9 +2578,9 @@ export default function App() {
                     <div className="bg-white rounded-3xl p-8 border border-gray-150/40 text-center shadow-3xs space-y-4">
                       <LucideIcons.Users className="w-12 h-12 text-gray-300 mx-auto" />
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled in Solo mode</h4>
+                        <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled under Solo CRM</h4>
                         <p className="text-xs text-gray-450 leading-relaxed max-w-sm mx-auto mt-1">
-                          Your workspace is currently set to <strong className="text-slate-800">Solo mode</strong>. Agent tracking, security isolates, 
+                          Your workspace is currently set to <strong className="text-slate-800">Solo CRM mode</strong>. Agent tracking, security isolates, 
                           members allocations settings, and invitations controls are locked out.
                         </p>
                       </div>
@@ -2668,7 +2588,7 @@ export default function App() {
                         <button 
                           onClick={() => {
                             setEditWorkspaceMode('team');
-                            alert('Operations format set to Team Workspace. Click "Update Workspace Specs" to apply instantly.');
+                            alert('Operations format set to Team CRM. Click "Update Workspace Specs" to apply instantly.');
                           }}
                           className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-xs"
                         >
@@ -2748,151 +2668,6 @@ export default function App() {
         </span>
         <span className="tracking-tight">LeadPilot AI Workspace Engine v3 • Signed in as: <strong className="font-extrabold text-[#4f46e5]">{user.email}</strong></span>
       </footer>
-
-      {/* MOBILE BOTTOM NAVIGATION BAR (Hidden on desktop, shown on mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg">
-        <div className="flex items-center justify-around px-2 py-2.5">
-          
-          {/* Dashboard Button */}
-          <button
-            onClick={() => {
-              setDashboardFilter('all');
-              setActiveTab('home');
-              setShowMobileMore(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'home' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
-            title="Dashboard"
-          >
-            <LucideIcons.LayoutDashboard className="w-6 h-6" />
-            <span className="text-[10px] font-bold">Dashboard</span>
-          </button>
-
-          {/* Leads Button */}
-          <button
-            onClick={() => {
-              setDashboardFilter('all');
-              setActiveTab('leads');
-              setShowMobileMore(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'leads' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
-            title="Leads"
-          >
-            <LucideIcons.Kanban className="w-6 h-6" />
-            <span className="text-[10px] font-bold">Leads</span>
-          </button>
-
-          {/* Funnel Button */}
-          <button
-            onClick={() => {
-              setDashboardFilter('all');
-              setActiveTab('funnel');
-              setShowMobileMore(false);
-            }}
-            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all ${activeTab === 'funnel' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
-            title="Funnel"
-          >
-            <LucideIcons.PieChart className="w-6 h-6" />
-            <span className="text-[10px] font-bold">Funnel</span>
-          </button>
-
-          {/* More Button */}
-          <button
-            onClick={() => setShowMobileMore(!showMobileMore)}
-            className={`flex flex-col items-center gap-1 p-2.5 rounded-lg transition-all relative ${showMobileMore ? 'bg-indigo-50 text-indigo-600' : 'text-slate-500 hover:bg-slate-50'}`}
-            title="More options"
-          >
-            <LucideIcons.MoreVertical className="w-6 h-6" />
-            <span className="text-[10px] font-bold">More</span>
-          </button>
-        </div>
-
-        {/* Mobile "More" Menu */}
-        <AnimatePresence>
-          {showMobileMore && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.15 }}
-              className="absolute bottom-16 right-4 bg-white border border-gray-150 rounded-2xl shadow-xl overflow-hidden w-56"
-            >
-              <div className="divide-y divide-gray-100">
-                
-                {/* Copilot & AI */}
-                <button
-                  onClick={() => {
-                    setDashboardFilter('all');
-                    setActiveTab('business');
-                    setShowMobileMore(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'business' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
-                >
-                  <LucideIcons.Flame className="w-4 h-4" />
-                  Copilot & AI
-                </button>
-
-                {/* Team & Settings */}
-                <button
-                  onClick={() => {
-                    setDashboardFilter('all');
-                    setActiveTab('settings');
-                    setShowMobileMore(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'settings' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
-                >
-                  <LucideIcons.Settings className="w-4 h-4" />
-                  Team & Settings
-                </button>
-
-                {/* Readiness */}
-                <button
-                  onClick={() => {
-                    setDashboardFilter('all');
-                    setActiveTab('checklist');
-                    setShowMobileMore(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 transition-all ${activeTab === 'checklist' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900 hover:bg-slate-50'}`}
-                >
-                  <LucideIcons.ShieldCheck className="w-4 h-4 text-emerald-500" />
-                  Readiness
-                </button>
-
-                <div className="h-px bg-gray-100" />
-
-                {/* Region Selector */}
-                <button
-                  onClick={() => {
-                    const targetRegion = marketRegion === 'USA' ? 'IND' : 'USA';
-                    setMarketRegion(targetRegion);
-                    localStorage.setItem('leadpilot_market_region', targetRegion);
-                  }}
-                  className="w-full px-4 py-3 text-left text-sm font-bold flex items-center justify-between text-slate-900 hover:bg-slate-50 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <LucideIcons.Globe className="w-4 h-4" />
-                    <span>{marketRegion === 'USA' ? '🇺🇸 USD' : '🇮🇳 INR'}</span>
-                  </div>
-                  <span className="text-xs text-slate-500">Switch</span>
-                </button>
-
-                <div className="h-px bg-gray-100" />
-
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left text-sm font-bold flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
-                >
-                  <LucideIcons.LogOut className="w-4 h-4" />
-                  Logout
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
-
-      {/* Spacer for mobile bottom navigation */}
-      <div className="md:hidden h-24" />
 
     </div>
   );

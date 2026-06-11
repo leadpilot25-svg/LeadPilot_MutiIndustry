@@ -1,169 +1,473 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * Phase 8: Lead Table Redesign
- * Professional SaaS-style table with improved spacing, hierarchy, and mobile responsiveness
  */
 
-import React, { useState } from 'react';
-import { Lead, IndustryConfig } from '../types';
+import React, { useState, useMemo } from 'react';
+import { IndustryConfig, Lead } from '../types';
 import * as LucideIcons from 'lucide-react';
 
+type SortField = 'name' | 'phone' | 'value' | 'createdAt' | 'nextFollowUpDate';
+type SortOrder = 'asc' | 'desc';
+
 interface LeadTableProps {
-  leads: Lead[];
   config: IndustryConfig;
+  leads: Lead[];
   onSelectLead: (lead: Lead) => void;
   onDeleteLead: (leadId: string) => void;
-  activeFilter?: string;
+  searchQuery?: string;
+  marketRegion?: 'USA' | 'IND';
+  onAddMultiLeads?: (leads: Lead[]) => void;
+  dashboardFilter?: string;
+  currentView?: 'kanban' | 'table';
+  onViewChange?: (view: 'kanban' | 'table') => void;
 }
 
-export default function LeadTable({ leads, config, onSelectLead, onDeleteLead, activeFilter }: LeadTableProps) {
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
+export default function LeadTable({
+  config,
+  leads,
+  onSelectLead,
+  onDeleteLead,
+  searchQuery = '',
+  marketRegion = 'USA',
+  onAddMultiLeads,
+  dashboardFilter
+}: LeadTableProps) {
+  const [sortField, setSortField] = useState<SortField>('createdAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [csvInput, setCsvInput] = useState('');
+  const [showCsvImport, setShowCsvImport] = useState(false);
 
-  // Get status color styling
-  const getStatusColor = (status: string) => {
-    const statusMap: Record<string, string> = {
-      'active': 'bg-green-50 text-green-700 border border-green-200',
-      'pending': 'bg-amber-50 text-amber-700 border border-amber-200',
-      'closed': 'bg-gray-50 text-gray-700 border border-gray-200',
-      'lead': 'bg-indigo-50 text-indigo-700 border border-indigo-200',
-      'prospect': 'bg-blue-50 text-blue-700 border border-blue-200',
-    };
-    return statusMap[status.toLowerCase()] || 'bg-gray-50 text-gray-700 border border-gray-200';
+  // ✅ SAFE: Filter with null checks for all properties
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      // Safe property access with defaults - NEVER call methods on undefined
+      const name = (lead.name || '').toLowerCase();
+      const phone = (lead.phone || '').toLowerCase();
+      const email = (lead.email || '').toLowerCase();
+      const source = (lead.source || '').toLowerCase();
+      const status = (lead.status || '').toLowerCase();
+      const query = (searchQuery || '').toLowerCase();
+
+      // Search across multiple fields safely
+      const matchesSearch =
+        name.includes(query) ||
+        phone.includes(query) ||
+        email.includes(query) ||
+        source.includes(query);
+
+      return matchesSearch;
+    });
+  }, [leads, searchQuery]);
+
+  // ✅ SAFE: Sort with null-safe comparisons
+  const sortedLeads = useMemo(() => {
+    const sorted = [...filteredLeads].sort((a, b) => {
+      let aVal: any = '';
+      let bVal: any = '';
+
+      switch (sortField) {
+        case 'name':
+          aVal = (a.name || '').toLowerCase();
+          bVal = (b.name || '').toLowerCase();
+          break;
+        case 'phone':
+          aVal = (a.phone || '').toLowerCase();
+          bVal = (b.phone || '').toLowerCase();
+          break;
+        case 'value':
+          aVal = a.value || 0;
+          bVal = b.value || 0;
+          break;
+        case 'createdAt':
+          aVal = a.createdAt || '';
+          bVal = b.createdAt || '';
+          break;
+        case 'nextFollowUpDate':
+          aVal = a.customFields?.nextFollowUpDate || '';
+          bVal = b.customFields?.nextFollowUpDate || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [filteredLeads, sortField, sortOrder]);
+
+  // ✅ SAFE: Handle CSV import with null-safe parsing
+  const handleCsvImport = () => {
+    if (!csvInput.trim() || !onAddMultiLeads) return;
+
+    try {
+      const lines = csvInput.trim().split('\n');
+      if (lines.length < 2) {
+        alert('CSV must have header row and at least one data row');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const newLeads: Lead[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length < 2) continue;
+
+        const lead: Lead = {
+          id: `import-${Date.now()}-${i}`,
+          name: values[headers.indexOf('name')] || `Lead ${i}`,
+          phone: values[headers.indexOf('phone')] || '',
+          email: values[headers.indexOf('email')] || '',
+          source: values[headers.indexOf('source')] || 'manual',
+          status: values[headers.indexOf('status')] || 'active',
+          stageId: config.stages[0]?.id || 'stage_1',
+          value: parseInt(values[headers.indexOf('value')] || '0', 10) || 0,
+          createdAt: new Date().toISOString().split('T')[0],
+          lastContacted: new Date().toISOString().split('T')[0],
+          notes: [],
+          tasks: [],
+          files: [],
+          customFields: {
+            followUpStage: 0,
+            nextFollowUpDate: ''
+          },
+          assignedTo: '',
+          assignedToName: ''
+        };
+
+        newLeads.push(lead);
+      }
+
+      if (newLeads.length > 0) {
+        onAddMultiLeads(newLeads);
+        setCsvInput('');
+        setShowCsvImport(false);
+      } else {
+        alert('No valid leads parsed from CSV');
+      }
+    } catch (err) {
+      alert(`CSV Parse Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   };
 
-  // Format currency
-  const formatValue = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
-    }).format(value);
+  // ✅ SAFE: Get status color with null-safe access
+  const getStatusColor = (status: string | undefined) => {
+    const safeStatus = (status || '').toLowerCase();
+    
+    switch (safeStatus) {
+      case 'active':
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'won':
+      case 'closed':
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
+      case 'lost':
+        return 'bg-red-50 text-red-700 border border-red-200';
+      case 'paused':
+        return 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
+    }
   };
 
-  // Filter leads based on activeFilter
-  const filteredLeads = leads.filter(lead => {
-    if (!activeFilter) return true;
-    if (activeFilter === 'total') return true;
-    if (activeFilter === 'open') return lead.status === 'active';
-    if (activeFilter === 'closed') return lead.status === 'closed';
-    if (activeFilter === 'today') return new Date(lead.createdAt).toDateString() === new Date().toDateString();
-    return true;
-  });
+  // Quick action handlers
+  const handleCall = (e: React.MouseEvent, phone: string | undefined) => {
+    e.stopPropagation();
+    if (!phone) {
+      alert('No phone number available');
+      return;
+    }
+    window.location.href = `tel:${phone}`;
+  };
+
+  const handleWhatsApp = (e: React.MouseEvent, phone: string | undefined) => {
+    e.stopPropagation();
+    if (!phone) {
+      alert('No phone number available');
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, '');
+    window.open(`https://wa.me/${cleanPhone}`, '_blank');
+  };
+
+  const handleSMS = (e: React.MouseEvent, phone: string | undefined) => {
+    e.stopPropagation();
+    if (!phone) {
+      alert('No phone number available');
+      return;
+    }
+    window.location.href = `sms:${phone}`;
+  };
+
+  const handleEmail = (e: React.MouseEvent, email: string | undefined) => {
+    e.stopPropagation();
+    if (!email) {
+      alert('No email address available');
+      return;
+    }
+    window.location.href = `mailto:${email}`;
+  };
+
+  const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
+    e.stopPropagation();
+    onSelectLead(lead);
+  };
 
   return (
-    <div className="w-full">
-      {/* Table Container */}
-      <div className="w-full overflow-x-auto rounded-xl border border-gray-200 shadow-xs">
-        <table className="w-full border-collapse">
-          {/* Table Header - Sticky */}
-          <thead className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="space-y-4">
+      {/* CSV Import Controls */}
+      {onAddMultiLeads && (
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={() => setShowCsvImport(!showCsvImport)}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+          >
+            <LucideIcons.Upload className="w-4 h-4" />
+            <span>Bulk Import CSV</span>
+          </button>
+        </div>
+      )}
+
+      {/* CSV Import Form */}
+      {showCsvImport && onAddMultiLeads && (
+        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-3">
+          <div>
+            <label className="text-xs font-bold text-emerald-900 block mb-2">
+              Paste CSV (name, phone, email, source, status, value)
+            </label>
+            <textarea
+              value={csvInput}
+              onChange={(e) => setCsvInput(e.target.value)}
+              placeholder="name,phone,email,source,status,value&#10;John Doe,555-1234,john@example.com,website,active,5000"
+              className="w-full text-xs border border-emerald-200 rounded-xl p-3 font-mono focus:outline-none focus:border-emerald-500 h-24"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleCsvImport}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold"
+            >
+              Import
+            </button>
+            <button
+              onClick={() => setShowCsvImport(false)}
+              className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-bold"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DESKTOP TABLE VIEW (md and up) ===== */}
+      <div className="hidden md:block overflow-x-auto bg-white rounded-3xl border border-gray-150/40 shadow-3xs">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50/50 border-b border-gray-150">
             <tr>
-              <th className="px-3 md:px-4 py-3 text-xs font-semibold text-gray-700 text-left tracking-wide">
-                {config.leadLabel}
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => {
+                    setSortField('name');
+                    setSortOrder(sortField === 'name' && sortOrder === 'asc' ? 'desc' : 'asc');
+                  }}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                >
+                  Name
+                  {sortField === 'name' && (
+                    <LucideIcons.ChevronDown
+                      className={`w-3 h-3 transition-transform ${sortOrder === 'desc' ? '' : 'rotate-180'}`}
+                    />
+                  )}
+                </button>
               </th>
-              <th className="hidden md:table-cell px-3 md:px-4 py-3 text-xs font-semibold text-gray-700 text-left tracking-wide">
-                Status
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => {
+                    setSortField('phone');
+                    setSortOrder(sortField === 'phone' && sortOrder === 'asc' ? 'desc' : 'asc');
+                  }}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                >
+                  Phone
+                  {sortField === 'phone' && (
+                    <LucideIcons.ChevronDown
+                      className={`w-3 h-3 transition-transform ${sortOrder === 'desc' ? '' : 'rotate-180'}`}
+                    />
+                  )}
+                </button>
               </th>
-              <th className="hidden lg:table-cell px-3 md:px-4 py-3 text-xs font-semibold text-gray-700 text-left tracking-wide">
-                {config.valueLabel}
+              <th className="px-4 py-3 text-left">
+                <span className="text-xs font-bold text-slate-700">Email</span>
               </th>
-              <th className="hidden lg:table-cell px-3 md:px-4 py-3 text-xs font-semibold text-gray-700 text-left tracking-wide">
-                Source
+              <th className="px-4 py-3 text-left">
+                <span className="text-xs font-bold text-slate-700">Status</span>
               </th>
-              <th className="px-3 md:px-4 py-3 text-xs font-semibold text-gray-700 text-right tracking-wide">
-                Actions
+              <th className="px-4 py-3 text-left">
+                <span className="text-xs font-bold text-slate-700">Source</span>
+              </th>
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => {
+                    setSortField('nextFollowUpDate');
+                    setSortOrder(sortField === 'nextFollowUpDate' && sortOrder === 'asc' ? 'desc' : 'asc');
+                  }}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                >
+                  Next Follow-up
+                  {sortField === 'nextFollowUpDate' && (
+                    <LucideIcons.ChevronDown
+                      className={`w-3 h-3 transition-transform ${sortOrder === 'desc' ? '' : 'rotate-180'}`}
+                    />
+                  )}
+                </button>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <span className="text-xs font-bold text-slate-700">Quick Actions</span>
               </th>
             </tr>
           </thead>
-
-          {/* Table Body */}
-          <tbody>
-            {filteredLeads.length === 0 ? (
+          <tbody className="divide-y divide-gray-150">
+            {sortedLeads.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 md:px-4 py-8 md:py-12 text-center">
-                  <div className="flex flex-col items-center justify-center">
-                    <LucideIcons.InboxIcon className="w-12 h-12 text-gray-300 mb-3" />
-                    <p className="text-sm text-gray-500">No leads found</p>
-                    <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or create a new lead</p>
-                  </div>
+                <td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-500">
+                  No leads found. Try adjusting your search or filters.
                 </td>
               </tr>
             ) : (
-              filteredLeads.map((lead) => (
+              sortedLeads.map((lead) => (
                 <tr
                   key={lead.id}
-                  className={`border-b border-gray-200 hover:bg-gray-50 transition-all duration-150 cursor-pointer ${
-                    selectedLeadId === lead.id ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedLeadId(lead.id);
-                    onSelectLead(lead);
-                  }}
+                  className="hover:bg-slate-50 transition-colors"
                 >
-                  {/* Lead Name - Primary Column */}
-                  <td className="px-3 md:px-4 py-3 md:py-4">
-                    <div className="flex flex-col">
-                      <div className="font-semibold text-sm text-gray-900 leading-snug">
-                        {lead.name}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5 font-normal">
-                        {lead.email}
-                      </div>
-                      <div className="text-xs text-gray-500 font-normal hidden md:block mt-0.5">
-                        {lead.phone}
-                      </div>
-                      {/* Mobile Status Badge */}
-                      <div className="md:hidden mt-1.5">
-                        <span className={`inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-md ${getStatusColor(lead.status)}`}>
-                          {lead.status}
-                        </span>
-                      </div>
-                    </div>
+                  {/* Name Column */}
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => onSelectLead(lead)}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-left"
+                    >
+                      {lead.name || 'Unnamed Lead'}
+                    </button>
                   </td>
 
-                  {/* Status Badge - Desktop Only */}
-                  <td className="hidden md:table-cell px-3 md:px-4 py-3 md:py-4">
-                    <span className={`inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-md ${getStatusColor(lead.status)}`}>
-                      {lead.status}
+                  {/* Phone Column */}
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">
+                      {lead.phone || '-'}
                     </span>
                   </td>
 
-                  {/* Value */}
-                  <td className="hidden lg:table-cell px-3 md:px-4 py-3 md:py-4 text-sm font-semibold text-gray-900 font-mono">
-                    {formatValue(lead.value)}
+                  {/* Email Column */}
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">
+                      {lead.email ? (
+                        <a
+                          href={`mailto:${lead.email}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-indigo-600 hover:underline"
+                        >
+                          {lead.email}
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </span>
                   </td>
 
-                  {/* Source */}
-                  <td className="hidden lg:table-cell px-3 md:px-4 py-3 md:py-4 text-sm text-gray-600">
-                    {lead.source}
+                  {/* Status Column */}
+                  <td className="px-4 py-3">
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ${getStatusColor(
+                        lead.status
+                      )}`}
+                    >
+                      {lead.status ? (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)) : 'Unknown'}
+                    </span>
                   </td>
 
-                  {/* Actions */}
-                  <td className="px-3 md:px-4 py-3 md:py-4 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+                  {/* Source Column */}
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">
+                      {lead.source || '-'}
+                    </span>
+                  </td>
+
+                  {/* Next Follow-up Date Column */}
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-600">
+                      {lead.customFields?.nextFollowUpDate ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-200">
+                          <LucideIcons.Calendar className="w-3 h-3" />
+                          {lead.customFields.nextFollowUpDate}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </span>
+                  </td>
+
+                  {/* Quick Actions Column */}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-1.5 relative">
+                      {/* Call Button */}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectLead(lead);
-                        }}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600 hover:text-gray-900"
-                        title="View details"
+                        onClick={(e) => handleCall(e, lead.phone)}
+                        className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg border border-transparent hover:border-green-200 transition-all"
+                        title="Call lead"
                       >
-                        <LucideIcons.Eye className="w-5 h-5" />
+                        <LucideIcons.Phone className="w-4 h-4" />
                       </button>
+
+                      {/* WhatsApp Button */}
+                      <button
+                        onClick={(e) => handleWhatsApp(e, lead.phone)}
+                        className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-transparent hover:border-emerald-200 transition-all"
+                        title="Send WhatsApp"
+                      >
+                        <LucideIcons.MessageCircle className="w-4 h-4" />
+                      </button>
+
+                      {/* SMS Button */}
+                      <button
+                        onClick={(e) => handleSMS(e, lead.phone)}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-200 transition-all"
+                        title="Send SMS"
+                      >
+                        <LucideIcons.Mail className="w-4 h-4" />
+                      </button>
+
+                      {/* Email Button */}
+                      <button
+                        onClick={(e) => handleEmail(e, lead.email)}
+                        className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg border border-transparent hover:border-purple-200 transition-all"
+                        title="Send email"
+                      >
+                        <LucideIcons.Send className="w-4 h-4" />
+                      </button>
+
+                      {/* View Details Button */}
+                      <button
+                        onClick={(e) => handleViewDetails(e, lead)}
+                        className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-transparent hover:border-indigo-200 transition-all"
+                        title="View full details"
+                      >
+                        <LucideIcons.Eye className="w-4 h-4" />
+                      </button>
+
+                      {/* Delete Button */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (confirm(`Delete ${lead.name}?`)) {
+                          if (confirm('Delete this lead?')) {
                             onDeleteLead(lead.id);
                           }
                         }}
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors text-gray-600 hover:text-red-600"
+                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg border border-transparent hover:border-red-200 transition-all"
                         title="Delete lead"
                       >
-                        <LucideIcons.Trash2 className="w-5 h-5" />
+                        <LucideIcons.Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -174,11 +478,165 @@ export default function LeadTable({ leads, config, onSelectLead, onDeleteLead, a
         </table>
       </div>
 
-      {/* Table Footer - Lead Count */}
-      <div className="mt-3 flex items-center justify-between px-3 md:px-4 py-2">
-        <p className="text-xs text-gray-600 font-medium">
-          Showing <span className="font-semibold text-gray-900">{filteredLeads.length}</span> of <span className="font-semibold text-gray-900">{leads.length}</span> leads
-        </p>
+      {/* ===== MOBILE CARD VIEW (below md) ===== */}
+      <div className="md:hidden space-y-3">
+        {sortedLeads.length === 0 ? (
+          <div className="text-center text-xs text-gray-500 py-8">
+            No leads found. Try adjusting your search or filters.
+          </div>
+        ) : (
+          sortedLeads.map((lead) => (
+            <div
+              key={lead.id}
+              className="bg-white border border-gray-150/40 rounded-2xl p-4 shadow-2xs space-y-3"
+            >
+              {/* Lead Info Section */}
+              <div className="space-y-2">
+                {/* Name */}
+                <button
+                  onClick={() => onSelectLead(lead)}
+                  className="text-sm font-bold text-indigo-600 hover:text-indigo-800 hover:underline text-left w-full"
+                >
+                  {lead.name || 'Unnamed Lead'}
+                </button>
+
+                {/* Phone with icon */}
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <LucideIcons.Phone className="w-4 h-4 text-gray-400" />
+                  <span>{lead.phone || '-'}</span>
+                </div>
+
+                {/* Email with icon */}
+                <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <LucideIcons.Mail className="w-4 h-4 text-gray-400" />
+                  {lead.email ? (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-indigo-600 hover:underline break-all"
+                    >
+                      {lead.email}
+                    </a>
+                  ) : (
+                    <span>-</span>
+                  )}
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Status:</span>
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${getStatusColor(
+                      lead.status
+                    )}`}
+                  >
+                    {lead.status ? (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)) : 'Unknown'}
+                  </span>
+                </div>
+
+                {/* Next Follow-up Date */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Follow-up:</span>
+                  {lead.customFields?.nextFollowUpDate ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 text-xs font-semibold">
+                      <LucideIcons.Calendar className="w-3 h-3" />
+                      {lead.customFields.nextFollowUpDate}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-150" />
+
+              {/* Quick Actions Section */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block">Actions</span>
+
+                {/* Action Buttons Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Call Button */}
+                  <button
+                    onClick={(e) => handleCall(e, lead.phone)}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-green-50 hover:bg-green-100 text-green-600 border border-green-200 rounded-lg transition-all active:scale-95"
+                    title="Call lead"
+                  >
+                    <LucideIcons.Phone className="w-4 h-4" />
+                    <span className="text-xs font-bold">Call</span>
+                  </button>
+
+                  {/* WhatsApp Button */}
+                  <button
+                    onClick={(e) => handleWhatsApp(e, lead.phone)}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-lg transition-all active:scale-95"
+                    title="Send WhatsApp"
+                  >
+                    <LucideIcons.MessageCircle className="w-4 h-4" />
+                    <span className="text-xs font-bold">WhatsApp</span>
+                  </button>
+
+                  {/* SMS Button */}
+                  <button
+                    onClick={(e) => handleSMS(e, lead.phone)}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg transition-all active:scale-95"
+                    title="Send SMS"
+                  >
+                    <LucideIcons.MessageSquare className="w-4 h-4" />
+                    <span className="text-xs font-bold">SMS</span>
+                  </button>
+
+                  {/* Email Button */}
+                  <button
+                    onClick={(e) => handleEmail(e, lead.email)}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 rounded-lg transition-all active:scale-95"
+                    title="Send email"
+                  >
+                    <LucideIcons.Send className="w-4 h-4" />
+                    <span className="text-xs font-bold">Email</span>
+                  </button>
+                </div>
+
+                {/* Full Width Buttons Row */}
+                <div className="grid grid-cols-2 gap-2">
+                  {/* View Details Button */}
+                  <button
+                    onClick={(e) => handleViewDetails(e, lead)}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 rounded-lg transition-all active:scale-95"
+                    title="View full details"
+                  >
+                    <LucideIcons.Eye className="w-4 h-4" />
+                    <span className="text-xs font-bold">Details</span>
+                  </button>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm('Delete this lead?')) {
+                        onDeleteLead(lead.id);
+                      }
+                    }}
+                    className="flex items-center justify-center gap-1.5 p-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg transition-all active:scale-95"
+                    title="Delete lead"
+                  >
+                    <LucideIcons.Trash2 className="w-4 h-4" />
+                    <span className="text-xs font-bold">Delete</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Summary */}
+      <div className="text-xs text-gray-500 px-4 md:px-0">
+        Showing {sortedLeads.length} of {leads.length} leads
+        {dashboardFilter && dashboardFilter !== 'all' && (
+          <span> • Filter: <strong>{dashboardFilter.replace(/_/g, ' ').toUpperCase()}</strong></span>
+        )}
       </div>
     </div>
   );

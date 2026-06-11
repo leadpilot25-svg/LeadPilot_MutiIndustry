@@ -1,369 +1,365 @@
+/**
+ * PublicLeadCaptureForm Component
+ * Production-ready public-facing lead intake form
+ * Captures leads from external sources and integrates with Firestore
+ */
+
 import React, { useState } from 'react';
-import { Tenant, Lead, IndustryConfig, PipelineStage } from '../types';
-import { INDUSTRY_CONFIGS } from '../constants/industries';
+import { Lead, Tenant } from '../types';
 import * as LucideIcons from 'lucide-react';
 
 interface PublicLeadCaptureFormProps {
-  tenantId: string | boolean;
+  tenantId: string;
   tenants: Tenant[];
-  onAddPublicLead: (tenantId: string, lead: Lead) => void;
+  onAddPublicLead: (tenantId: string, lead: Lead) => Promise<void>;
 }
 
-export default function PublicLeadCaptureForm({ tenantId, tenants, onAddPublicLead }: PublicLeadCaptureFormProps) {
-  // Gracefully render dynamic session loader if tenants profiles have not finished initializing on mount
-  if (!tenants || tenants.length === 0) {
+export default function PublicLeadCaptureForm({
+  tenantId,
+  tenants,
+  onAddPublicLead
+}: PublicLeadCaptureFormProps) {
+  const activeTenant = tenants.find(t => t.id === tenantId);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    source: 'public_form',
+    value: 0,
+    notes: '',
+    stageId: 'stage_1'
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    if (formData.phone && !/^[\d\s\-\+\(\)]+$/.test(formData.phone)) {
+      newErrors.phone = 'Invalid phone format';
+    }
+
+    if (formData.value < 0) {
+      newErrors.value = 'Value cannot be negative';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'value' ? parseFloat(value) || 0 : value
+    }));
+
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSuccessMessage('');
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      const newLead: Lead = {
+        id: `public-lead-${Date.now()}`,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company.trim(),
+        source: 'public_form',
+        sourceDisplay: 'Public Form',
+        status: 'active',
+        stageId: formData.stageId || 'stage_1',
+        value: formData.value,
+        createdAt: today,
+        lastContacted: today,
+        notes: formData.notes.trim() ? [
+          {
+            id: `note-${Date.now()}`,
+            content: `Public form submission: ${formData.notes.trim()}`,
+            createdAt: today,
+            author: 'Public Form'
+          }
+        ] : [],
+        tasks: [
+          {
+            id: `task-${Date.now()}-1`,
+            title: 'Follow up with public form lead',
+            completed: false
+          }
+        ],
+        files: [],
+        customFields: {
+          nextFollowUpDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          followUpStage: 1
+        },
+        assignedTo: '',
+        assignedToName: ''
+      };
+
+      await onAddPublicLead(tenantId, newLead);
+
+      setSuccessMessage('✅ Thank you! Your inquiry has been received. We will contact you soon.');
+
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        source: 'public_form',
+        value: 0,
+        notes: '',
+        stageId: 'stage_1'
+      });
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+    } catch (err) {
+      console.error('Failed to submit public lead:', err);
+      setErrors({
+        submit: `Failed to submit form. Please try again. ${err instanceof Error ? err.message : ''}`
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!activeTenant) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
-          <LucideIcons.Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
-          <p className="text-xs font-mono text-slate-400">Loading secure workspace session...</p>
+      <div className="p-8 text-center space-y-3">
+        <div className="p-3 bg-red-100 text-red-600 rounded-full w-12 h-12 mx-auto flex items-center justify-center">
+          <LucideIcons.AlertCircle className="w-6 h-6" />
         </div>
+        <h4 className="font-bold text-slate-950">Invalid Workspace</h4>
+        <p className="text-xs text-slate-500">Unable to load the capture form. Please try again later.</p>
       </div>
     );
   }
 
-  // Resolve actual active tenant for branding
-  const targetTenantId = (typeof tenantId === 'string' && tenantId !== 'true') ? tenantId : tenants[0]?.id || 't-real-estate';
-  const tenant = tenants.find(t => t.id === targetTenantId) || tenants[0];
-  const industry = INDUSTRY_CONFIGS.find(i => i.id === tenant.industryId) || INDUSTRY_CONFIGS[0];
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [message, setMessage] = useState('');
-  const [value, setValue] = useState<number | ''>('');
-  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
-  
-  // Statuses
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
- 
-  const handleCustomFieldChange = (key: string, val: any) => {
-    setCustomFieldValues(prev => ({
-      ...prev,
-      [key]: val
-    }));
-  };
- 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
- 
-    if (!name.trim()) {
-      setErrorMsg("Please provide your full name.");
-      return;
-    }
-    if (!phone.trim()) {
-      setErrorMsg("Please provide your Phone Number.");
-      return;
-    }
- 
-    setIsLoading(true);
- 
-    try {
-      // Create new inbound lead object
-      const newLead: Lead = {
-        id: `lead-public-${Date.now()}`,
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        source: 'Website',
-        stageId: industry.stages[0]?.id || 'new_inquiry',
-        createdAt: new Date().toISOString().split('T')[0],
-        lastContacted: new Date().toISOString().split('T')[0],
-        status: 'active',
-        value: typeof value === 'number' ? value : 15000, // Default estimated value
-        customFields: {
-          ...customFieldValues
-        },
-        notes: [
-          {
-            id: `note-inbound-${Date.now()}`,
-            content: `✨ Leads captured securely via dynamic Public Intake Form of ${tenant.company_name}.`,
-            createdAt: new Date().toISOString().split('T')[0],
-            author: 'LeadPilot Inbound Bot'
-          },
-          ...(message.trim() ? [{
-            id: `note-msg-${Date.now()}`,
-            content: `Message: ${message.trim()}`,
-            createdAt: new Date().toISOString().split('T')[0],
-            author: 'Lead'
-          }] : [])
-        ],
-        tasks: [
-          {
-            id: `task-inbound-${Date.now()}`,
-            title: `Review inbound intake details from ${name.trim()}`,
-            completed: false
-          }
-        ]
-      };
- 
-      // Push to corporate database
-      onAddPublicLead(tenant.id, newLead);
- 
-      setTimeout(() => {
-        setIsLoading(false);
-        setIsSubmitted(true);
-      }, 1000);
- 
-    } catch (err: any) {
-      setIsLoading(false);
-      setErrorMsg("Something went wrong with state persistence. Try again shortly!");
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center justify-center p-4 selection:bg-indigo-600 selection:text-white" id="public-lead-form-outer">
-      
-      {/* Decorative ambient background accents */}
-      <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-indigo-900/10 to-transparent pointer-events-none" />
+    <div className="w-full space-y-6 font-sans">
+      <div className="space-y-2 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-2xl">{activeTenant.logoEmoji}</span>
+          <h1 className="text-xl font-bold text-slate-900">{activeTenant.company_name}</h1>
+        </div>
+        <p className="text-xs text-slate-500">Get in touch with us - we'll respond within 24 hours</p>
+      </div>
 
-      <div className="w-full max-w-lg bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6" id="public-form-container">
-        
-        {/* State 1: Submitted Success state */}
-        {isSubmitted ? (
-          <div className="text-center py-8 space-y-4 animate-fade-in" id="submission-success-view">
-            <div className="w-16 h-16 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-              <LucideIcons.CheckCircle2 className="w-8 h-8" />
-            </div>
-            
-            <span className="text-[10px] font-bold tracking-widest text-emerald-400 font-mono uppercase bg-emerald-950/40 border border-emerald-900 px-3 py-1 rounded-full">
-              SECURELY REGISTERED
-            </span>
-            
-            <h3 className="text-2xl font-bold tracking-tight text-white mt-2">
-              All set, {name}!
-            </h3>
-            
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm mx-auto">
-              Your inquiry has been logged instantly in the client system of <span className="text-indigo-400 font-bold">{tenant.company_name}</span>. An advisor will contact you shortly via email or phone!
-            </p>
+      {successMessage && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+          <p className="text-sm text-emerald-900 font-medium">{successMessage}</p>
+        </div>
+      )}
 
-            <div className="pt-6 border-t border-slate-900/60 flex flex-col gap-2.5">
-              <button
-                onClick={() => {
-                  setIsSubmitted(false);
-                  setName('');
-                  setEmail('');
-                  setPhone('');
-                  setMessage('');
-                  setValue('');
-                  setCustomFieldValues({});
-                }}
-                className="w-full px-5 py-2.5 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-xl text-xs font-semibold text-slate-300 transition-all border border-slate-700 cursor-pointer"
-              >
-                Submit another inquiry
-              </button>
-
-              <button
-                onClick={() => {
-                  window.location.href = window.location.origin;
-                }}
-                className="w-full px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 hover:text-white rounded-xl text-xs font-extrabold text-white transition-all border border-indigo-700 shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <LucideIcons.LayoutDashboard className="w-4 h-4 text-indigo-250" />
-                <span>Go to CRM Dashboard Control Console</span>
-              </button>
-              
-              <span className="text-[9px] text-slate-600 font-mono text-center mt-2">
-                Powered securely by LeadPilot CRM Engine
-              </span>
-            </div>
-          </div>
-        ) : (
-          /* State 2: Main Intake Input Form */
-          <div className="space-y-6 animate-fade-in">
-            
-            {/* Form Header branding */}
-            <div className="text-center space-y-2 pb-4 border-b border-slate-900">
-              <div className="text-3xl mb-1">{tenant.logoEmoji || '💼'}</div>
-              <h2 className="text-xl font-bold text-white tracking-tight">{tenant.company_name}</h2>
-              <p className="text-xs text-indigo-400 font-mono tracking-wide uppercase">{industry.tagline}</p>
-              <p className="text-xs text-slate-400">Please provide your details below to submit your inquiry or book-in with our team.</p>
-            </div>
-
-            {errorMsg && (
-              <div className="p-3 bg-red-950/30 border border-red-500/30 text-red-300 text-xs rounded-xl font-medium flex items-center gap-2 animate-pulse">
-                <LucideIcons.AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4 text-left">
-              
-              {/* Name */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                  Full Name <span className="text-indigo-400">*</span>
-                </label>
-                <div className="relative">
-                  <LucideIcons.User className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder="Enter your full name"
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Direct Grid Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Email */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <LucideIcons.Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@domain.com"
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Phone */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                    Phone Number <span className="text-indigo-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <LucideIcons.Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                      placeholder="+1 (555) 000-0000"
-                      className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Message / Message Notes */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                  Message / Notes
-                </label>
-                <div className="relative">
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Enter any questions or requirements..."
-                    rows={3}
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-500 transition-all focus:outline-none resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Estimated Budget / Value */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                  🎨 Estimated Budget / Value ({industry.valueLabel})
-                </label>
-                <div className="relative">
-                  <span className="text-slate-500 absolute left-3.5 top-3 text-xs font-mono font-bold">$</span>
-                  <input
-                    type="number"
-                    value={value}
-                    onChange={(e) => setValue(e.target.value ? Number(e.target.value) : '')}
-                    placeholder="E.g. 50000"
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 pl-10 pr-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Dynamic industry-specific custom fields checklist */}
-              <div className="space-y-4 pt-2 mt-2 border-t border-slate-900">
-                <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-indigo-400 block">
-                  📋 Specific Terminology Preference Profile
-                </span>
-                
-                <div className="space-y-3.5">
-                  {industry.customFields.map((field) => {
-                    return (
-                      <div key={field.key} className="space-y-1">
-                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                          {field.label} {field.required && <span className="text-indigo-400">*</span>}
-                        </label>
-
-                        {field.type === 'select' ? (
-                          <select
-                            value={customFieldValues[field.key] || ''}
-                            onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all focus:outline-none"
-                          >
-                            <option value="">-- Select option --</option>
-                            {field.options?.map((opt) => (
-                              <option key={opt} value={opt}>{opt}</option>
-                            ))}
-                          </select>
-                        ) : field.type === 'boolean' ? (
-                          <select
-                            value={customFieldValues[field.key] || ''}
-                            onChange={(e) => handleCustomFieldChange(field.key, e.target.value === 'true')}
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all focus:outline-none"
-                          >
-                            <option value="">-- Choose status --</option>
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                          </select>
-                        ) : (
-                          <input
-                            type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
-                            value={customFieldValues[field.key] || ''}
-                            placeholder={field.placeholder || `Provide details...`}
-                            onChange={(e) => handleCustomFieldChange(field.key, field.type === 'number' ? Number(e.target.value) : e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-600 transition-all"
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-xl text-xs tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
-                >
-                  {isLoading ? (
-                    <>
-                      <LucideIcons.Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Transmitting Inquiry to Advisor...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LucideIcons.Send className="w-4 h-4 text-indigo-200" />
-                      <span>Submit Secure Application Form</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-            </form>
-
-            <div className="pt-4 border-t border-slate-900/60 text-center">
-              <span className="text-[10px] text-slate-600 font-sans tracking-wide block">
-                🔒 GDPR Standard Encrypted Secure Form
-              </span>
-            </div>
-
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {errors.submit && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <p className="text-sm text-red-900 font-medium">{errors.submit}</p>
           </div>
         )}
 
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">
+            Full Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="John Smith"
+            className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+              errors.name
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-slate-200 bg-white focus:border-indigo-500'
+            }`}
+          />
+          {errors.name && (
+            <p className="text-xs text-red-600 font-medium flex items-center gap-1">
+              <LucideIcons.AlertCircle className="w-3 h-3" />
+              {errors.name}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">
+            Email Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="john@example.com"
+            className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+              errors.email
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-slate-200 bg-white focus:border-indigo-500'
+            }`}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-600 font-medium flex items-center gap-1">
+              <LucideIcons.AlertCircle className="w-3 h-3" />
+              {errors.email}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">Phone Number</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            placeholder="+1 (555) 123-4567"
+            className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+              errors.phone
+                ? 'border-red-300 bg-red-50 focus:border-red-500'
+                : 'border-slate-200 bg-white focus:border-indigo-500'
+            }`}
+          />
+          {errors.phone && (
+            <p className="text-xs text-red-600 font-medium flex items-center gap-1">
+              <LucideIcons.AlertCircle className="w-3 h-3" />
+              {errors.phone}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">Company</label>
+          <input
+            type="text"
+            name="company"
+            value={formData.company}
+            onChange={handleInputChange}
+            placeholder="Your Company Inc."
+            className="w-full text-sm border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors bg-white"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">Message</label>
+          <textarea
+            name="notes"
+            value={formData.notes}
+            onChange={handleInputChange}
+            placeholder="Tell us more about your inquiry..."
+            rows={4}
+            className="w-full text-sm border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition-colors bg-white resize-none font-sans"
+          />
+          <p className="text-[10px] text-slate-500">
+            {formData.notes.length}/500 characters
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-slate-700 block">Estimated Value (Optional)</label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-slate-600">$</span>
+            <input
+              type="number"
+              name="value"
+              value={formData.value}
+              onChange={handleInputChange}
+              placeholder="0"
+              min="0"
+              step="100"
+              className={`flex-1 text-sm border rounded-xl px-4 py-3 focus:outline-none transition-colors ${
+                errors.value
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-slate-200 bg-white focus:border-indigo-500'
+              }`}
+            />
+          </div>
+          {errors.value && (
+            <p className="text-xs text-red-600 font-medium flex items-center gap-1">
+              <LucideIcons.AlertCircle className="w-3 h-3" />
+              {errors.value}
+            </p>
+          )}
+        </div>
+
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            We respect your privacy. Your information will be used solely to respond to your inquiry and provide our services. We will never share your data with third parties.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <LucideIcons.Loader2 className="w-4 h-4 animate-spin" />
+              <span>Submitting...</span>
+            </>
+          ) : (
+            <>
+              <LucideIcons.Send className="w-4 h-4" />
+              <span>Send My Inquiry</span>
+            </>
+          )}
+        </button>
+
+        <p className="text-center text-[11px] text-slate-500">
+          Or reach out directly at{' '}
+          <a
+            href={`mailto:contact@leadpilot.co`}
+            className="text-indigo-600 hover:underline font-medium"
+          >
+            contact@leadpilot.co
+          </a>
+        </p>
+      </form>
+
+      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200">
+        <div className="text-center">
+          <p className="text-lg font-bold text-indigo-600">24hrs</p>
+          <p className="text-[10px] text-slate-500">Response Time</p>
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-bold text-emerald-600">100%</p>
+          <p className="text-[10px] text-slate-500">Confidential</p>
+        </div>
       </div>
     </div>
   );
