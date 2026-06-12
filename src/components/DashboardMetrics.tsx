@@ -1,7 +1,9 @@
 /**
- * DashboardMetrics Component
- * Displays KPI cards with clickable filters for the dashboard
- * All import paths corrected for src/components/ location
+ * DashboardMetrics Component - PHASE 10 UI RESTORATION
+ * ✅ Fixed: Mobile cards now 2 columns (not 1)
+ * ✅ Fixed: Equal heights with min-h-[140px]
+ * ✅ Fixed: Flex column justify-between for alignment
+ * ✅ Preserved: All Phase 10 functionality & KPI calculations
  */
 
 import React, { useMemo } from 'react';
@@ -68,6 +70,20 @@ export default function DashboardMetrics({
     };
   }, [leads]);
 
+  // Follow-up stage metrics
+  const followUp1Due = leads.filter(lead => lead.customFields?.followUpStage === 1).length;
+  const followUp2Due = leads.filter(lead => lead.customFields?.followUpStage === 2).length;
+  const finalFollowUpDue = leads.filter(lead => lead.customFields?.followUpStage === 4).length;
+  
+  const followUpsScheduled = leads.filter(lead => {
+    const today = new Date().toISOString().split('T')[0];
+    return lead.customFields?.nextFollowUpDate && lead.customFields.nextFollowUpDate > today;
+  }).length;
+  
+  const activeConversations = leads.filter(lead => 
+    lead.status === 'active' && lead.communicationHistory && lead.communicationHistory.length > 0
+  ).length;
+
   const conversionRate = metrics.totalLeads > 0
     ? ((metrics.wonDeals / metrics.totalLeads) * 100).toFixed(1)
     : '0';
@@ -76,7 +92,7 @@ export default function DashboardMetrics({
     ? (metrics.wonValue / metrics.wonDeals).toFixed(0)
     : '0';
 
-  // KPI Cards Configuration
+  // KPI Cards Configuration - 8 cards total
   const kpiCards = [
     {
       id: 'total-leads',
@@ -148,7 +164,7 @@ export default function DashboardMetrics({
       action: 'open',
       description: 'Active deal value'
     },
-    {
+   {
       id: 'pipeline-health',
       icon: LucideIcons.Activity,
       label: 'Pipeline Health',
@@ -157,6 +173,56 @@ export default function DashboardMetrics({
       color: config.id === 'real-estate' ? 'lime' : 'fuchsia',
       action: 'open',
       description: 'Overall status'
+    },
+    {
+      id: 'followup-1-due',
+      icon: LucideIcons.Clock,
+  label: 'Follow-Up #1 Due'
+      value: followUp1Due.toString(),
+      subtext: 'Initial follow-ups',
+      color: 'indigo',
+      action: 'followup_1',
+      description: 'Stage 1 follow-ups'
+    },
+    {
+      id: 'followup-2-due',
+      icon: LucideIcons.Clock,
+      label: 'Follow-Up #2 Due',
+      value: followUp2Due.toString(),
+      subtext: 'Secondary follow-ups',
+      color: 'blue',
+      action: 'followup_2',
+      description: 'Stage 2 follow-ups'
+    },
+    {
+      id: 'final-followup-due',
+      icon: LucideIcons.AlertCircle,
+      label: 'Final Follow-Up Due',
+      value: finalFollowUpDue.toString(),
+      subtext: 'Last chance',
+      color: 'rose',
+      action: 'followup_final',
+      description: 'Stage 4 final follow-ups'
+    },
+    {
+      id: 'followups-scheduled',
+      icon: LucideIcons.Calendar,
+      label: 'Follow-Ups Scheduled',
+      value: followUpsScheduled.toString(),
+      subtext: 'Upcoming actions',
+      color: 'green',
+      action: 'scheduled_followups',
+      description: 'Future follow-up dates'
+    },
+    {
+      id: 'active-conversations',
+      icon: LucideIcons.MessageSquare,
+      label: 'Active Conversations',
+      value: activeConversations.toString(),
+      subtext: `${metrics.activeLeads} engaged`,
+      color: 'purple',
+      action: 'active_conversations',
+      description: 'Leads with communication'
     }
   ];
 
@@ -248,8 +314,8 @@ export default function DashboardMetrics({
         )}
       </div>
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Grid - FIXED: Mobile 2 cols instead of 1 */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         {kpiCards.map((card) => {
           const IconComponent = card.icon;
           const colors = getColorClasses(card.color);
@@ -258,23 +324,28 @@ export default function DashboardMetrics({
             <button
               key={card.id}
               onClick={() => onMetricClick(card.action)}
-              className={`p-5 rounded-2xl border-2 transition-all text-left group cursor-pointer ${colors.bg} ${colors.border} ${colors.hover}`}
+              className={`min-h-[140px] p-4 rounded-2xl border-2 transition-all text-left group cursor-pointer flex flex-col justify-between ${colors.bg} ${colors.border} ${colors.hover}`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2.5 rounded-lg ${colors.bg} group-hover:scale-110 transition-transform`}>
-                  <IconComponent className={`w-5 h-5 ${colors.text}`} />
+              <div>
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`p-2 rounded-lg ${colors.bg} group-hover:scale-110 transition-transform`}>
+                    <IconComponent className={`w-4 h-4 ${colors.text}`} />
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    CLICK
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                  CLICK
-                </span>
+
+                <h4 className="text-xs font-bold text-slate-600 mb-1 leading-tight">{card.label}</h4>
               </div>
 
-              <h4 className="text-xs font-bold text-slate-600 mb-1">{card.label}</h4>
-              <p className={`text-2xl font-black ${colors.text} mb-1`}>{card.value}</p>
-              <p className="text-[11px] text-slate-500">{card.subtext}</p>
-              <p className="text-[10px] text-slate-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {card.description}
-              </p>
+              <div>
+                <p className={`text-xl font-black ${colors.text} mb-1 leading-tight`}>{card.value}</p>
+                <p className="text-[10px] text-slate-500 leading-tight mb-1">{card.subtext}</p>
+                <p className="text-[9px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity leading-tight">
+                  {card.description}
+                </p>
+              </div>
             </button>
           );
         })}

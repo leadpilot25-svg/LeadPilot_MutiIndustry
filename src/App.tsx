@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IndustryConfig, Lead, PipelineStage, Tenant, Note, LeadFile } from './types';
 import { INDUSTRY_CONFIGS, INITIAL_LEADS_BY_INDUSTRY } from './constants/industries';
 import PipelineBoard from './components/PipelineBoard';
 import LeadTable from './components/LeadTable';
 import LeadForm from './components/LeadForm';
 import LeadDetailModal from './components/LeadDetailModal';
-import DashboardMetrics from './components/DashboardMetrics';
 import AIPredictor from './components/AIPredictor';
 import GoogleSheetsSync from './components/GoogleSheetsSync';
 import PublicLeadCaptureForm from './components/PublicLeadCaptureForm';
@@ -182,9 +181,6 @@ export default function App() {
   
   // Interactive Dashboard Click/Filter state
   const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today'>('all');
-
-  // Search query state
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Intake Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1379,36 +1375,26 @@ export default function App() {
   const closedDealsLeads = currentLeads.filter(l => isCompletedLead(l));
   const closedDealsCount = closedDealsLeads.length;
 
-  // Final filtered array depending on Dashboard Interactive selection
-  const getFilteredLeads = () => {
-    let base = [...currentLeads];
-    
-    // Dynamic tab state filtering integration
-    if (dashboardFilter === 'today_followups') {
-      return upcomingFollowupLeads;
-    }
-    if (dashboardFilter === 'missed_followups') {
-      return missedFollowupLeads;
-    }
-    if (dashboardFilter === 'meetings_today') {
-      return todayFollowupLeads;
-    }
-    if (dashboardFilter === 'closed_deals') {
-      return closedDealsLeads;
-    }
-    if (dashboardFilter === 'open') {
-      return base.filter(l => l.status === 'active' && !isCompletedLead(l));
-    }
-    if (dashboardFilter === 'closed') {
-      return base.filter(l => isCompletedLead(l) || l.status === 'lost');
-    }
-    if (dashboardFilter === 'today') {
-      return base.filter(l => l.createdAt === todayDateStr);
-    }
-    return base;
-  };
 
-  const filteredLeads = getFilteredLeads();
+  // Follow-Up Stage Metrics
+  const followUp1DueLeads = currentLeads.filter(l => l.customFields?.followUpStage === 1);
+  const followUp1DueCount = followUp1DueLeads.length;
+
+  const followUp2DueLeads = currentLeads.filter(l => l.customFields?.followUpStage === 2);
+  const followUp2DueCount = followUp2DueLeads.length;
+
+  const finalFollowUpDueLeads = currentLeads.filter(l => l.customFields?.followUpStage === 4);
+  const finalFollowUpDueCount = finalFollowUpDueLeads.length;
+
+  // Active Conversations
+  const activeConversationLeads = currentLeads.filter(l => 
+    l.status === 'active' && 
+    l.communicationHistory && 
+    l.communicationHistory.length > 0
+  );
+  const activeConversationCount = activeConversationLeads.length;
+
+  // Final filtered array depending on Dashboard Interactive selection
 
   // Public Lead Intake Capture Gateway Screen Router
   if (publicFormTenantId) {
@@ -1811,8 +1797,53 @@ export default function App() {
       )}
 
       {/* Primary Header Frame Layout */}
-      <header className="bg-white border-b border-gray-100 py-3.5 px-6 flex items-center justify-center shrink-0 shadow-xs relative">
-        {/* Global Nav Elements */}
+ <header className="bg-white border-b border-gray-100 py-3 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0 shadow-xs relative">
+     {/* LEFT SECTION - Branding & Logo */}
+        <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+          {userProfile.role === 'super_admin' ? (
+            <>
+              <span className="text-2xl p-1.5 bg-slate-900 border border-slate-800 rounded-lg select-none shrink-0 shadow-sm text-white font-bold flex items-center justify-center w-10 h-10">
+                🛠️
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-tight truncate">Super Control Center</h1>
+                  <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-red-100 text-red-950 border border-red-200 font-mono shrink-0 whitespace-nowrap">
+                    Super Admin
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 font-medium truncate leading-tight">Platform Management</p>
+              </div>
+            </>
+          ) : (
+            <>
+   <div className="shrink-0 flex items-center justify-center">
+  <img
+    src="/logo.png"
+    alt="LeadPilot"
+    className="w-12 h-12 object-contain"
+  />
+</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-tight truncate">
+                    {activeTenant.company_name}
+                  </h1>
+                  <span className="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-mono shrink-0 whitespace-nowrap">
+                    {activeTenant.subscription_plan}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 font-medium truncate leading-tight">
+                  <strong className="text-slate-600 font-semibold">{activeIndustry.name}</strong> • {marketRegion}
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* RIGHT SECTION - Navigation & Actions */}
+        <div className="flex flex-wrap items-center gap-2 justify-end"></div>
+          {/* Global Nav Elements */}
         <div className="flex flex-wrap items-center gap-2">
           {userProfile.role === 'super_admin' ? (
             <>
@@ -2065,7 +2096,87 @@ export default function App() {
                       {activeIndustry.closedDealsLabel || "Closed deals"}
                     </span>
                   </div>
+                  
                 </div>
+
+
+                {/* Card 5: Follow-Up #1 Due */}
+                <div 
+                  onClick={() => handleDashboardFilterClick('followup_1')}
+                  className="bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  id="kpi-followup-1-due"
+                >
+                  <div className="text-indigo-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {followUp1DueCount}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                      Follow-Up #1 Due
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card 6: Follow-Up #2 Due */}
+                <div 
+                  onClick={() => handleDashboardFilterClick('followup_2')}
+                  className="bg-blue-50/50 hover:bg-blue-50 border border-blue-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  id="kpi-followup-2-due"
+                >
+                  <div className="text-blue-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {followUp2DueCount}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                      Follow-Up #2 Due
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card 7: Final Follow-Up Due */}
+                <div 
+                  onClick={() => handleDashboardFilterClick('followup_final')}
+                  className="bg-rose-50/40 hover:bg-rose-50/80 border border-rose-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  id="kpi-final-followup-due"
+                >
+                  <div className="text-rose-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.AlertCircle className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {finalFollowUpDueCount}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                      Final Follow-Up Due
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card 8: Active Conversations */}
+                <div 
+                  onClick={() => handleDashboardFilterClick('active_conversations')}
+                  className="bg-purple-50/40 hover:bg-purple-50/80 border border-purple-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  id="kpi-active-conversations"
+                >
+                  <div className="text-purple-500 group-hover:scale-110 transition-transform">
+                    <LucideIcons.MessageSquare className="w-6 h-6 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                      {activeConversationCount}
+                    </span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                      Active Conversations
+                    </span>
+                  </div>
+                </div>
+
+              
 
               </div>
 
@@ -2204,7 +2315,7 @@ export default function App() {
               {currentView === 'kanban' ? (
                 <PipelineBoard 
                   config={activeIndustry} 
-                  leads={filteredLeads} 
+                  leads={currentLeads} 
                   onMoveLead={handleMoveLead} 
                   onSelectLead={setSelectedLead}
                   onQuickAdd={triggerQuickAdd}
@@ -2213,7 +2324,7 @@ export default function App() {
               ) : (
                 <LeadTable 
                   config={activeIndustry} 
-                  leads={filteredLeads} 
+                  leads={currentLeads}
                   onSelectLead={setSelectedLead} 
                   onDeleteLead={handleDeleteLead}
                   marketRegion={marketRegion}
