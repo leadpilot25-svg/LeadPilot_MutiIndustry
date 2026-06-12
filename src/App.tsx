@@ -1926,7 +1926,7 @@ case 'today':
         {/* RIGHT SECTION - Navigation & Actions */}
         <div className="flex flex-wrap items-center gap-2 justify-end"></div>
           {/* Global Nav Elements */}
-        <div className="flex flex-wrap items-center gap-2">
+<div className="hidden md:flex flex-wrap items-center gap-2">
           {userProfile.role === 'super_admin' ? (
             <>
               <button 
@@ -2048,8 +2048,8 @@ case 'today':
       </header>
 
       {/* Base Viewport Container */}
-      <main id="workspace-viewport-pane" className="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto">
-        <AnimatePresence mode="wait">
+
+<main id="workspace-viewport-pane" className="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto md:pb-6 pb-28">        <AnimatePresence mode="wait">
           
           {/* ================= tab: SUPER ADMIN DASHBOARD ================= */}
           {activeTab === 'super_admin_dash' && userProfile.role === 'super_admin' && (
@@ -2075,7 +2075,7 @@ case 'today':
                   <h3 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
                     {greeting}, {userProfile.displayName}!
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">Here is a diagnostics brief of your active portfolio pipelines synchronized real-time in cloud storage.</p>
+                  <p className="text-xs text-slate-500 mt-1"></p>
                 </div>
                 <button
                   onClick={() => setIsFormOpen(true)}
@@ -2860,8 +2860,58 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
 
       </AnimatePresence>
 
+      {/* Mobile Bottom Navigation */}
+      {!isDemoMode || userProfile.role !== 'super_admin' ? (
+        <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-150/40 px-2 py-2 flex items-center justify-around gap-1 shrink-0 z-30">
+          <button 
+            onClick={() => { setDashboardFilter('all'); setActiveTab('home'); }}
+            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'home' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Dashboard"
+          >
+            <LucideIcons.LayoutDashboard className="w-5 h-5" />
+            <span>Dashboard</span>
+          </button>
+
+          <button 
+            onClick={() => { setDashboardFilter('all'); setActiveTab('leads'); }}
+            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'leads' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Pipelines"
+          >
+            <LucideIcons.Kanban className="w-5 h-5" />
+            <span>Pipelines</span>
+          </button>
+
+          <button 
+            onClick={() => { setDashboardFilter('all'); setActiveTab('funnel'); }}
+            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'funnel' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Conversion Funnel"
+          >
+            <LucideIcons.PieChart className="w-5 h-5" />
+            <span>Funnel</span>
+          </button>
+
+          <button 
+            onClick={() => { setDashboardFilter('all'); setActiveTab('business'); }}
+            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'business' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Copilot & AI Tools"
+          >
+            <LucideIcons.Flame className="w-5 h-5" />
+            <span>AI</span>
+          </button>
+
+          <button 
+            onClick={() => { setDashboardFilter('all'); setActiveTab('settings'); }}
+            className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'settings' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Team & Settings"
+          >
+            <LucideIcons.Settings className="w-5 h-5" />
+            <span>Settings</span>
+          </button>
+        </nav>
+      ) : null}
+
       {/* Footer Platform Specs bar (Anti-AI-Slop humbler branding) */}
-      <footer className="p-4 bg-white border-t border-gray-150/40 text-[10px] text-gray-450 hover:text-gray-500 font-mono flex flex-col md:flex-row justify-between items-center gap-2 mt-auto shrink-0 relative">
+      <footer className="p-4 bg-white border-t border-gray-150/40 text-[10px] text-gray-450 hover:text-gray-500 font-mono flex flex-col md:flex-row justify-between items-center gap-2 mt-auto shrink-0 relative hidden md:flex">
         <span className="flex items-center gap-1.5 font-bold">
           <span>PORTAL: CLIENT CLOUD ENVIRONMENT ACTIVATE</span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
