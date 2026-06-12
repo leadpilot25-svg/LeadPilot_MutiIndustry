@@ -33,6 +33,7 @@ export default function LeadTable({
   onAddMultiLeads,
   dashboardFilter
 }: LeadTableProps) {
+  console.log('LEADTABLE RECEIVED:', leads.length, dashboardFilter);
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [csvInput, setCsvInput] = useState('');

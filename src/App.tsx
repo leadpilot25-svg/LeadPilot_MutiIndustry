@@ -1298,10 +1298,11 @@ export default function App() {
     setIsFormOpen(true);
   };
 
-  const handleDashboardFilterClick = (filterType: typeof dashboardFilter) => {
-    setDashboardFilter(filterType);
-    setActiveTab('leads');
-  };
+ const handleDashboardFilterClick = (filterType: typeof dashboardFilter) => {
+  console.log('CLICK:', filterType);
+  setDashboardFilter(filterType);
+  setActiveTab('leads');
+};
 
   // Dynamic colors highlighted for current industry config
   const getIndustryThemeColor = (id: string) => {
@@ -1392,36 +1393,51 @@ export default function App() {
   );
   const activeConversationCount = activeConversationLeads.length;
 
-  const tableLeads = (() => {
+ const tableLeads = (() => {
+  console.log('dashboardFilter=', dashboardFilter);
+  console.log('todayFollowupLeads=', todayFollowupLeads.length);
+  console.log('missedFollowupLeads=', missedFollowupLeads.length);
+
   switch (dashboardFilter) {
     case 'today_followups':
+      console.log('📋 CASE MATCHED: today_followups, returning', todayFollowupLeads.length, 'leads');  // ← Add this
       return todayFollowupLeads;
 
     case 'missed_followups':
+      console.log('📋 CASE MATCHED: missed_followups, returning', missedFollowupLeads.length, 'leads');
       return missedFollowupLeads;
 
     case 'meetings_today':
+      console.log('📋 CASE MATCHED: meetings_today, returning', upcomingFollowupLeads.length, 'leads');
       return upcomingFollowupLeads;
 
     case 'closed_deals':
+      console.log('📋 CASE MATCHED: closed_deals, returning', closedDealsLeads.length, 'leads');
       return closedDealsLeads;
 
     case 'followup_1':
+      console.log('📋 CASE MATCHED: followup_1, returning', followUp1DueLeads.length, 'leads');
       return followUp1DueLeads;
 
     case 'followup_2':
+      console.log('📋 CASE MATCHED: followup_2, returning', followUp2DueLeads.length, 'leads');
       return followUp2DueLeads;
 
     case 'followup_final':
+      console.log('📋 CASE MATCHED: followup_final, returning', finalFollowUpDueLeads.length, 'leads');
       return finalFollowUpDueLeads;
 
     case 'active_conversations':
+      console.log('📋 CASE MATCHED: active_conversations, returning', activeConversationLeads.length, 'leads');
       return activeConversationLeads;
 
     default:
+      console.log('⚠️ NO CASE MATCHED! Returning DEFAULT currentLeads:', currentLeads.length, 'leads');
       return currentLeads;
   }
 })();
+
+  
   // Final filtered array depending on Dashboard Interactive selection
 
   // Public Lead Intake Capture Gateway Screen Router
@@ -2350,10 +2366,11 @@ export default function App() {
                   marketRegion={marketRegion}
                 />
               ) : (
-                <LeadTable 
-                  config={activeIndustry} 
-                  leads={currentLeads}
-                  onSelectLead={setSelectedLead} 
+                <LeadTable
+  config={activeIndustry}
+  leads={tableLeads}
+  dashboardFilter={dashboardFilter}
+  onSelectLead={setSelectedLead} 
                   onDeleteLead={handleDeleteLead}
                   marketRegion={marketRegion}
                   onAddMultiLeads={handleBatchImportLeads}
