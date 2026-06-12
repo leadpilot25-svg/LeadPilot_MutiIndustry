@@ -2107,26 +2107,30 @@ case 'today':
                 {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
                 <div 
                   onClick={() => handleDashboardFilterClick('today_followups')}
-                  className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-today-followups"
                 >
                   <div className="text-amber-500 group-hover:scale-110 transition-transform">
                     <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
                   </div>
                   <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                     {todayFollowupsCount}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                      {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
-                    </span>
-                  </div>
-                </div>
+  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+    {todayFollowupsCount}
+  </span>
 
-                {/* Card 2: Missed follow-ups */}
+  <div className="h-10 flex items-center">
+  <span className="text-[11px] font-semibold uppercase leading-tight">
+    FOLLOW-UPS TODAY
+  </span>
+</div>
+</div>
+
+</div>
+
+{/* Card 2: Missed follow-ups */}
                 <div 
                   onClick={() => handleDashboardFilterClick('missed_followups')}
-                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-missed-followups"
                 >
                   <div className="text-red-500 group-hover:scale-110 transition-transform">
@@ -2145,7 +2149,7 @@ case 'today':
                 {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
                 <div 
                   onClick={() => handleDashboardFilterClick('meetings_today')}
-                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-meetings-today"
                 >
                   <div className="text-orange-500 group-hover:scale-110 transition-transform">
@@ -2164,7 +2168,7 @@ case 'today':
                 {/* Card 4: Closed deals */}
                 <div 
                   onClick={() => handleDashboardFilterClick('closed_deals')}
-                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-closed-deals"
                 >
                   <div className="text-emerald-500 group-hover:scale-110 transition-transform">
@@ -2185,7 +2189,7 @@ case 'today':
                 {/* Card 5: Follow-Up #1 Due */}
                 <div 
                   onClick={() => handleDashboardFilterClick('followup_1')}
-                  className="bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-indigo-50/50 hover:bg-indigo-50 border border-indigo-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-followup-1-due"
                 >
                   <div className="text-indigo-500 group-hover:scale-110 transition-transform">
@@ -2204,7 +2208,7 @@ case 'today':
                 {/* Card 6: Follow-Up #2 Due */}
                 <div 
                   onClick={() => handleDashboardFilterClick('followup_2')}
-                  className="bg-blue-50/50 hover:bg-blue-50 border border-blue-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-blue-50/50 hover:bg-blue-50 border border-blue-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-followup-2-due"
                 >
                   <div className="text-blue-500 group-hover:scale-110 transition-transform">
@@ -2223,7 +2227,7 @@ case 'today':
                 {/* Card 7: Final Follow-Up Due */}
                 <div 
                   onClick={() => handleDashboardFilterClick('followup_final')}
-                  className="bg-rose-50/40 hover:bg-rose-50/80 border border-rose-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-rose-50/40 hover:bg-rose-50/80 border border-rose-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-final-followup-due"
                 >
                   <div className="text-rose-500 group-hover:scale-110 transition-transform">
@@ -2242,7 +2246,7 @@ case 'today':
                 {/* Card 8: Active Conversations */}
                 <div 
                   onClick={() => handleDashboardFilterClick('active_conversations')}
-                  className="bg-purple-50/40 hover:bg-purple-50/80 border border-purple-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[120px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                  className="bg-purple-50/40 hover:bg-purple-50/80 border border-purple-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-active-conversations"
                 >
                   <div className="text-purple-500 group-hover:scale-110 transition-transform">
