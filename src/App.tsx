@@ -1331,26 +1331,42 @@ export default function App() {
     }
   };
 
-  // 10. Computations & Follow-up Alerts Dashboard Logic
-  // Isolated row-level secured leads loaded for the active tenant
- const currentLeads = leads;
-  const todayDateStr = new Date().toLocaleDateString('en-CA');
+    // 10. Computations & Follow-up Alerts Dashboard Logic
+const currentLeads = leads;
+const todayDateStr = new Date().toLocaleDateString('en-CA');
 
-  const totalLeadsCount = currentLeads.length;
-  const openLeadsCount = currentLeads.filter(l => l.status === 'active').length;
-  const todayCreatedCount = currentLeads.filter(l => l.createdAt === todayDateStr).length;
+const totalLeadsCount = currentLeads.length;
 
-  const finalStageId = activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
+const finalStageId =
+  activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
 
-  const isCompletedLead = (l: Lead) => l.stageId === finalStageId || l.status === 'won';
+const isCompletedLead = (l: Lead) =>
+  l.stageId === 'won_client' ||
+  l.stageId === 'project_delivered' ||
+  l.status === 'won';
 
-  // TODAY KPI: Count leads where nextFollowUpDate equals today's date.
-  const todayFollowupLeads = currentLeads.filter(l => 
-    l.status === 'active' && 
+// NOW use isCompletedLead
+const openLeadsCount = currentLeads.filter(
+  l => l.status === 'active' && !isCompletedLead(l)
+).length;
+
+const todayCreatedCount = currentLeads.filter(
+  l => l.createdAt === todayDateStr
+).length;
+
+// TODAY KPI
+const todayFollowupLeads = currentLeads.filter(
+  l =>
+    l.status === 'active' &&
     !isCompletedLead(l) &&
     l.customFields?.nextFollowUpDate === todayDateStr
-  );
-  const todayFollowupsCount = todayFollowupLeads.length;
+);
+
+const todayFollowupsCount = todayFollowupLeads.length;
+
+// MISSED KPI
+
+
 
   // OVERDUE KPI: Count leads where nextFollowUpDate is before today AND lead is not completed/closed.
   const missedFollowupLeads = currentLeads.filter(l => 
@@ -1371,8 +1387,15 @@ export default function App() {
   const meetingsCount = upcomingFollowupLeads.length;
 
   // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
-  const closedDealsLeads = currentLeads.filter(l => isCompletedLead(l));
-  const closedDealsCount = closedDealsLeads.length;
+const closedDealsLeads = currentLeads.filter(
+  l => isCompletedLead(l)
+);
+
+const closedDealsCount = closedDealsLeads.length;
+console.log('TOTAL:', totalLeadsCount);
+console.log('OPEN:', openLeadsCount);
+console.log('CLOSED:', closedDealsCount);
+console.log('FINAL STAGE ID:', finalStageId);
 
 
   // Follow-Up Stage Metrics
@@ -1407,9 +1430,10 @@ export default function App() {
       console.log('📋 CASE MATCHED: missed_followups, returning', missedFollowupLeads.length, 'leads');
       return missedFollowupLeads;
 
-    case 'meetings_today':
-      console.log('📋 CASE MATCHED: meetings_today, returning', upcomingFollowupLeads.length, 'leads');
-      return upcomingFollowupLeads;
+        case 'meetings_today':
+  console.log('📋 CASE MATCHED: meetings_today, returning', todayFollowupLeads.length, 'leads');
+  return todayFollowupLeads;
+     
 
     case 'closed_deals':
       console.log('📋 CASE MATCHED: closed_deals, returning', closedDealsLeads.length, 'leads');
@@ -1430,6 +1454,20 @@ export default function App() {
     case 'active_conversations':
       console.log('📋 CASE MATCHED: active_conversations, returning', activeConversationLeads.length, 'leads');
       return activeConversationLeads;
+      case 'open':
+  return currentLeads.filter(
+    l => l.status === 'active' && !isCompletedLead(l)
+  );
+
+case 'closed':
+  return currentLeads.filter(
+    l => isCompletedLead(l)
+  );
+
+case 'today':
+  return currentLeads.filter(
+    l => l.createdAt === todayDateStr
+  );
 
     default:
       console.log('⚠️ NO CASE MATCHED! Returning DEFAULT currentLeads:', currentLeads.length, 'leads');
@@ -2077,7 +2115,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {meetingsCount}
+                     {todayFollowupsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
                       {activeIndustry.todayFollowupsLabel || "Today's follow-ups"}
@@ -2366,6 +2404,8 @@ export default function App() {
                   marketRegion={marketRegion}
                 />
               ) : (
+               
+               
                 <LeadTable
   config={activeIndustry}
   leads={tableLeads}
