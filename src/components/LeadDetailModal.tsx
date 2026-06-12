@@ -29,19 +29,34 @@ export default function LeadDetailModal({
 }: LeadDetailModalProps) {
   const [currentTab, setCurrentTab] = useState<'details' | 'communications' | 'history'>('details');
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
+const [editData, setEditData] = useState({
     name: lead.name,
     email: lead.email,
     phone: lead.phone,
     company: lead.company || '',
     service: lead.service || '',
     value: lead.value || 0,
+    status: lead.status || 'active',
+    source: lead.source || '',
+    nextFollowUpDate: lead.customFields?.nextFollowUpDate || '',
+    followUpStage: lead.customFields?.followUpStage || 0,
+    notes: lead.notes || [],
   });
 
-  const handleSaveChanges = () => {
-    onUpdate(editData);
-    setIsEditing(false);
-  };
+const handleSaveChanges = () => {
+  onUpdate({
+    ...lead,
+    ...editData,
+    customFields: {
+      ...(lead.customFields || {}),
+      nextFollowUpDate: editData.nextFollowUpDate,
+      followUpStage: editData.followUpStage,
+    },
+    notes: editData.notes,
+  });
+
+  setIsEditing(false);
+};
 
   const getFollowUpStageName = (stage: number | undefined): string => {
     switch (stage) {
@@ -248,20 +263,46 @@ export default function LeadDetailModal({
                         ${lead.value?.toLocaleString() || '0'}
                       </p>
                     </div>
+                 </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">STATUS</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-2 ${
+                        lead.status === 'active'
+                          ? 'bg-green-50 text-green-700'
+                          : lead.status === 'closed'
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'bg-yellow-50 text-yellow-700'
+                      }`}>
+                        {lead.status?.charAt(0).toUpperCase() + lead.status?.slice(1)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">SOURCE</p>
+                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.source || '-'}</p>
+                    </div>
                   </div>
 
                   <div>
-                    <p className="text-xs text-gray-600 font-semibold">STATUS</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-2 ${
-                      lead.status === 'active'
-                        ? 'bg-green-50 text-green-700'
-                        : lead.status === 'closed'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'bg-yellow-50 text-yellow-700'
-                    }`}>
-                      {lead.status?.charAt(0).toUpperCase() + lead.status?.slice(1)}
+                    <p className="text-xs text-gray-600 font-semibold">FOLLOW-UP STAGE</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-2 border ${getFollowUpStageBadgeColor(lead.customFields?.followUpStage)}`}>
+                      {getFollowUpStageName(lead.customFields?.followUpStage)}
                     </span>
                   </div>
+
+                  {lead.customFields?.nextFollowUpDate && (
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">NEXT FOLLOW-UP DATE</p>
+                      <p className={`text-lg font-semibold mt-1 ${
+                        lead.customFields?.nextFollowUpDate && new Date(lead.customFields.nextFollowUpDate) < new Date()
+                          ? 'text-red-600'
+                          : 'text-indigo-600'
+                      }`}>
+                        {new Date(lead.customFields.nextFollowUpDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => setIsEditing(true)}
@@ -328,6 +369,76 @@ export default function LeadDetailModal({
                         onChange={e => setEditData({ ...editData, value: parseInt(e.target.value) || 0 })}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
                       />
+                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+                      <select
+                        value={editData.status}
+                        onChange={e => setEditData({ ...editData, status: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                      >
+                        <option value="active">Active</option>
+                        <option value="closed">Closed</option>
+                        <option value="lost">Lost</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">Source</label>
+                      <input
+                        type="text"
+                        value={editData.source}
+                        onChange={e => setEditData({ ...editData, source: e.target.value })}
+                        placeholder="e.g., Website, Referral, Cold Call"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Follow-Up Management</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Follow-Up Date</label>
+                        <input
+                          type="date"
+                          value={editData.nextFollowUpDate}
+                          onChange={e => setEditData({ ...editData, nextFollowUpDate: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Follow-Up Stage</label>
+                        <select
+                          value={editData.followUpStage}
+                          onChange={e => setEditData({ ...editData, followUpStage: parseInt(e.target.value) })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                        >
+                          <option value={0}>New Lead</option>
+                          <option value={1}>Initial Contact Sent</option>
+                          <option value={2}>Follow-up #1 Sent</option>
+                          <option value={3}>Follow-up #2 Sent</option>
+                          <option value={4}>Final Follow-up Sent</option>
+                          <option value={5}>Won</option>
+                          <option value={6}>Lost</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">Internal Notes</label>
+                        <textarea
+                          value={editData.notes && editData.notes.length > 0 ? editData.notes[0]?.content || '' : ''}
+                          onChange={e => {
+                            const newNote = {
+                              id: editData.notes && editData.notes.length > 0 ? editData.notes[0].id : `note-${Date.now()}`,
+                              content: e.target.value,
+                              createdAt: editData.notes && editData.notes.length > 0 ? editData.notes[0].createdAt : new Date().toISOString().split('T')[0],
+                              author: editData.notes && editData.notes.length > 0 ? editData.notes[0].author : 'Current User'
+                            };
+                            setEditData({ ...editData, notes: [newNote] });
+                          }}
+                          placeholder="Add internal notes about this lead..."
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 h-24"
+                        />
+                      </div>
                     </div>
                   </div>
 

@@ -2,8 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { IndustryConfig, Lead, PipelineStage, Tenant, Note, LeadFile } from './types';
 import { INDUSTRY_CONFIGS, INITIAL_LEADS_BY_INDUSTRY } from './constants/industries';
 import PipelineBoard from './components/PipelineBoard';
@@ -1333,8 +1332,7 @@ export default function App() {
 
   // 10. Computations & Follow-up Alerts Dashboard Logic
   // Isolated row-level secured leads loaded for the active tenant
-  const currentLeads = leads;
-
+ const currentLeads = leads;
   const todayDateStr = new Date().toLocaleDateString('en-CA');
 
   const totalLeadsCount = currentLeads.length;
@@ -1394,6 +1392,36 @@ export default function App() {
   );
   const activeConversationCount = activeConversationLeads.length;
 
+  const tableLeads = (() => {
+  switch (dashboardFilter) {
+    case 'today_followups':
+      return todayFollowupLeads;
+
+    case 'missed_followups':
+      return missedFollowupLeads;
+
+    case 'meetings_today':
+      return upcomingFollowupLeads;
+
+    case 'closed_deals':
+      return closedDealsLeads;
+
+    case 'followup_1':
+      return followUp1DueLeads;
+
+    case 'followup_2':
+      return followUp2DueLeads;
+
+    case 'followup_final':
+      return finalFollowUpDueLeads;
+
+    case 'active_conversations':
+      return activeConversationLeads;
+
+    default:
+      return currentLeads;
+  }
+})();
   // Final filtered array depending on Dashboard Interactive selection
 
   // Public Lead Intake Capture Gateway Screen Router
@@ -2315,7 +2343,7 @@ export default function App() {
               {currentView === 'kanban' ? (
                 <PipelineBoard 
                   config={activeIndustry} 
-                  leads={currentLeads} 
+                  leads={tableLeads}
                   onMoveLead={handleMoveLead} 
                   onSelectLead={setSelectedLead}
                   onQuickAdd={triggerQuickAdd}
@@ -2733,7 +2761,7 @@ export default function App() {
             lead={selectedLead}
             config={activeIndustry}
             onClose={() => setSelectedLead(null)}
-            onUpdateLead={handleUpdateLead}
+          onUpdate={handleUpdateLead}
             marketRegion={marketRegion}
             isTeamMode={userWorkspace?.mode === 'team'}
             teamAgents={workspaceMembers.filter(m => m.role === 'agent' && m.status === 'active')}
