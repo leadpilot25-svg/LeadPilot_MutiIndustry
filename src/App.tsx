@@ -1879,7 +1879,7 @@ case 'today':
       )}
 
       {/* Primary Header Frame Layout */}
- <header className="bg-white border-b border-gray-100 py-3 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0 shadow-xs relative">
+<header className="sticky top-0 z-40 bg-white border-b border-gray-100 py-3 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0 shadow-xs relative">
      {/* LEFT SECTION - Branding & Logo */}
         <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
           {userProfile.role === 'super_admin' ? (
@@ -2862,7 +2862,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
 
       {/* Mobile Bottom Navigation */}
       {!isDemoMode || userProfile.role !== 'super_admin' ? (
-        <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-150/40 px-2 py-2 flex items-center justify-around gap-1 shrink-0 z-30">
+        <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-150/40 px-2 py-2 flex items-center justify-between gap-1 shrink-0 z-30">
           <button 
             onClick={() => { setDashboardFilter('all'); setActiveTab('home'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'home' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
@@ -2907,6 +2907,14 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <LucideIcons.Settings className="w-5 h-5" />
             <span>Settings</span>
           </button>
+          <button
+  onClick={handleLogout}
+  className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold text-red-500"
+  title="Logout"
+>
+  <LucideIcons.LogOut className="w-5 h-5" />
+  <span>Logout</span>
+</button>
         </nav>
       ) : null}
 
