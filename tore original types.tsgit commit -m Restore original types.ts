@@ -1,0 +1,155 @@
+[1mdiff --git a/src/types.ts b/src/types.ts[m
+[1mindex 1a14b2b..937d787 100644[m
+[1m--- a/src/types.ts[m
+[1m+++ b/src/types.ts[m
+[36m@@ -1,64 +1,99 @@[m
+ /**[m
+[31m- * PHASE 10D - EXTEND src/types.ts WITH THESE TYPES[m
+[31m- * [m
+[31m- * Add these to the end of your existing types.ts file[m
+[32m+[m[32m * @license[m
+[32m+[m[32m * SPDX-License-Identifier: Apache-2.0[m
+  */[m
+ [m
+[31m-// ============================================================================[m
+[31m-// AUTOMATION SETTINGS[m
+[31m-// ============================================================================[m
+[32m+[m[32mexport interface Task {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  title: string;[m
+[32m+[m[32m  completed: boolean;[m
+[32m+[m[32m  dueDate?: string;[m
+[32m+[m[32m}[m
+ [m
+[31m-export interface AutomationSettings {[m
+[31m-  followUp1Delay: number; // days until follow-up #1[m
+[31m-  followUp2Delay: number; // days until follow-up #2[m
+[31m-  finalFollowUpDelay: number; // days until final follow-up[m
+[31m-  lostReviewDelay: number; // days until lost review[m
+[32m+[m[32mexport interface Note {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  content: string;[m
+[32m+[m[32m  createdAt: string;[m
+[32m+[m[32m  author: string;[m
+ }[m
+ [m
+[31m-// Default automation settings[m
+[31m-export const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {[m
+[31m-  followUp1Delay: 3,[m
+[31m-  followUp2Delay: 3,[m
+[31m-  finalFollowUpDelay: 5,[m
+[31m-  lostReviewDelay: 7,[m
+[31m-};[m
+[32m+[m[32mexport interface LeadFile {[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  url: string;[m
+[32m+[m[32m  type: string;[m
+[32m+[m[32m  size: number;[m
+[32m+[m[32m  uploadedAt: string;[m
+[32m+[m[32m  uploadedBy: string;[m
+[32m+[m[32m}[m
+ [m
+[31m-// ============================================================================[m
+[31m-// FOLLOW-UP METRICS[m
+[31m-// ============================================================================[m
+[32m+[m[32mexport interface Lead {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  email: string;[m
+[32m+[m[32m  phone: string;[m
+[32m+[m[32m  source: string;[m
+[32m+[m[32m  stageId: string;[m
+[32m+[m[32m  createdAt: string;[m
+[32m+[m[32m  lastContacted: string;[m
+[32m+[m[32m  status: 'active' | 'archived' | 'won';[m
+[32m+[m[32m  value: number; // Potential monetary value[m
+[32m+[m[32m  customFields: Record<string, string | number | boolean>;[m
+[32m+[m[32m  notes: Note[];[m
+[32m+[m[32m  tasks: Task[];[m
+[32m+[m[32m  assignedTo?: string;[m
+[32m+[m[32m  assignedToName?: string;[m
+[32m+[m[32m  files?: LeadFile[];[m
+[32m+[m[32m}[m
+ [m
+[31m-export interface FollowUpMetrics {[m
+[31m-  newLeads: number;[m
+[31m-  followUp1Due: number;[m
+[31m-  followUp2Due: number;[m
+[31m-  finalFollowUpDue: number;[m
+[31m-  lostReviewDue: number;[m
+[31m-  overdueCount: number;[m
+[31m-  dueToday: number;[m
+[31m-  totalFollowUpsDue: number;[m
+[32m+[m[32mexport interface FieldDefinition {[m
+[32m+[m[32m  key: string;[m
+[32m+[m[32m  label: string;[m
+[32m+[m[32m  type: 'text' | 'number' | 'select' | 'boolean' | 'date';[m
+[32m+[m[32m  options?: string[];[m
+[32m+[m[32m  placeholder?: string;[m
+[32m+[m[32m  required?: boolean;[m
+ }[m
+ [m
+[31m-// ============================================================================[m
+[31m-// FOLLOW-UP UPDATE[m
+[31m-// ============================================================================[m
+[32m+[m[32mexport interface PipelineStage {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  label: string;[m
+[32m+[m[32m  color: string; // Tailwind color class or hex, e.g. 'bg-emerald-500'[m
+[32m+[m[32m}[m
+ [m
+[31m-export interface FollowUpUpdate {[m
+[31m-  stage: number;[m
+[31m-  nextFollowUpDate: string;[m
+[31m-  lastContactDate: string;[m
+[32m+[m[32mexport interface MetricDefinition {[m
+[32m+[m[32m  key: string;[m
+[32m+[m[32m  label: string;[m
+[32m+[m[32m  prefix?: string;[m
+[32m+[m[32m  suffix?: string;[m
+[32m+[m[32m  type: 'sum' | 'count' | 'average';[m
+[32m+[m[32m  sourceField?: 'value' | string; // Field to aggregate on[m
+[32m+[m[32m  description: string;[m
+ }[m
+ [m
+[31m-// ============================================================================[m
+[31m-// FOLLOW-UP STATUS[m
+[31m-// ============================================================================[m
+[32m+[m[32mexport interface IndustryConfig {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  iconName: string; // Identifier for Lucide icon[m
+[32m+[m[32m  tagline: string;[m
+[32m+[m[32m  leadLabel: string; // e.g. "Buyer", "Prospect", "Querent", "Rider"[m
+[32m+[m[32m  valueLabel: string; // e.g. "Estimated Value", "Estimated Premium", "Coaching Budget", "Fare"[m
+[32m+[m[32m  stages: PipelineStage[];[m
+[32m+[m[32m  customFields: FieldDefinition[];[m
+[32m+[m[32m  metrics: MetricDefinition[];[m
+[32m+[m[32m  suggestedSources: string[];[m
+[32m+[m[32m  todayFollowupsLabel?: string;[m
+[32m+[m[32m  missedFollowupsLabel?: string;[m
+[32m+[m[32m  meetingsTodayLabel?: string;[m
+[32m+[m[32m  closedDealsLabel?: string;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mexport interface Tenant {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  company_name: string;[m
+[32m+[m[32m  industryId: string;[m
+[32m+[m[32m  logoEmoji: string;[m
+[32m+[m[32m  subscription_plan: 'Starter' | 'Professional' | 'Enterprise';[m
+[32m+[m[32m  status: 'active' | 'suspended';[m
+[32m+[m[32m  assignedOwner: string;[m
+[32m+[m[32m}[m
+ [m
+[31m-export interface FollowUpStatus {[m
+[31m-  stage: number;[m
+[31m-  stageName: string;[m
+[31m-  lastContactDate?: string;[m
+[31m-  nextFollowUpDate?: string;[m
+[31m-  daysUntilFollowUp?: number;[m
+[31m-  isOverdue: boolean;[m
+[31m-  daysOverdue?: number;[m
+[31m-  communicationCount: number;[m
+[31m-}[m
+\ No newline at end of file[m

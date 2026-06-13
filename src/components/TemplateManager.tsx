@@ -8,12 +8,8 @@
 
 import React, { useState, useMemo } from 'react';
 import * as LucideIcons from 'lucide-react';
-import {
-  GlobalTemplates,
-  FollowUpTemplate,
-  FollowUpStages,
-  DEFAULT_TEMPLATES,
-} from '../types';
+import { GlobalTemplates, FollowUpTemplate } from '../templateTypes';
+import { DEFAULT_TEMPLATES } from '../defaultTemplates';
 import TemplateEditor from './TemplateEditor';
 import TemplatePreview from './TemplatePreview';
 
