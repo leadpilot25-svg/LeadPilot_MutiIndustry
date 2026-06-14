@@ -19,6 +19,7 @@ interface LeadDetailModalProps {
   onClose: () => void;
   onUpdate: (leadData: Partial<Lead>) => void;
   onQuickAction?: (action: QuickActionType) => void;
+  templates?: any;
 }
 
 export default function LeadDetailModal({
@@ -26,9 +27,18 @@ export default function LeadDetailModal({
   onClose,
   onUpdate,
   onQuickAction,
+  templates,
 }: LeadDetailModalProps) {
   const [currentTab, setCurrentTab] = useState<'details' | 'communications' | 'history'>('details');
   const [isEditing, setIsEditing] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+const [selectedAction, setSelectedAction] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
+const [selectedTemplateId, setSelectedTemplateId] = useState('');
+const [nextFollowUpDate, setNextFollowUpDate] = useState(
+  new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+);
 const [editData, setEditData] = useState({
     name: lead.name,
     email: lead.email,
@@ -117,7 +127,12 @@ const handleSaveChanges = () => {
                 <span className="hidden sm:inline">Call</span>
               </button>
               <button
-                onClick={() => onQuickAction?.('whatsapp')}
+                onClick={() => {
+setSelectedAction('whatsapp');
+setNextFollowUpDate('');
+setShowTemplateModal(true);
+  setShowTemplateModal(true);
+}}
                 disabled={!lead.phone}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -125,7 +140,19 @@ const handleSaveChanges = () => {
                 <span className="hidden sm:inline">WhatsApp</span>
               </button>
               <button
-                onClick={() => onQuickAction?.('email')}
+               onClick={() => {
+  setSelectedAction('email');
+
+setNextFollowUpDate(
+  new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+);
+
+setShowTemplateModal(true);
+  setShowTemplateModal(true);
+}}
+
                 disabled={!lead.email}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -133,7 +160,12 @@ const handleSaveChanges = () => {
                 <span className="hidden sm:inline">Email</span>
               </button>
               <button
-                onClick={() => onQuickAction?.('sms')}
+                onClick={() => {
+setSelectedAction('sms');
+setNextFollowUpDate('');
+setShowTemplateModal(true);
+  setShowTemplateModal(true);
+}}
                 disabled={!lead.phone}
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -202,21 +234,7 @@ const handleSaveChanges = () => {
           >
             Details
           </button>
-          <button
-            onClick={() => setCurrentTab('communications')}
-            className={`py-4 px-2 border-b-2 font-medium transition-colors flex items-center gap-2 ${
-              currentTab === 'communications'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Communications
-            {(lead.communicationHistory || []).length > 0 && (
-              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">
-                {(lead.communicationHistory || []).length}
-              </span>
-            )}
-          </button>
+          
           <button
             onClick={() => setCurrentTab('history')}
             className={`py-4 px-2 border-b-2 font-medium transition-colors ${
@@ -225,7 +243,7 @@ const handleSaveChanges = () => {
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
           >
-            Activity
+            Timeline
           </button>
         </div>
 
@@ -461,9 +479,7 @@ const handleSaveChanges = () => {
             </div>
           )}
 
-          {currentTab === 'communications' && (
-            <CommunicationHistory lead={lead} />
-          )}
+          
 
           {currentTab === 'history' && (
             <div className="text-center py-8">
@@ -484,6 +500,98 @@ const handleSaveChanges = () => {
           </button>
         </div>
       </div>
+      {showTemplateModal && selectedAction && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+      <h3 className="text-lg font-bold mb-4">
+        Select {selectedAction} Template
+      </h3>
+
+      <select
+        value={selectedTemplateId}
+        onChange={(e) => setSelectedTemplateId(e.target.value)}
+        className="w-full border border-gray-300 rounded-lg p-2 mb-4"
+      >
+        <option value="">Choose Template</option>
+
+        {(templates?.[selectedAction] || []).map((t: any) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      <div className="mt-4">
+  <label className="block text-sm font-medium mb-2">
+    Next Follow-Up Date
+  </label>
+
+  <input
+    type="date"
+    value={nextFollowUpDate}
+    onChange={(e) => setNextFollowUpDate(e.target.value)}
+    className="w-full border border-gray-300 rounded-lg p-2"
+  />
+</div>
+
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowTemplateModal(false)}
+          className="px-4 py-2 border rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => {
+            const template =
+              templates?.[selectedAction]?.find(
+                (t: any) => t.id === selectedTemplateId
+              );
+
+            if (!template) {
+              alert('Please select a template');
+              return;
+            }
+
+       const content = template.content
+  .replace(/{{name}}/g, lead.name || '')
+  .replace(/{{email}}/g, lead.email || '')
+  .replace(/{{phone}}/g, lead.phone || '');
+
+if (selectedAction === 'email') {
+  window.location.href =
+    `mailto:${lead.email}?subject=${encodeURIComponent(template.name)}&body=${encodeURIComponent(content)}`;
+}
+
+if (selectedAction === 'whatsapp') {
+  window.open(
+    `https://wa.me/${lead.phone}?text=${encodeURIComponent(content)}`,
+    '_blank'
+  );
+}
+
+if (selectedAction === 'sms') {
+  window.location.href =
+    `sms:${lead.phone}?body=${encodeURIComponent(content)}`;
+}
+onUpdate({
+  customFields: {
+    ...lead.customFields,
+    nextFollowUpDate,
+    lastContactType: selectedAction,
+    lastContactDate: new Date().toISOString().split('T')[0],
+  }
+});
+setShowTemplateModal(false);
+          }}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

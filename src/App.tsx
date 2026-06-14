@@ -19,6 +19,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { isDemoSandboxAllowed } from './lib/env';
 import ProductionReadinessChecklist from './components/ProductionReadinessChecklist';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
+import TemplateManager from './components/TemplateManager';
+import { DEFAULT_TEMPLATES } from './defaultTemplates';
 
 // Firebase Modules
 import { auth, db, storage, OperationType, handleFirestoreError } from './lib/firebase';
@@ -170,12 +172,16 @@ export default function App() {
       return 'USA';
     }
   });
+// Navigation state (home, leads, funnel, business, settings, checklist)
+const [activeTab, setActiveTab] = useState<string>('home');
 
-  // Navigation state (home, leads, funnel, business, settings, checklist)
-  const [activeTab, setActiveTab] = useState<string>('home');
-
-  // Leads sub-view state
-  const [currentView, setCurrentView] = useState<'kanban' | 'table'>('kanban');
+// Templates state
+const [templates, setTemplates] = useState(() => {
+  const saved = localStorage.getItem('leadpilot_templates');
+  return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
+});
+// Leads sub-view state
+const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   // Interactive Dashboard Click/Filter state
@@ -210,6 +216,12 @@ export default function App() {
     else if (hours < 17) setGreeting('Good afternoon 🌤️');
     else setGreeting('Good evening 🌙');
   }, []);
+  useEffect(() => {
+  localStorage.setItem(
+    'leadpilot_templates',
+    JSON.stringify(templates)
+  );
+}, [templates]);
 
   // Fetch platform dynamic branding configurations from Firestore or localStorage
   useEffect(() => {
@@ -2188,8 +2200,6 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
 
                 
 
-              
-
               </div>
 
               {/* Section: LEAD OVERVIEW Breakdown parameters */}
@@ -2324,32 +2334,30 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
               )}
 
               {/* Core Viewport Rendering */}
-              {currentView === 'kanban' ? (
-                <PipelineBoard 
-                  config={activeIndustry} 
-                  leads={tableLeads}
-                  onMoveLead={handleMoveLead} 
-                  onSelectLead={setSelectedLead}
-                  onQuickAdd={triggerQuickAdd}
-                  marketRegion={marketRegion}
-                />
-              ) : (
-               
-               
-                <LeadTable
-  config={activeIndustry}
-  leads={tableLeads}
-  dashboardFilter={dashboardFilter}
-  onSelectLead={setSelectedLead} 
-                  onDeleteLead={handleDeleteLead}
-                  marketRegion={marketRegion}
-                  onAddMultiLeads={handleBatchImportLeads}
-                />
-              )}
+       
+     {currentView === 'kanban' ? (
+  <PipelineBoard
+    config={activeIndustry}
+    leads={tableLeads}
+    onMoveLead={handleMoveLead}
+    onSelectLead={setSelectedLead}
+    onQuickAdd={triggerQuickAdd}
+    marketRegion={marketRegion}
+  />
+) : (
+  <LeadTable
+    config={activeIndustry}
+    leads={tableLeads}
+    dashboardFilter={dashboardFilter}
+    onSelectLead={setSelectedLead}
+    onDeleteLead={handleDeleteLead}
+    marketRegion={marketRegion}
+    onAddMultiLeads={handleBatchImportLeads}
+  />
+)}
 
-            </div>
-          )}
-
+</div>
+)}
           {/* ================= tab: FUNNEL ================= */}
           {activeTab === 'funnel' && (
             <div className="space-y-6 animate-fade-in" id="funnel-tab-content">
@@ -2724,7 +2732,32 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                     </div>
                   )}
                 </div>
+{/* Communication Templates */}
+<div className="bg-white rounded-3xl p-6 border border-gray-150/40 mt-6">
+  <h3 className="text-lg font-bold mb-4">
+    Communication Templates
+  </h3>
 
+ <TemplateManager
+  templates={templates}
+  onSaveTemplate={async (template) => {
+    setTemplates(prev => ({
+      ...prev,
+      [template.type]: [
+        ...(prev[template.type] || []),
+        template
+      ]
+    }));
+  }}
+  onDeleteTemplate={async (templateId, type) => {
+    setTemplates(prev => ({
+      ...prev,
+      [type]: prev[type].filter(t => t.id !== templateId)
+    }));
+  }}
+  onClose={() => {}}
+/>
+</div>
               </div>
 
             </div>
@@ -2744,11 +2777,12 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
         
         {/* Detail Modal Overlay */}
         {selectedLead && (
-          <LeadDetailModal 
-            lead={selectedLead}
-            config={activeIndustry}
-            onClose={() => setSelectedLead(null)}
-          onUpdate={handleUpdateLead}
+         <LeadDetailModal 
+  lead={selectedLead}
+  config={activeIndustry}
+  onClose={() => setSelectedLead(null)}
+  onUpdate={handleUpdateLead}
+  templates={templates}
             marketRegion={marketRegion}
             isTeamMode={userWorkspace?.mode === 'team'}
             teamAgents={workspaceMembers.filter(m => m.role === 'agent' && m.status === 'active')}

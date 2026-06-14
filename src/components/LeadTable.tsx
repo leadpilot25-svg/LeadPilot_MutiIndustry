@@ -6,6 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import { IndustryConfig, Lead } from '../types';
 import * as LucideIcons from 'lucide-react';
+import QuickActionModal from './QuickActionModal';
 
 type SortField = 'name' | 'phone' | 'value' | 'createdAt' | 'nextFollowUpDate';
 type SortOrder = 'asc' | 'desc';
@@ -38,7 +39,9 @@ export default function LeadTable({
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [csvInput, setCsvInput] = useState('');
   const [showCsvImport, setShowCsvImport] = useState(false);
-
+ const [selectedLeadForAction, setSelectedLeadForAction] = useState<Lead | null>(null);
+const [selectedActionType, setSelectedActionType] = useState<'email' | 'whatsapp' | 'sms' | 'call' | null>(null);
+const [showQuickActionModal, setShowQuickActionModal] = useState(false);
   // ✅ SAFE: Filter with null checks for all properties
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -184,41 +187,54 @@ export default function LeadTable({
     window.location.href = `tel:${phone}`;
   };
 
-  const handleWhatsApp = (e: React.MouseEvent, phone: string | undefined) => {
-    e.stopPropagation();
-    if (!phone) {
-      alert('No phone number available');
-      return;
-    }
-    const cleanPhone = phone.replace(/\D/g, '');
-    window.open(`https://wa.me/${cleanPhone}`, '_blank');
-  };
+const handleWhatsApp = (e: React.MouseEvent, lead: Lead) => {
+  e.stopPropagation();
 
-  const handleSMS = (e: React.MouseEvent, phone: string | undefined) => {
-    e.stopPropagation();
-    if (!phone) {
-      alert('No phone number available');
-      return;
-    }
-    window.location.href = `sms:${phone}`;
-  };
+  console.log('WHATSAPP LEAD:', lead);
 
-  const handleEmail = (e: React.MouseEvent, email: string | undefined) => {
-    e.stopPropagation();
-    if (!email) {
-      alert('No email address available');
-      return;
-    }
-    window.location.href = `mailto:${email}`;
-  };
+  if (!lead.phone) {
+    alert('No phone number available');
+    return;
+  }
 
-  const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
-    e.stopPropagation();
-    onSelectLead(lead);
-  };
+  setSelectedLeadForAction(lead);
+  setSelectedActionType('whatsapp');
+  setShowQuickActionModal(true);
+};
 
+const handleSMS = (e: React.MouseEvent, lead: Lead) => {
+  e.stopPropagation();
+
+  if (!lead.phone) {
+    alert('No phone number available');
+    return;
+  }
+
+  setSelectedLeadForAction(lead);
+  setSelectedActionType('sms');
+  setShowQuickActionModal(true);
+};
+  
+
+const handleEmail = (e: React.MouseEvent, lead: Lead) => {
+  e.stopPropagation();
+
+  if (!lead.email || lead.email === '-') {
+    alert('No email address available');
+    return;
+  }
+
+  setSelectedLeadForAction(lead);
+  setSelectedActionType('email');
+  setShowQuickActionModal(true);
+};
+
+const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
+  e.stopPropagation();
+  onSelectLead(lead);
+};
   return (
-    <div className="space-y-4">
+  <div className="space-y-4">
       {/* CSV Import Controls */}
       {onAddMultiLeads && (
         <div className="flex gap-2 items-center">
@@ -423,8 +439,8 @@ export default function LeadTable({
 
                       {/* WhatsApp Button */}
                       <button
-                        onClick={(e) => handleWhatsApp(e, lead.phone)}
-                        className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-transparent hover:border-emerald-200 transition-all"
+onClick={(e) => handleWhatsApp(e, lead)}
+className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-transparent hover:border-emerald-200 transition-all"
                         title="Send WhatsApp"
                       >
                         <LucideIcons.MessageCircle className="w-4 h-4" />
@@ -432,8 +448,8 @@ export default function LeadTable({
 
                       {/* SMS Button */}
                       <button
-                        onClick={(e) => handleSMS(e, lead.phone)}
-                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-200 transition-all"
+onClick={(e) => handleSMS(e, lead)}
+className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-200 transition-all"
                         title="Send SMS"
                       >
                         <LucideIcons.Mail className="w-4 h-4" />
@@ -441,7 +457,7 @@ export default function LeadTable({
 
                       {/* Email Button */}
                       <button
-                        onClick={(e) => handleEmail(e, lead.email)}
+                      onClick={(e) => handleEmail(e, lead)}
                         className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg border border-transparent hover:border-purple-200 transition-all"
                         title="Send email"
                       >
@@ -570,8 +586,8 @@ export default function LeadTable({
 
                   {/* WhatsApp Button */}
                   <button
-                    onClick={(e) => handleWhatsApp(e, lead.phone)}
-                    className="flex items-center justify-center gap-1.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-lg transition-all active:scale-95"
+onClick={(e) => handleWhatsApp(e, lead)}
+className="flex items-center justify-center gap-1.5 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-lg transition-all active:scale-95"
                     title="Send WhatsApp"
                   >
                     <LucideIcons.MessageCircle className="w-4 h-4" />
@@ -580,8 +596,8 @@ export default function LeadTable({
 
                   {/* SMS Button */}
                   <button
-                    onClick={(e) => handleSMS(e, lead.phone)}
-                    className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg transition-all active:scale-95"
+onClick={(e) => handleSMS(e, lead)}
+className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg transition-all active:scale-95"
                     title="Send SMS"
                   >
                     <LucideIcons.MessageSquare className="w-4 h-4" />
@@ -590,7 +606,7 @@ export default function LeadTable({
 
                   {/* Email Button */}
                   <button
-                    onClick={(e) => handleEmail(e, lead.email)}
+                  onClick={(e) => handleEmail(e, lead)}
                     className="flex items-center justify-center gap-1.5 p-2.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 rounded-lg transition-all active:scale-95"
                     title="Send email"
                   >
@@ -632,13 +648,17 @@ export default function LeadTable({
         )}
       </div>
 
-      {/* Summary */}
-      <div className="text-xs text-gray-500 px-4 md:px-0">
-        Showing {sortedLeads.length} of {leads.length} leads
-        {dashboardFilter && dashboardFilter !== 'all' && (
-          <span> • Filter: <strong>{dashboardFilter.replace(/_/g, ' ').toUpperCase()}</strong></span>
-        )}
-      </div>
-    </div>
-  );
+     {/* Summary */}
+<div className="text-xs text-gray-500 px-4 md:px-0">
+  Showing {sortedLeads.length} of {leads.length} leads
+</div>
+{showQuickActionModal && selectedLeadForAction && (
+  <QuickActionModal
+    lead={selectedLeadForAction}
+    actionType={selectedActionType}
+    onClose={() => setShowQuickActionModal(false)}
+  />
+)}
+</div>
+);
 }

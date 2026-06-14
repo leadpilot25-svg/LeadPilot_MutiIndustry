@@ -34,16 +34,21 @@ export default function TemplateManager({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+const currentTemplates = useMemo(() => {
+  console.log('templates=', templates);
+  console.log('activeTab=', activeTab);
 
-  const currentTemplates = useMemo(() => {
-    if (!templates) return [];
-    const typeTemplates = templates[activeTab] || [];
-    return typeTemplates.filter(t =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.content.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [templates, activeTab, searchQuery]);
+  if (!templates) return [];
 
+  const typeTemplates = templates[activeTab] || [];
+
+  console.log('typeTemplates=', typeTemplates);
+
+  return typeTemplates.filter(t =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.content.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+}, [templates, activeTab, searchQuery]);
   const handleSaveTemplate = async (template: FollowUpTemplate) => {
     try {
       setIsLoading(true);
@@ -144,20 +149,14 @@ export default function TemplateManager({
     <div className="w-full h-full bg-gray-50 overflow-auto">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
+        <div className="w-full px-4 md:px-6 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Template Manager</h1>
-              <p className="text-sm text-gray-600 mt-1">Create and manage communication templates</p>
-            </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <LucideIcons.X className="w-5 h-5 text-gray-600" />
-              </button>
-            )}
+  <h1 className="text-2xl font-bold text-gray-900">Template Manager</h1>
+  <p className="text-sm text-gray-600 mt-1">
+    Create and manage communication templates
+  </p>
+</div>
           </div>
         </div>
       </div>
@@ -253,8 +252,8 @@ export default function TemplateManager({
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>
                     <p className="text-xs text-gray-600 mt-0.5">
-                      {stageLabel(template.stage)}
-                    </p>
+  {template.stage ? stageLabel(template.stage) : 'General Template'}
+</p>
                   </div>
                   {template.isDefault && (
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium whitespace-nowrap">
@@ -267,21 +266,24 @@ export default function TemplateManager({
                 <p className="text-sm text-gray-600 mb-4 line-clamp-3">{template.content}</p>
 
                 {/* Variables */}
-                {template.variables.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 font-medium mb-2">Variables:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {template.variables.map((variable, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono"
-                        >
-                          {variable}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+{template.variables?.length > 0 && (
+  <div className="mb-4">
+    <p className="text-xs text-gray-500 font-medium mb-2">
+      Variables:
+    </p>
+
+    <div className="flex flex-wrap gap-1">
+      {template.variables.map((variable, idx) => (
+        <span
+          key={idx}
+          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono"
+        >
+          {variable}
+        </span>
+      ))}
+    </div>
+  </div>
+)}
 
                 {/* Actions */}
                 <div className="flex gap-2">

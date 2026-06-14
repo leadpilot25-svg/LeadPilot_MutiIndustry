@@ -21,10 +21,10 @@ import {
 interface QuickActionModalProps {
   lead: Lead;
   actionType: QuickActionType;
-  template: FollowUpTemplate;
+  template?: FollowUpTemplate;
   onClose: () => void;
-  onSend: (content: string, notes?: string) => Promise<void>;
-  isLoading: boolean;
+  onSend?: (content: string, notes?: string) => Promise<void>;
+  isLoading?: boolean;
   error?: string;
 }
 
@@ -38,13 +38,33 @@ export default function QuickActionModal({
   error,
 }: QuickActionModalProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(
-    replaceTemplateVariables(template.content, lead, 'Agent')
-  );
+ const [editedContent, setEditedContent] = useState(
+  template?.content ||
+  `Hi ${lead.name},
+
+Thank you for your interest.
+
+Just checking in to see if you have any questions.
+
+Regards,
+LeadPilot Team`
+);
   const [notes, setNotes] = useState('');
+  const [nextFollowUpDate, setNextFollowUpDate] = useState(
+  actionType === 'email'
+    ? new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0]
+    : ''
+);
 
-  const replacedContent = isEditing ? editedContent : replaceTemplateVariables(template.content, lead, 'Agent');
-
+const replacedContent = isEditing
+  ? editedContent
+  : replaceTemplateVariables(
+      template?.content || '',
+      lead,
+      'Agent'
+    );
   const typeIcon = {
     whatsapp: { icon: LucideIcons.MessageCircle, label: 'WhatsApp', color: 'green' },
     email: { icon: LucideIcons.Mail, label: 'Email', color: 'blue' },
@@ -55,14 +75,58 @@ export default function QuickActionModal({
   const typeConfig = typeIcon[actionType];
   const TypeIcon = typeConfig.icon;
 
-  const handleSend = async () => {
-    try {
-      await onSend(isEditing ? editedContent : replacedContent, notes);
+const handleSend = async () => {
+  try {
+
+    if (actionType === 'whatsapp') {
+      const phone = lead.phone?.replace(/\D/g, '');
+
+      window.open(
+        `https://wa.me/${phone}?text=${encodeURIComponent(
+          isEditing ? editedContent : replacedContent
+        )}`,
+        '_blank'
+      );
+
       onClose();
-    } catch (err) {
-      // Error handled by parent
+      return;
     }
-  };
+
+    if (actionType === 'email') {
+      window.location.href =
+        `mailto:${lead.email}` +
+        `?subject=${encodeURIComponent('Follow Up')}` +
+        `&body=${encodeURIComponent(
+          isEditing ? editedContent : replacedContent
+        )}`;
+
+      onClose();
+      return;
+    }
+
+    if (actionType === 'sms') {
+      window.location.href =
+        `sms:${lead.phone}?body=${encodeURIComponent(
+          isEditing ? editedContent : replacedContent
+        )}`;
+
+      onClose();
+      return;
+    }
+
+    if (onSend) {
+      await onSend(
+        isEditing ? editedContent : replacedContent,
+        notes
+      );
+    }
+
+    onClose();
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const isValidForSending = actionType === 'whatsapp'
     ? lead.phone?.length > 0
@@ -83,7 +147,9 @@ export default function QuickActionModal({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{typeConfig.label}</h2>
-              <p className="text-sm text-gray-600">{template.name}</p>
+              <p className="text-sm text-gray-600">
+  {template?.name || 'Quick Action'}
+</p>
             </div>
           </div>
           <button
@@ -122,11 +188,25 @@ export default function QuickActionModal({
                   <p className="text-blue-600">{lead.company}</p>
                 </div>
               )}
-            </div>
           </div>
+</div>
 
-          {/* Error Alert */}
-          {error && (
+{/* Follow-Up Date */}
+<div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+  <label className="block text-sm font-semibold mb-2">
+    Next Follow-Up Date
+  </label>
+
+  <input
+    type="date"
+    value={nextFollowUpDate}
+    onChange={(e) => setNextFollowUpDate(e.target.value)}
+    className="w-full border border-gray-300 rounded-lg p-2"
+  />
+</div>
+
+{/* Error Alert */}
+{error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <div className="flex gap-3">
                 <LucideIcons.AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
