@@ -23,7 +23,11 @@ interface QuickActionModalProps {
   actionType: QuickActionType;
   template?: FollowUpTemplate;
   onClose: () => void;
-  onSend?: (content: string, notes?: string) => Promise<void>;
+ onSend?: (
+  content: string,
+  notes?: string,
+  nextFollowUpDate?: string
+) => Promise<void>;
   isLoading?: boolean;
   error?: string;
 }
@@ -57,7 +61,14 @@ LeadPilot Team`
         .split('T')[0]
     : ''
 );
+const setFollowUpDays = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
 
+  setNextFollowUpDate(
+    date.toISOString().split('T')[0]
+  );
+};
 const replacedContent = isEditing
   ? editedContent
   : replaceTemplateVariables(
@@ -87,7 +98,7 @@ const handleSend = async () => {
         )}`,
         '_blank'
       );
-
+console.log('NEXT FOLLOWUP:', nextFollowUpDate);
       onClose();
       return;
     }
@@ -114,12 +125,13 @@ const handleSend = async () => {
       return;
     }
 
-    if (onSend) {
-      await onSend(
-        isEditing ? editedContent : replacedContent,
-        notes
-      );
-    }
+   if (onSend) {
+  await onSend(
+    isEditing ? editedContent : replacedContent,
+    notes,
+    nextFollowUpDate
+  );
+}
 
     onClose();
 
@@ -196,6 +208,40 @@ const handleSend = async () => {
   <label className="block text-sm font-semibold mb-2">
     Next Follow-Up Date
   </label>
+
+  <div className="flex gap-2 mb-3 flex-wrap">
+    <button
+      type="button"
+      onClick={() => setFollowUpDays(1)}
+      className="px-3 py-1 bg-blue-100 rounded-lg text-xs"
+    >
+      +1 Day
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setFollowUpDays(3)}
+      className="px-3 py-1 bg-green-100 rounded-lg text-xs"
+    >
+      +3 Days
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setFollowUpDays(7)}
+      className="px-3 py-1 bg-yellow-100 rounded-lg text-xs"
+    >
+      +7 Days
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setFollowUpDays(14)}
+      className="px-3 py-1 bg-purple-100 rounded-lg text-xs"
+    >
+      +14 Days
+    </button>
+  </div>
 
   <input
     type="date"
