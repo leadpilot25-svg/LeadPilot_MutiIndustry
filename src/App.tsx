@@ -1010,7 +1010,17 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
       const wsId = userProfile?.workspaceId || userWorkspace?.id;
       if (!wsId) throw new Error("Workspace ID is undefined.");
       const leadDocRef = doc(db, 'workspaces', wsId, 'leads', updatedLead.id);
-      await setDoc(leadDocRef, updatedLead);
+      console.log(
+  'SAVING FOLLOWUP:',
+  updatedLead.id,
+  updatedLead.customFields?.nextFollowUpDate
+);
+      await setDoc(
+  leadDocRef,
+  updatedLead,
+  { merge: true }
+);
+      console.log('SAVED FOLLOWUP:', updatedLead.customFields?.nextFollowUpDate);
       setSelectedLead(updatedLead);
     } catch (err) {
       console.error('Update lead failed:', err);
@@ -2350,8 +2360,9 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
     leads={tableLeads}
     dashboardFilter={dashboardFilter}
     onSelectLead={setSelectedLead}
+    onUpdateLead={handleUpdateLead}
     onDeleteLead={handleDeleteLead}
-    marketRegion={marketRegion}
+   marketRegion={marketRegion}
     onAddMultiLeads={handleBatchImportLeads}
   />
 )}

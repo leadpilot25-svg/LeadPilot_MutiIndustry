@@ -19,15 +19,17 @@ interface LeadTableProps {
   searchQuery?: string;
   marketRegion?: 'USA' | 'IND';
   onAddMultiLeads?: (leads: Lead[]) => void;
-  dashboardFilter?: string;
+ dashboardFilter?: string;
   currentView?: 'kanban' | 'table';
   onViewChange?: (view: 'kanban' | 'table') => void;
+  onUpdateLead?: (lead: Lead) => Promise<void>;
 }
 
 export default function LeadTable({
   config,
   leads,
   onSelectLead,
+  onUpdateLead,
   onDeleteLead,
   searchQuery = '',
   marketRegion = 'USA',
@@ -648,17 +650,44 @@ className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-bl
         )}
       </div>
 
-     {/* Summary */}
+  {/* Summary */}
 <div className="text-xs text-gray-500 px-4 md:px-0">
   Showing {sortedLeads.length} of {leads.length} leads
 </div>
+
 {showQuickActionModal && selectedLeadForAction && (
   <QuickActionModal
     lead={selectedLeadForAction}
     actionType={selectedActionType}
     onClose={() => setShowQuickActionModal(false)}
-  />
-)}
-</div>
-);
+  onSend={async (content, notes, nextFollowUpDate) => {
+
+  console.log('SENDING:', content);
+  console.log('NOTES:', notes);
+  console.log('FOLLOWUP:', nextFollowUpDate);
+console.log('LEAD ID:', selectedLeadForAction?.id);
+console.log('DATE:', nextFollowUpDate);
+  const updatedLead = {
+    ...selectedLeadForAction,
+    customFields: {
+      ...selectedLeadForAction.customFields,
+      nextFollowUpDate
+    }
+  };
+
+  console.log('UPDATED LEAD:', updatedLead);
+
+  if (onUpdateLead) {
+    await onUpdateLead(updatedLead);
+    console.log('SAVED TO FIRESTORE:', updatedLead);
+  }
+
+
+            setShowQuickActionModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
 }
+ 

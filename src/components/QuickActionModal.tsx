@@ -88,55 +88,41 @@ const replacedContent = isEditing
 
 const handleSend = async () => {
   try {
+    const messageContent = isEditing
+      ? editedContent
+      : replacedContent;
 
+    // SAVE FOLLOW-UP FIRST
+    if (onSend) {
+      await onSend(
+        messageContent,
+        notes,
+        nextFollowUpDate
+      );
+    }
+
+    // THEN OPEN CHANNEL
     if (actionType === 'whatsapp') {
       const phone = lead.phone?.replace(/\D/g, '');
 
       window.open(
-        `https://wa.me/${phone}?text=${encodeURIComponent(
-          isEditing ? editedContent : replacedContent
-        )}`,
+        `https://wa.me/${phone}?text=${encodeURIComponent(messageContent)}`,
         '_blank'
       );
-console.log('NEXT FOLLOWUP:', nextFollowUpDate);
-      onClose();
-      return;
-    }
-
-    if (actionType === 'email') {
+    } else if (actionType === 'email') {
       window.location.href =
         `mailto:${lead.email}` +
         `?subject=${encodeURIComponent('Follow Up')}` +
-        `&body=${encodeURIComponent(
-          isEditing ? editedContent : replacedContent
-        )}`;
-
-      onClose();
-      return;
-    }
-
-    if (actionType === 'sms') {
+        `&body=${encodeURIComponent(messageContent)}`;
+    } else if (actionType === 'sms') {
       window.location.href =
-        `sms:${lead.phone}?body=${encodeURIComponent(
-          isEditing ? editedContent : replacedContent
-        )}`;
-
-      onClose();
-      return;
+        `sms:${lead.phone}?body=${encodeURIComponent(messageContent)}`;
     }
-
-   if (onSend) {
-  await onSend(
-    isEditing ? editedContent : replacedContent,
-    notes,
-    nextFollowUpDate
-  );
-}
 
     onClose();
 
   } catch (err) {
-    console.error(err);
+    console.error('handleSend error:', err);
   }
 };
 
