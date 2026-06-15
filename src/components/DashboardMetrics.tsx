@@ -79,6 +79,21 @@ export default function DashboardMetrics({
     const today = new Date().toISOString().split('T')[0];
     return lead.customFields?.nextFollowUpDate && lead.customFields.nextFollowUpDate > today;
   }).length;
+  console.log('TOTAL LEADS:', leads.length);
+console.log('FOLLOWUPS SCHEDULED:', followUpsScheduled);
+
+console.log(
+  'FOLLOWUP DATES:',
+  leads.map(l => ({
+    name: l.name,
+    date: l.customFields?.nextFollowUpDate
+  }))
+);
+
+console.log(
+  'FOLLOWUPS SCHEDULED:',
+  followUpsScheduled
+);
   
   const activeConversations = leads.filter(lead => 
     lead.status === 'active' && lead.communicationHistory && lead.communicationHistory.length > 0

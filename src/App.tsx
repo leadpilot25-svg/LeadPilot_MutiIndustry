@@ -24,32 +24,32 @@ import { DEFAULT_TEMPLATES } from './defaultTemplates';
 
 // Firebase Modules
 import { auth, db, storage, OperationType, handleFirestoreError } from './lib/firebase';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
-  onAuthStateChanged, 
-  User 
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  User
 } from 'firebase/auth';
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  collection, 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  collection,
   writeBatch,
   getDocs
 } from 'firebase/firestore';
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
 } from 'firebase/storage';
 
 export default function App() {
@@ -93,7 +93,7 @@ export default function App() {
           isAnonymous: true,
         } as any;
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
   const [userProfile, setUserProfile] = useState<any>(() => {
@@ -120,7 +120,7 @@ export default function App() {
           createdAt: new Date().toISOString()
         };
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
   const [userWorkspace, setUserWorkspace] = useState<any>(() => {
@@ -140,7 +140,7 @@ export default function App() {
           createdAt: new Date().toISOString()
         };
       }
-    } catch (e) {}
+    } catch (e) { }
     return null;
   });
   const [authLoading, setAuthLoading] = useState(true);
@@ -172,18 +172,18 @@ export default function App() {
       return 'USA';
     }
   });
-// Navigation state (home, leads, funnel, business, settings, checklist)
-const [activeTab, setActiveTab] = useState<string>('home');
+  // Navigation state (home, leads, funnel, business, settings, checklist)
+  const [activeTab, setActiveTab] = useState<string>('home');
 
-// Templates state
-const [templates, setTemplates] = useState(() => {
-  const saved = localStorage.getItem('leadpilot_templates');
-  return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
-});
-// Leads sub-view state
-const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
+  // Templates state
+  const [templates, setTemplates] = useState(() => {
+    const saved = localStorage.getItem('leadpilot_templates');
+    return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
+  });
+  // Leads sub-view state
+  const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  
+
   // Interactive Dashboard Click/Filter state
   const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today'>('all');
 
@@ -217,11 +217,11 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
     else setGreeting('Good evening 🌙');
   }, []);
   useEffect(() => {
-  localStorage.setItem(
-    'leadpilot_templates',
-    JSON.stringify(templates)
-  );
-}, [templates]);
+    localStorage.setItem(
+      'leadpilot_templates',
+      JSON.stringify(templates)
+    );
+  }, [templates]);
 
   // Fetch platform dynamic branding configurations from Firestore or localStorage
   useEffect(() => {
@@ -289,7 +289,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
         displayName: 'Sandbox User',
         isAnonymous: true,
       } as any);
-      
+
       setUserProfile({
         uid: 'demo-sandbox-id',
         email: 'demo@leadpilot.co',
@@ -313,7 +313,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
         if (savedWs) {
           initialWs = JSON.parse(savedWs);
         }
-      } catch (e) {}
+      } catch (e) { }
       setUserWorkspace(initialWs);
       setEditWorkspaceName(initialWs.name || '');
       setEditWorkspaceMode(initialWs.mode || 'solo');
@@ -486,7 +486,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
             { uid: 'agent-1', email: 'agent1@apexhorizon.com', displayName: 'Agent Samantha', role: 'agent', status: 'active' },
             { uid: 'agent-2', email: 'agent2@apexhorizon.com', displayName: 'Agent Roger', role: 'agent', status: 'disabled' },
           ]);
-          
+
           setWorkspaceInvitations([
             { email: 'pending_agent@apexhorizon.com', role: 'agent', createdAt: new Date().toISOString() }
           ]);
@@ -525,8 +525,8 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
     });
 
     // B. Sync Workspace Members (All authenticated workspace users can sync team list, invitations are Owner Only)
-    let unsubscribeMembers = () => {};
-    let unsubscribeInvites = () => {};
+    let unsubscribeMembers = () => { };
+    let unsubscribeInvites = () => { };
 
     const membersQuery = query(collection(db, 'users'), where('workspaceId', '==', wsId));
     console.log('[Firestore Sync Debug] Initializing members subscription. wsId used:', wsId);
@@ -590,7 +590,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
     setIsOnboardingSaving(true);
     try {
       const wsId = `ws_${user.uid}_${Date.now().toString(36)}`;
-      
+
       // Update workspaces
       const wsDoc = {
         id: wsId,
@@ -876,9 +876,9 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
       const wsId = userProfile?.workspaceId || userWorkspace?.id;
       if (!wsId) throw new Error("Workspace ID is undefined.");
       const leadDocRef = doc(db, 'workspaces', wsId, 'leads', leadId);
-      await updateDoc(leadDocRef, { 
-        stageId: newStageId, 
-        lastContacted: today 
+      await updateDoc(leadDocRef, {
+        stageId: newStageId,
+        lastContacted: today
       });
     } catch (err) {
       console.error('Move stage failed:', err);
@@ -935,7 +935,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
       // 3. Ensure optional email is: empty string "" and never undefined
       cleanedLeadData.email = cleanedLeadData.email ? String(cleanedLeadData.email).trim() : "";
 
-      const newNotes = cleanedLeadData.noteText 
+      const newNotes = cleanedLeadData.noteText
         ? [{ id: `note-${Date.now()}`, content: cleanedLeadData.noteText, createdAt: today, author: userProfile?.displayName || 'Advisor Agent' }]
         : [];
 
@@ -1011,15 +1011,15 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
       if (!wsId) throw new Error("Workspace ID is undefined.");
       const leadDocRef = doc(db, 'workspaces', wsId, 'leads', updatedLead.id);
       console.log(
-  'SAVING FOLLOWUP:',
-  updatedLead.id,
-  updatedLead.customFields?.nextFollowUpDate
-);
+        'SAVING FOLLOWUP:',
+        updatedLead.id,
+        updatedLead.customFields?.nextFollowUpDate
+      );
       await setDoc(
-  leadDocRef,
-  updatedLead,
-  { merge: true }
-);
+        leadDocRef,
+        updatedLead,
+        { merge: true }
+      );
       console.log('SAVED FOLLOWUP:', updatedLead.customFields?.nextFollowUpDate);
       setSelectedLead(updatedLead);
     } catch (err) {
@@ -1137,7 +1137,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
         setLeads(updatedLeads);
         localStorage.setItem('leadpilot_demo_leads', JSON.stringify(updatedLeads));
         if (selectedLead?.id === leadId) {
-          setSelectedLead(prev => prev ? { ...prev, files: updatedFiles, notes: [newNote, ...(prev.notes || [] )] } : null);
+          setSelectedLead(prev => prev ? { ...prev, files: updatedFiles, notes: [newNote, ...(prev.notes || [])] } : null);
         }
         alert('File attachment added to local sandbox successfully!');
         return;
@@ -1176,7 +1176,7 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
         await updateDoc(leadDocRef, { notes: [newNote, ...(leadData.notes || [])] });
 
         if (selectedLead?.id === leadId) {
-          setSelectedLead(prev => prev ? { ...prev, files: updatedFiles, notes: [newNote, ...(prev.notes || [] )] } : null);
+          setSelectedLead(prev => prev ? { ...prev, files: updatedFiles, notes: [newNote, ...(prev.notes || [])] } : null);
         }
         alert('File attachment uploaded and added to lead profile successfully!');
       }
@@ -1320,11 +1320,11 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
     setIsFormOpen(true);
   };
 
- const handleDashboardFilterClick = (filterType: typeof dashboardFilter) => {
-  console.log('CLICK:', filterType);
-  setDashboardFilter(filterType);
-  setActiveTab('leads');
-};
+  const handleDashboardFilterClick = (filterType: typeof dashboardFilter) => {
+    console.log('CLICK:', filterType);
+    setDashboardFilter(filterType);
+    setActiveTab('leads');
+  };
 
   // Dynamic colors highlighted for current industry config
   const getIndustryThemeColor = (id: string) => {
@@ -1353,71 +1353,88 @@ const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
     }
   };
 
-    // 10. Computations & Follow-up Alerts Dashboard Logic
-const currentLeads = leads;
-const todayDateStr = new Date().toLocaleDateString('en-CA');
+  // 10. Computations & Follow-up Alerts Dashboard Logic
+  const currentLeads = leads;
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const totalLeadsCount = currentLeads.length;
 
-const totalLeadsCount = currentLeads.length;
+  const finalStageId =
+    activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
 
-const finalStageId =
-  activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
+  const isCompletedLead = (l: Lead) =>
+    l.stageId === 'won_client' ||
+    l.stageId === 'project_delivered' ||
+    l.status === 'won';
 
-const isCompletedLead = (l: Lead) =>
-  l.stageId === 'won_client' ||
-  l.stageId === 'project_delivered' ||
-  l.status === 'won';
+  // NOW use isCompletedLead
+  const openLeadsCount = currentLeads.filter(
+    l => l.status === 'active' && !isCompletedLead(l)
+  ).length;
 
-// NOW use isCompletedLead
-const openLeadsCount = currentLeads.filter(
-  l => l.status === 'active' && !isCompletedLead(l)
-).length;
+  const todayCreatedCount = currentLeads.filter(
+    l => l.createdAt === todayDateStr
+  ).length;
 
-const todayCreatedCount = currentLeads.filter(
-  l => l.createdAt === todayDateStr
-).length;
+  // TODAY KPI
+  const todayFollowupLeads = currentLeads.filter(
+    l =>
+      l.status === 'active' &&
+      !isCompletedLead(l) &&
+      l.customFields?.nextFollowUpDate === todayDateStr
+  );
 
-// TODAY KPI
-const todayFollowupLeads = currentLeads.filter(
-  l =>
-    l.status === 'active' &&
-    !isCompletedLead(l) &&
-    l.customFields?.nextFollowUpDate === todayDateStr
-);
+  const todayFollowupsCount = todayFollowupLeads.length;
 
-const todayFollowupsCount = todayFollowupLeads.length;
-
-// MISSED KPI
+  // MISSED KPI
 
 
 
   // OVERDUE KPI: Count leads where nextFollowUpDate is before today AND lead is not completed/closed.
-  const missedFollowupLeads = currentLeads.filter(l => 
-    l.status === 'active' && 
+  const missedFollowupLeads = currentLeads.filter(l =>
+    l.status === 'active' &&
     !isCompletedLead(l) &&
-    l.customFields?.nextFollowUpDate && 
+    l.customFields?.nextFollowUpDate &&
     l.customFields.nextFollowUpDate < todayDateStr
   );
   const missedFollowupsCount = missedFollowupLeads.length;
 
+  const scheduledFollowupLeads = currentLeads.filter((lead) => {
+    const date = lead.customFields?.nextFollowUpDate;
+
+    if (!date) return false;
+
+    return (
+      lead.status === 'active' &&
+      !isCompletedLead(lead) &&
+      date > todayDateStr
+    );
+  });
+
+  const scheduledFollowupsCount = scheduledFollowupLeads.length;
+  console.log(
+    'SCHEDULED FOLLOWUPS:',
+    scheduledFollowupsCount
+  );
+
   // UPCOMING KPI: Count leads where nextFollowUpDate is after today.
-  const upcomingFollowupLeads = currentLeads.filter(l => 
-    l.status === 'active' && 
+  const upcomingFollowupLeads = currentLeads.filter(l =>
+    l.status === 'active' &&
     !isCompletedLead(l) &&
-    l.customFields?.nextFollowUpDate && 
+    l.customFields?.nextFollowUpDate &&
     l.customFields.nextFollowUpDate > todayDateStr
   );
   const meetingsCount = upcomingFollowupLeads.length;
 
   // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
-const closedDealsLeads = currentLeads.filter(
-  l => isCompletedLead(l)
-);
+  const closedDealsLeads = currentLeads.filter(
+    l => isCompletedLead(l)
+  );
 
-const closedDealsCount = closedDealsLeads.length;
-console.log('TOTAL:', totalLeadsCount);
-console.log('OPEN:', openLeadsCount);
-console.log('CLOSED:', closedDealsCount);
-console.log('FINAL STAGE ID:', finalStageId);
+  const closedDealsCount = closedDealsLeads.length;
+  console.log('TOTAL:', totalLeadsCount);
+  console.log('OPEN:', openLeadsCount);
+  console.log('CLOSED:', closedDealsCount);
+  console.log('FINAL STAGE ID:', finalStageId);
 
 
   // Follow-Up Stage Metrics
@@ -1431,73 +1448,79 @@ console.log('FINAL STAGE ID:', finalStageId);
   const finalFollowUpDueCount = finalFollowUpDueLeads.length;
 
   // Active Conversations
-  const activeConversationLeads = currentLeads.filter(l => 
-    l.status === 'active' && 
-    l.communicationHistory && 
+  const activeConversationLeads = currentLeads.filter(l =>
+    l.status === 'active' &&
+    l.communicationHistory &&
     l.communicationHistory.length > 0
   );
   const activeConversationCount = activeConversationLeads.length;
 
- const tableLeads = (() => {
-  console.log('dashboardFilter=', dashboardFilter);
-  console.log('todayFollowupLeads=', todayFollowupLeads.length);
-  console.log('missedFollowupLeads=', missedFollowupLeads.length);
+  const tableLeads = (() => {
+    console.log('dashboardFilter=', dashboardFilter);
+    console.log('todayFollowupLeads=', todayFollowupLeads.length);
+    console.log('missedFollowupLeads=', missedFollowupLeads.length);
 
-  switch (dashboardFilter) {
-    case 'today_followups':
-      console.log('📋 CASE MATCHED: today_followups, returning', todayFollowupLeads.length, 'leads');  // ← Add this
-      return todayFollowupLeads;
+    switch (dashboardFilter) {
+      case 'today_followups':
+        console.log('📋 CASE MATCHED: today_followups, returning', todayFollowupLeads.length, 'leads');  // ← Add this
+        return todayFollowupLeads;
 
-    case 'missed_followups':
-      console.log('📋 CASE MATCHED: missed_followups, returning', missedFollowupLeads.length, 'leads');
-      return missedFollowupLeads;
+      case 'missed_followups':
+        console.log('📋 CASE MATCHED: missed_followups, returning', missedFollowupLeads.length, 'leads');
+        return missedFollowupLeads;
 
-        case 'meetings_today':
-  console.log('📋 CASE MATCHED: meetings_today, returning', todayFollowupLeads.length, 'leads');
-  return todayFollowupLeads;
-     
+      case 'meetings_today':
+        console.log('📋 CASE MATCHED: meetings_today, returning', todayFollowupLeads.length, 'leads');
+        return todayFollowupLeads;
+      case 'scheduled_followups':
+        console.log(
+          '📋 CASE MATCHED: scheduled_followups, returning',
+          scheduledFollowupLeads.length,
+          'leads'
+        );
+        return scheduledFollowupLeads;
 
-    case 'closed_deals':
-      console.log('📋 CASE MATCHED: closed_deals, returning', closedDealsLeads.length, 'leads');
-      return closedDealsLeads;
+      case 'closed_deals':
+        console.log('📋 CASE MATCHED: closed_deals, returning', closedDealsLeads.length, 'leads');
+        return closedDealsLeads;
 
-    case 'followup_1':
-      console.log('📋 CASE MATCHED: followup_1, returning', followUp1DueLeads.length, 'leads');
-      return followUp1DueLeads;
+      case 'followup_1':
+        console.log('📋 CASE MATCHED: followup_1, returning', followUp1DueLeads.length, 'leads');
+        return followUp1DueLeads;
 
-    case 'followup_2':
-      console.log('📋 CASE MATCHED: followup_2, returning', followUp2DueLeads.length, 'leads');
-      return followUp2DueLeads;
+      case 'followup_2':
+        console.log('📋 CASE MATCHED: followup_2, returning', followUp2DueLeads.length, 'leads');
+        return followUp2DueLeads;
 
-    case 'followup_final':
-      console.log('📋 CASE MATCHED: followup_final, returning', finalFollowUpDueLeads.length, 'leads');
-      return finalFollowUpDueLeads;
+      case 'followup_final':
+        console.log('📋 CASE MATCHED: followup_final, returning', finalFollowUpDueLeads.length, 'leads');
+        return finalFollowUpDueLeads;
 
-    case 'active_conversations':
-      console.log('📋 CASE MATCHED: active_conversations, returning', activeConversationLeads.length, 'leads');
-      return activeConversationLeads;
+      case 'active_conversations':
+        console.log('📋 CASE MATCHED: active_conversations, returning', activeConversationLeads.length, 'leads');
+        return activeConversationLeads;
       case 'open':
-  return currentLeads.filter(
-    l => l.status === 'active' && !isCompletedLead(l)
-  );
+        return currentLeads.filter(
+          l => l.status === 'active' && !isCompletedLead(l)
+        );
 
-case 'closed':
-  return currentLeads.filter(
-    l => isCompletedLead(l)
-  );
+      case 'closed':
+        return currentLeads.filter(
+          l => isCompletedLead(l)
+        );
 
-case 'today':
-  return currentLeads.filter(
-    l => l.createdAt === todayDateStr
-  );
+      case 'today':
+        return currentLeads.filter(
+          l => l.createdAt === todayDateStr
+        );
 
-    default:
-      console.log('⚠️ NO CASE MATCHED! Returning DEFAULT currentLeads:', currentLeads.length, 'leads');
-      return currentLeads;
-  }
-})();
+      default:
+        console.log('⚠️ NO CASE MATCHED! Returning DEFAULT currentLeads:', currentLeads.length, 'leads');
+        return currentLeads;
+    }
+  })();
 
-  
+
   // Final filtered array depending on Dashboard Interactive selection
 
   // Public Lead Intake Capture Gateway Screen Router
@@ -1516,7 +1539,7 @@ case 'today':
             </div>
             <h4 className="text-lg font-bold text-slate-950">Invalid Workspace Reference</h4>
             <p className="text-xs text-gray-500">The referral capture form you are searching for is invalid or retired by its owner.</p>
-            <button 
+            <button
               onClick={() => {
                 window.history.pushState({}, document.title, window.location.pathname);
                 setPublicFormTenantId(null);
@@ -1528,7 +1551,7 @@ case 'today':
           </div>
         ) : (
           <div className="w-full max-w-lg mt-6 mb-12">
-            <PublicLeadCaptureForm 
+            <PublicLeadCaptureForm
               tenantId={publicFormWorkspace.id}
               tenants={[{
                 id: publicFormWorkspace.id,
@@ -1582,7 +1605,7 @@ case 'today':
         <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] bg-emerald-950/20 rounded-full filter blur-[120px] pointer-events-none" />
 
         <div className="w-full max-w-md bg-zinc-900/90 border border-zinc-800 rounded-3xl p-8 shadow-2xl relative z-10 space-y-6 text-center backdrop-blur-md">
-          
+
           {/* Logo element */}
           <div className="space-y-3">
             <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-md shadow-emerald-500/10">
@@ -1713,7 +1736,7 @@ case 'today':
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 relative font-sans">
         <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-900/10 rounded-full blur-[100px]" />
-        
+
         <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-7 shadow-2xl space-y-6 text-left relative z-10">
           <div className="space-y-1.5 border-b border-zinc-800 pb-4">
             <div className="inline-block px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono text-[9px] font-bold uppercase tracking-wider">
@@ -1724,7 +1747,7 @@ case 'today':
           </div>
 
           <form onSubmit={handleOnboardSubmit} className="space-y-4">
-            
+
             {/* Input Workspace Name */}
             <div className="space-y-1">
               <label className="text-zinc-400 text-xs font-semibold block">Company or Profile Name</label>
@@ -1761,9 +1784,9 @@ case 'today':
             <div className="space-y-2 pt-2 border-t border-zinc-800">
               <label className="text-zinc-400 text-xs font-semibold block">SaaS Operations Format</label>
               <div className="grid grid-cols-2 gap-3">
-                
+
                 {/* Solo Mode option */}
-                <div 
+                <div
                   onClick={() => setOnboardIsTeamMode(false)}
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${!onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
@@ -1773,7 +1796,7 @@ case 'today':
                 </div>
 
                 {/* Team Mode option */}
-                <div 
+                <div
                   onClick={() => setOnboardIsTeamMode(true)}
                   className={`p-3.5 rounded-xl border border-zinc-850 cursor-pointer select-none transition-all ${onboardIsTeamMode ? 'border-indigo-600 bg-indigo-950/20 text-white' : 'hover:border-zinc-700 text-zinc-400 hover:text-white'}`}
                 >
@@ -1876,7 +1899,7 @@ case 'today':
   // ACTIVE CRM FULL VIEW WORKSPACE PORTAL SCREEN
   return (
     <div id="saas-corporate-frame" className="min-h-screen bg-slate-50 flex flex-col font-sans transition-colors duration-250 relative">
-      
+
       {/* Dynamic Alerts follow-up dashboard warning bar (Phase 1 & Phase 2 follow-ups warnings) */}
       {(missedFollowupsCount > 0 || todayFollowupsCount > 0) && (
         <div className="bg-amber-100/70 border-b border-amber-200/50 py-2.5 px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 text-xs shrink-0 animate-fade-in relative z-20">
@@ -1891,7 +1914,7 @@ case 'today':
               </span>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => handleDashboardFilterClick('missed_followups')}
             className="text-[10px] bg-amber-800 hover:bg-amber-900 text-white font-bold px-3 py-1.5 rounded-lg shrink-0 transition-all font-sans"
           >
@@ -1901,8 +1924,8 @@ case 'today':
       )}
 
       {/* Primary Header Frame Layout */}
-<header className="sticky top-0 z-40 bg-white border-b border-gray-100 py-3 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0 shadow-xs relative">
-     {/* LEFT SECTION - Branding & Logo */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-100 py-3 px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0 shadow-xs relative">
+        {/* LEFT SECTION - Branding & Logo */}
         <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
           {userProfile.role === 'super_admin' ? (
             <>
@@ -1921,13 +1944,13 @@ case 'today':
             </>
           ) : (
             <>
-   <div className="shrink-0 flex items-center justify-center">
-  <img
-    src="/logo.png"
-    alt="LeadPilot"
-    className="w-12 h-12 object-contain"
-  />
-</div>
+              <div className="shrink-0 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="LeadPilot"
+                  className="w-12 h-12 object-contain"
+                />
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-tight truncate">
@@ -1947,11 +1970,11 @@ case 'today':
 
         {/* RIGHT SECTION - Navigation & Actions */}
         <div className="flex flex-wrap items-center gap-2 justify-end"></div>
-          {/* Global Nav Elements */}
-<div className="hidden md:flex flex-wrap items-center gap-2">
+        {/* Global Nav Elements */}
+        <div className="hidden md:flex flex-wrap items-center gap-2">
           {userProfile.role === 'super_admin' ? (
             <>
-              <button 
+              <button
                 onClick={() => {
                   setActiveTab('super_admin_dash');
                 }}
@@ -1961,7 +1984,7 @@ case 'today':
                 <span>Super Admin Dash</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setActiveTab('checklist');
                 }}
@@ -1973,7 +1996,7 @@ case 'today':
             </>
           ) : (
             <>
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('home');
@@ -1984,7 +2007,7 @@ case 'today':
                 <span>Dashboard</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('leads');
@@ -1995,7 +2018,7 @@ case 'today':
                 <span>Pipelines</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('funnel');
@@ -2006,7 +2029,7 @@ case 'today':
                 <span>Conversion Funnel</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('business');
@@ -2018,7 +2041,7 @@ case 'today':
               </button>
 
               {/* Settings replaces Admin for Owners. Visible for Lead Allocation settings */}
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('settings');
@@ -2029,7 +2052,7 @@ case 'today':
                 <span>Team & Settings</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   setDashboardFilter('all');
                   setActiveTab('checklist');
@@ -2071,106 +2094,108 @@ case 'today':
 
       {/* Base Viewport Container */}
 
-<main id="workspace-viewport-pane" className="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto md:pb-6 pb-28">        <AnimatePresence mode="wait">
-          
-          {/* ================= tab: SUPER ADMIN DASHBOARD ================= */}
-          {activeTab === 'super_admin_dash' && userProfile.role === 'super_admin' && (
-            <div className="space-y-6 animate-fade-in" id="super-admin-tab-content">
-              <SuperAdminDashboard 
-                isDemoMode={isDemoMode}
-                onBrandingChange={(newBrandingName) => {
-                  setPlatformConfig((prev: any) => ({
-                    ...prev,
-                    appBranding: newBrandingName
-                  }));
-                }}
-              />
-            </div>
-          )}
+      <main id="workspace-viewport-pane" className="flex-1 p-6 max-w-7xl w-full mx-auto overflow-y-auto md:pb-6 pb-28">        <AnimatePresence mode="wait">
 
-          {/* ================= tab: HOME (METRICS & ACTIVE PANELS) ================= */}
-          {activeTab === 'home' && (
-            <div className="space-y-6 animate-fade-in" id="home-tab-content">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-150/40 shadow-2xs">
-                <div>
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
-                    {greeting}, {userProfile.displayName}!
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1"></p>
+        {/* ================= tab: SUPER ADMIN DASHBOARD ================= */}
+        {activeTab === 'super_admin_dash' && userProfile.role === 'super_admin' && (
+          <div className="space-y-6 animate-fade-in" id="super-admin-tab-content">
+            <SuperAdminDashboard
+              isDemoMode={isDemoMode}
+              onBrandingChange={(newBrandingName) => {
+                setPlatformConfig((prev: any) => ({
+                  ...prev,
+                  appBranding: newBrandingName
+                }));
+              }}
+            />
+          </div>
+        )}
+
+        {/* ================= tab: HOME (METRICS & ACTIVE PANELS) ================= */}
+        {activeTab === 'home' && (
+          <div className="space-y-6 animate-fade-in" id="home-tab-content">
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-150/40 shadow-2xs">
+              <div>
+                <h3 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
+                  {greeting}, {userProfile.displayName}!
+                </h3>
+                <p className="text-xs text-slate-500 mt-1"></p>
+              </div>
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer"
+              >
+                <LucideIcons.Plus className="w-4 h-4 text-indigo-400 stroke-[3]" />
+                <span>Onboard New {activeIndustry.leadLabel}</span>
+              </button>
+            </div>
+
+            {/* Follow-up Clearance banner card (matching original) */}
+            {missedFollowupsCount === 0 && todayFollowupsCount === 0 && (
+              <div className="bg-emerald-50 border border-emerald-150/60 p-4 rounded-3xl" id="clean-followups-clear-banner">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-full text-emerald-600 shrink-0">
+                    <LucideIcons.CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-emerald-950 block">All active follow-ups cleared!</span>
+                    <p className="text-[11px] text-emerald-800 leading-normal mt-0.5">Your customer pipeline contains zero expired tasks or actions today.</p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setIsFormOpen(true)}
-                  className="px-4.5 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 self-start sm:self-auto shrink-0 select-none cursor-pointer"
-                >
-                  <LucideIcons.Plus className="w-4 h-4 text-indigo-400 stroke-[3]" />
-                  <span>Onboard New {activeIndustry.leadLabel}</span>
-                </button>
+              </div>
+            )}
+
+            {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
+
+              {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
+              <div
+                onClick={() => handleDashboardFilterClick('today_followups')}
+                className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                id="kpi-today-followups"
+              >
+                <div className="text-amber-500 group-hover:scale-110 transition-transform">
+                  <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
+                </div>
+                <div>
+                  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                   {todayFollowupsCount}
+                  </span>
+
+                  <div className="h-10 flex items-center">
+                    <span className="text-[11px] font-semibold uppercase leading-tight">
+                      FOLLOW-UPS TODAY
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Follow-up Clearance banner card (matching original) */}
-              {missedFollowupsCount === 0 && todayFollowupsCount === 0 && (
-                <div className="bg-emerald-50 border border-emerald-150/60 p-4 rounded-3xl" id="clean-followups-clear-banner">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-full text-emerald-600 shrink-0">
-                      <LucideIcons.CheckCircle2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-bold text-emerald-950 block">All active follow-ups cleared!</span>
-                      <p className="text-[11px] text-emerald-800 leading-normal mt-0.5">Your customer pipeline contains zero expired tasks or actions today.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Card 2: Missed follow-ups */}
+             <div
+  onClick={() => handleDashboardFilterClick('missed_followups')}
+  className="bg-red-50/40 hover:bg-red-50/80 ..."
+  id="kpi-missed-followups"
+>
+  <div className="text-red-500 group-hover:scale-110 transition-transform">
+    <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
+  </div>
 
-              {/* 4 Large Clickable Dashboard Metric Blocks (matching user image layout 1:1) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="dashboard-large-clickable-metrics">
-                
-                {/* Card 1: Trips Scheduled / Site Visits Scheduled / Consults Scheduled (Future Items) */}
-                <div 
-                  onClick={() => handleDashboardFilterClick('today_followups')}
-className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-                  id="kpi-today-followups"
-                >
-                  <div className="text-amber-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Clock className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <div>
-  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-    {todayFollowupsCount}
-  </span>
+  <div>
+    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+      {missedFollowupsCount}
+    </span>
 
-  <div className="h-10 flex items-center">
-  <span className="text-[11px] font-semibold uppercase leading-tight">
-    FOLLOW-UPS TODAY
-  </span>
+    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+      {activeIndustry.missedFollowupsLabel || "Expired tasks"}
+    </span>
+  </div>
 </div>
-</div>
-
-</div>
-
-{/* Card 2: Missed follow-ups */}
-                <div 
-                  onClick={() => handleDashboardFilterClick('missed_followups')}
-                  className="bg-red-50/40 hover:bg-red-50/80 border border-red-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-                  id="kpi-missed-followups"
-                >
-                  <div className="text-red-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {missedFollowupsCount}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                      {activeIndustry.missedFollowupsLabel || "Expired tasks"}
-                    </span>
-                  </div>
-                </div>
 
                 {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
-                <div 
-                  onClick={() => handleDashboardFilterClick('meetings_today')}
+                <div
+                  onClick={() => handleDashboardFilterClick('scheduled_followups')}
                   className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-meetings-today"
                 >
@@ -2179,16 +2204,16 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {todayFollowupsCount}
+                      {scheduledFollowupsCount}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                      {activeIndustry.meetingsTodayLabel || "Meetings today"}
+                      Follow-Ups Scheduled
                     </span>
                   </div>
                 </div>
 
                 {/* Card 4: Closed deals */}
-                <div 
+                <div
                   onClick={() => handleDashboardFilterClick('closed_deals')}
                   className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
                   id="kpi-closed-deals"
@@ -2204,11 +2229,11 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                       {activeIndustry.closedDealsLabel || "Closed deals"}
                     </span>
                   </div>
-                  
+
                 </div>
 
 
-                
+
 
               </div>
 
@@ -2216,9 +2241,9 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
               <div className="space-y-3 pt-2" id="lead-overview-block">
                 <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  
+
                   {/* Total */}
-                  <div 
+                  <div
                     onClick={() => handleDashboardFilterClick('total')}
                     className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
@@ -2227,7 +2252,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                   </div>
 
                   {/* Open */}
-                  <div 
+                  <div
                     onClick={() => handleDashboardFilterClick('open')}
                     className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
@@ -2236,7 +2261,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                   </div>
 
                   {/* Closed */}
-                  <div 
+                  <div
                     onClick={() => handleDashboardFilterClick('closed')}
                     className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
@@ -2245,7 +2270,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                   </div>
 
                   {/* Today */}
-                  <div 
+                  <div
                     onClick={() => handleDashboardFilterClick('today')}
                     className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
                   >
@@ -2268,14 +2293,14 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
                     Calculations on this screen are tailored dynamically for <strong className="text-white">{activeIndustry.leadLabel}s</strong> with value-based monitoring configured under the <strong className="text-white">{activeIndustry.valueLabel}</strong> matrix.
                   </p>
                   <div className="pt-2 flex items-center gap-3">
-                    <button 
+                    <button
                       onClick={() => setActiveTab('leads')}
                       className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold transition-all text-white flex items-center gap-1.5"
                     >
                       <LucideIcons.ArrowRight className="w-3.5 h-3.5" />
                       <span>Open Interactive Pipeline</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveTab('business')}
                       className="px-4 py-2 bg-slate-900/40 hover:bg-slate-900/60 rounded-xl text-xs font-semibold text-indigo-100"
                     >
@@ -2288,512 +2313,511 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             </div>
           )}
 
-          {/* ================= tab: LEADS (PIPELINE & BOARD) ================= */}
-          {activeTab === 'leads' && (
-            <div className="space-y-6 animate-fade-in" id="leads-tab-content">
-              
-              <div className="bg-white p-4.5 rounded-3xl border border-gray-150/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-3xs justify-start leading-none mb-2">
-                <div className="space-y-1 self-start sm:self-auto">
-                  <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Active {activeIndustry.leadLabel} Leads Roster</h4>
-                  <p className="text-xs text-gray-500">Track and advance lead stages in real-time. System sync is active.</p>
-                </div>
+            {/* ================= tab: LEADS (PIPELINE & BOARD) ================= */}
+            {activeTab === 'leads' && (
+              <div className="space-y-6 animate-fade-in" id="leads-tab-content">
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  {/* View Form toggle panel */}
-                  <div className="bg-slate-100 p-1 rounded-xl flex items-center shrink-0 border">
-                    <button
-                      onClick={() => setCurrentView('kanban')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'kanban' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
-                    >
-                      <LucideIcons.Layout className="w-3.5 h-3.5" />
-                      <span>Kanban</span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentView('table')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'table' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
-                    >
-                      <LucideIcons.List className="w-3.5 h-3.5" />
-                      <span>Table</span>
-                    </button>
+                <div className="bg-white p-4.5 rounded-3xl border border-gray-150/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-3xs justify-start leading-none mb-2">
+                  <div className="space-y-1 self-start sm:self-auto">
+                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Active {activeIndustry.leadLabel} Leads Roster</h4>
+                    <p className="text-xs text-gray-500">Track and advance lead stages in real-time. System sync is active.</p>
                   </div>
 
-                  <button
-                    onClick={() => setIsFormOpen(true)}
-                    className="px-4.5 py-2 bg-slate-950 text-white rounded-xl text-xs font-bold hover:bg-indigo-900 transition-colors flex items-center gap-1 border shrink-0 cursor-pointer"
-                  >
-                    <LucideIcons.Plus className="w-4 h-4 text-emerald-400 stroke-[3]" />
-                    <span>Create Lead</span>
-                  </button>
-                </div>
-              </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {/* View Form toggle panel */}
+                    <div className="bg-slate-100 p-1 rounded-xl flex items-center shrink-0 border">
+                      <button
+                        onClick={() => setCurrentView('kanban')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'kanban' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
+                      >
+                        <LucideIcons.Layout className="w-3.5 h-3.5" />
+                        <span>Kanban</span>
+                      </button>
+                      <button
+                        onClick={() => setCurrentView('table')}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'table' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
+                      >
+                        <LucideIcons.List className="w-3.5 h-3.5" />
+                        <span>Table</span>
+                      </button>
+                    </div>
 
-              {/* Dynamic selection helper note if active */}
-              {dashboardFilter !== 'all' && (
-                <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
-                  <div className="flex items-center gap-2">
-                    <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
-                    <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
+                    <button
+                      onClick={() => setIsFormOpen(true)}
+                      className="px-4.5 py-2 bg-slate-950 text-white rounded-xl text-xs font-bold hover:bg-indigo-900 transition-colors flex items-center gap-1 border shrink-0 cursor-pointer"
+                    >
+                      <LucideIcons.Plus className="w-4 h-4 text-emerald-400 stroke-[3]" />
+                      <span>Create Lead</span>
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => setDashboardFilter('all')}
-                    className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
-                  >
-                    Clear Filter
-                  </button>
                 </div>
-              )}
 
-              {/* Core Viewport Rendering */}
-       
-     {currentView === 'kanban' ? (
-  <PipelineBoard
-    config={activeIndustry}
-    leads={tableLeads}
-    onMoveLead={handleMoveLead}
-    onSelectLead={setSelectedLead}
-    onQuickAdd={triggerQuickAdd}
-    marketRegion={marketRegion}
-  />
-) : (
-  <LeadTable
-    config={activeIndustry}
-    leads={tableLeads}
-    dashboardFilter={dashboardFilter}
-    onSelectLead={setSelectedLead}
-    onUpdateLead={handleUpdateLead}
-    onDeleteLead={handleDeleteLead}
-   marketRegion={marketRegion}
-    onAddMultiLeads={handleBatchImportLeads}
-  />
-)}
+                {/* Dynamic selection helper note if active */}
+                {dashboardFilter !== 'all' && (
+                  <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
+                    <div className="flex items-center gap-2">
+                      <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
+                      <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
+                    </div>
+                    <button
+                      onClick={() => setDashboardFilter('all')}
+                      className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
+                    >
+                      Clear Filter
+                    </button>
+                  </div>
+                )}
 
-</div>
-)}
-          {/* ================= tab: FUNNEL ================= */}
-          {activeTab === 'funnel' && (
-            <div className="space-y-6 animate-fade-in" id="funnel-tab-content">
-              
-              <div className="bg-gradient-to-r from-indigo-900 to-indigo-950 rounded-3xl p-6 text-white border space-y-4">
-                <span className="text-[10px] uppercase font-mono font-bold text-[#10b981] bg-indigo-950/40 border px-2.5 py-1 rounded-full inline-block">Conversions</span>
-                <h3 className="text-xl font-bold tracking-tight">Active Conversion Funnel diagnostics</h3>
-                <p className="text-xs text-indigo-200 leading-relaxed max-w-xl">
-                  Evaluates progression values for active clients across each stage of the {activeIndustry.name} pipeline workflow registry.
-                </p>
+                {/* Core Viewport Rendering */}
+
+                {currentView === 'kanban' ? (
+                  <PipelineBoard
+                    config={activeIndustry}
+                    leads={tableLeads}
+                    onMoveLead={handleMoveLead}
+                    onSelectLead={setSelectedLead}
+                    onQuickAdd={triggerQuickAdd}
+                    marketRegion={marketRegion}
+                  />
+                ) : (
+                  <LeadTable
+                    config={activeIndustry}
+                    leads={tableLeads}
+                    dashboardFilter={dashboardFilter}
+                    onSelectLead={setSelectedLead}
+                    onUpdateLead={handleUpdateLead}
+                    onDeleteLead={handleDeleteLead}
+                    marketRegion={marketRegion}
+                    onAddMultiLeads={handleBatchImportLeads}
+                  />
+                )}
+
               </div>
+            )}
+            {/* ================= tab: FUNNEL ================= */}
+            {activeTab === 'funnel' && (
+              <div className="space-y-6 animate-fade-in" id="funnel-tab-content">
 
-              {/* Funnel chart simulation */}
-              <div className="bg-white p-6 rounded-3xl border border-gray-150/40 shadow-3xs space-y-4">
-                <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics</span>
-                <div className="space-y-4">
-                  {activeIndustry.stages.map((stage, idx) => {
-                    const stageLeads = currentLeads.filter(l => l.stageId === stage.id);
-                    const percentOfTotal = totalLeadsCount > 0 ? (stageLeads.length / totalLeadsCount) * 100 : 0;
-                    const stageValue = stageLeads.reduce((acc, lead) => acc + (lead.value || 0), 0);
-                    
-                    return (
-                      <div key={stage.id} className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-medium">
-                          <span className="font-bold text-slate-800">{idx + 1}. {stage.label}</span>
-                          <span className="text-slate-500 font-bold">
-                            {stageLeads.length} leads • {marketRegion === 'USA' ? '$' : '₹'}{stageValue.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-50 border border-slate-100 rounded-full h-4 relative overflow-hidden">
-                          <div 
-                            className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${Math.max(percentOfTotal, 3)}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ================= tab: BUSINESS (TOOLS & AI ADVISOR) ================= */}
-          {activeTab === 'business' && (
-            <div className="space-y-6 animate-fade-in" id="business-tab-content">
-              
-              {/* Header / Intro Area */}
-              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl space-y-4">
-                <div className="space-y-2">
-                  <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#10b981] bg-emerald-950/40 border border-emerald-900/30 px-3 py-1 rounded-full inline-block">
-                    🎯 CRM Business Management Hub
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
-                    AI Advisor & Client Growth Ecosystem
-                  </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
-                    Welcome to your operational cockpit. Under security compliance guidelines, standard sales operations (like pipelines and contact checklists) 
-                    reside on your main dashboard, while high-level growth integrations like 
-                    <strong className="text-emerald-400"> Google Sheet synchronization</strong>, 
-                    <strong className="text-indigo-400"> Social referral intake pages</strong>, and 
-                    <strong className="text-sky-400"> AI Conversion predictors</strong> are separated here to keep your operations clean and focused!
+                <div className="bg-gradient-to-r from-indigo-900 to-indigo-950 rounded-3xl p-6 text-white border space-y-4">
+                  <span className="text-[10px] uppercase font-mono font-bold text-[#10b981] bg-indigo-950/40 border px-2.5 py-1 rounded-full inline-block">Conversions</span>
+                  <h3 className="text-xl font-bold tracking-tight">Active Conversion Funnel diagnostics</h3>
+                  <p className="text-xs text-indigo-200 leading-relaxed max-w-xl">
+                    Evaluates progression values for active clients across each stage of the {activeIndustry.name} pipeline workflow registry.
                   </p>
                 </div>
 
-                {/* Core capabilities list */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs text-slate-300">
-                  <div className="space-y-1">
-                    <span className="font-bold text-emerald-400">📊 Google Sheets Sync</span>
-                    <p className="text-slate-400">Formats, groups, and logs client lists directly into corporate spreadsheets in real-time.</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-bold text-indigo-400">🔗 Bio Link Capture Form</span>
-                    <p className="text-slate-400">Provides specialized referral links tailored to capture target Facebook or Instagram traffic.</p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-bold text-sky-400">🧠 AI Advisor Diagnostics</span>
-                    <p className="text-slate-400">Evaluates business pipeline velocity, scores conversion weights, and drives simulations.</p>
+                {/* Funnel chart simulation */}
+                <div className="bg-white p-6 rounded-3xl border border-gray-150/40 shadow-3xs space-y-4">
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-tight block">Conversion Stages Flow metrics</span>
+                  <div className="space-y-4">
+                    {activeIndustry.stages.map((stage, idx) => {
+                      const stageLeads = currentLeads.filter(l => l.stageId === stage.id);
+                      const percentOfTotal = totalLeadsCount > 0 ? (stageLeads.length / totalLeadsCount) * 100 : 0;
+                      const stageValue = stageLeads.reduce((acc, lead) => acc + (lead.value || 0), 0);
+
+                      return (
+                        <div key={stage.id} className="space-y-1.5">
+                          <div className="flex justify-between text-xs font-medium">
+                            <span className="font-bold text-slate-800">{idx + 1}. {stage.label}</span>
+                            <span className="text-slate-500 font-bold">
+                              {stageLeads.length} leads • {marketRegion === 'USA' ? '$' : '₹'}{stageValue.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-50 border border-slate-100 rounded-full h-4 relative overflow-hidden">
+                            <div
+                              className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.max(percentOfTotal, 3)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              </div>
 
-              {/* Section A: Public Form Referral Capture Link for Social Media */}
-              <div className="bg-white rounded-3xl p-6 border border-gray-150/45 shadow-3xs space-y-4 text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                      Social Growth Tool
+              </div>
+            )}
+
+            {/* ================= tab: BUSINESS (TOOLS & AI ADVISOR) ================= */}
+            {activeTab === 'business' && (
+              <div className="space-y-6 animate-fade-in" id="business-tab-content">
+
+                {/* Header / Intro Area */}
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#10b981] bg-emerald-950/40 border border-emerald-900/30 px-3 py-1 rounded-full inline-block">
+                      🎯 CRM Business Management Hub
                     </span>
-                    <h4 className="text-base font-bold text-slate-900">Facebook & Instagram Public Capture Page</h4>
-                    <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into CRM!</p>
+                    <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-sans">
+                      AI Advisor & Client Growth Ecosystem
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
+                      Welcome to your operational cockpit. Under security compliance guidelines, standard sales operations (like pipelines and contact checklists)
+                      reside on your main dashboard, while high-level growth integrations like
+                      <strong className="text-emerald-400"> Google Sheet synchronization</strong>,
+                      <strong className="text-indigo-400"> Social referral intake pages</strong>, and
+                      <strong className="text-sky-400"> AI Conversion predictors</strong> are separated here to keep your operations clean and focused!
+                    </p>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      const bioUrl = `${window.location.origin}${window.location.pathname}?form=${userWorkspace?.id || 'ws_preview'}`;
-                      navigator.clipboard.writeText(bioUrl);
-                      alert('Direct bio integration link copied to clipboard successfully!');
-                    }}
-                    className="p-3 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto"
-                  >
-                    <LucideIcons.Copy className="w-4 h-4" />
-                    <span>Copy Bio URL Link</span>
-                  </button>
-                </div>
-
-                {/* Display url */}
-                <div className="bg-neutral-50 border p-3.5 rounded-2xl font-mono text-[11px] text-indigo-800 border-indigo-200 font-sans select-all leading-normal">
-                  {window.location.origin}{window.location.pathname}?form={userWorkspace?.id || 'ws_preview'}
-                </div>
-              </div>
-
-              {/* Section B: Google Sheets Sync Panel */}
-              <GoogleSheetsSync 
-                config={activeIndustry}
-                leads={currentLeads}
-              />
-
-              {/* Section C: AIPredictor Model Panel */}
-              <AIPredictor 
-                config={activeIndustry} 
-                leads={currentLeads} 
-                onAddSimulatedLead={async (simulatedLead) => {
-                  try {
-                    const leadDocRef = doc(db, 'workspaces', userWorkspace.id, 'leads', simulatedLead.id);
-                    await setDoc(leadDocRef, { ...simulatedLead, files: [] });
-                    alert('Simulated agent lead successfully added to real-time Firestore database!');
-                  } catch (err) {
-                    console.error('Failed simulation lead insertion:', err);
-                  }
-                }}
-              />
-
-              {/* Section D: Raw terminology config payload sandbox */}
-              <div className="bg-white rounded-3xl p-6 border border-gray-150/40 space-y-4 shadow-3xs">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[10px] font-bold text-[#10b981] bg-emerald-50 px-2.5 py-0.5 rounded">CONFIG EXPORTER</span>
-                    <h4 className="text-base font-bold text-slate-900 mt-1">Industry Wordings Payload Sandbox</h4>
+                  {/* Core capabilities list */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs text-slate-300">
+                    <div className="space-y-1">
+                      <span className="font-bold text-emerald-400">📊 Google Sheets Sync</span>
+                      <p className="text-slate-400">Formats, groups, and logs client lists directly into corporate spreadsheets in real-time.</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-bold text-indigo-400">🔗 Bio Link Capture Form</span>
+                      <p className="text-slate-400">Provides specialized referral links tailored to capture target Facebook or Instagram traffic.</p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-bold text-sky-400">🧠 AI Advisor Diagnostics</span>
+                      <p className="text-slate-400">Evaluates business pipeline velocity, scores conversion weights, and drives simulations.</p>
+                    </div>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Below is the raw, fully detailed JSON dictionary representing custom fields, pipeline configurations, terminology parameters, and metric aggregates for your current {activeIndustry.name} configuration:
-                </p>
-
-                <div className="relative group bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(JSON.stringify(activeIndustry, null, 2));
-                      alert('Configuration parameters payload copied safely to clipboard!');
-                    }}
-                    className="absolute top-3 right-3 text-[10px] bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all"
-                  >
-                    Copy JSON Parameters
-                  </button>
-                  <pre className="text-[10px] text-emerald-400 font-mono leading-relaxed h-[150px] overflow-y-auto whitespace-pre font-sans no-scrollbar">
-                    {JSON.stringify(activeIndustry, null, 2)}
-                  </pre>
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          {/* ================= tab: SETTINGS & TEAM MANAGEMENT (Owner-Only Settings, Agent viewing assignment checklist) ================= */}
-          {activeTab === 'settings' && (
-            <div className="space-y-6 animate-fade-in" id="settings-tab-content">
-              
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* COLUMN 1: Workspace branding specifications */}
-                <div className="lg:col-span-1 space-y-5">
-                  <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
-                    <div className="border-b border-gray-100 pb-2">
-                      <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                        <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
-                        <span>Workspace Branding Specs</span>
-                      </h4>
-                      <p className="text-[11px] text-gray-500 mt-0.5">Control company name, business scope, or terminology parameters.</p>
+                {/* Section A: Public Form Referral Capture Link for Social Media */}
+                <div className="bg-white rounded-3xl p-6 border border-gray-150/45 shadow-3xs space-y-4 text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                        Social Growth Tool
+                      </span>
+                      <h4 className="text-base font-bold text-slate-900">Facebook & Instagram Public Capture Page</h4>
+                      <p className="text-xs text-slate-500">Put this URL inside your Instagram bio, Facebook page settings, or YouTube video description to auto-inject leads directly into CRM!</p>
                     </div>
 
-                    {userProfile.role === 'owner' ? (
-                      <form onSubmit={handleSettingsUpdate} className="space-y-4 text-xs font-medium">
-                        <div className="space-y-1">
-                          <label className="text-slate-600 block">Workspace Display Name</label>
-                          <input 
-                            type="text"
-                            required
-                            value={editWorkspaceName}
-                            onChange={(e) => setEditWorkspaceName(e.target.value)}
-                            className="w-full text-xs font-bold border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500"
-                          />
-                        </div>
+                    <button
+                      onClick={() => {
+                        const bioUrl = `${window.location.origin}${window.location.pathname}?form=${userWorkspace?.id || 'ws_preview'}`;
+                        navigator.clipboard.writeText(bioUrl);
+                        alert('Direct bio integration link copied to clipboard successfully!');
+                      }}
+                      className="p-3 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-indigo-700 text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1.5 transition-colors self-start sm:self-auto"
+                    >
+                      <LucideIcons.Copy className="w-4 h-4" />
+                      <span>Copy Bio URL Link</span>
+                    </button>
+                  </div>
 
-                        <div className="space-y-1">
-                          <label className="text-slate-600 block">Business Operations Mode</label>
-                          <select 
-                            value={editWorkspaceMode}
-                            onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
-                            className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
-                          >
-                            <option value="solo">Solo CRM Mode ("Just Me")</option>
-                            <option value="team">Team CRM Mode ("Small Team")</option>
-                          </select>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={isSavingSettings}
-                          className="w-full mt-2 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-bold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed shrink-0 flex items-center justify-center"
-                        >
-                          {isSavingSettings ? 'Writing database...' : 'Update Workspace Specs'}
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="p-4 bg-gray-50 border rounded-2xl text-[11px] text-gray-500 leading-normal font-medium speak-none">
-                        ⚠️ Agent View Limit: only the Workspace Owner may alter branding or industry metadata formats.
-                      </div>
-                    )}
+                  {/* Display url */}
+                  <div className="bg-neutral-50 border p-3.5 rounded-2xl font-mono text-[11px] text-indigo-800 border-indigo-200 font-sans select-all leading-normal">
+                    {window.location.origin}{window.location.pathname}?form={userWorkspace?.id || 'ws_preview'}
                   </div>
                 </div>
 
-                {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in TEAM CRM mode) */}
-                <div className="lg:col-span-2 space-y-5">
-                  {userWorkspace?.mode === 'team' ? (
-                    <div className="space-y-5">
-                      
-                      {/* Inviter Console (Owner Only) */}
-                      {userProfile.role === 'owner' && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
-                          <div className="border-b border-gray-100 pb-2">
-                            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                              <LucideIcons.UserPlus className="w-4 h-4 text-[#10b981]" />
-                              <span>Invite Agent to Team Workspace</span>
-                            </h4>
-                            <p className="text-[11px] text-gray-500 mt-0.5">Enter their Google Account email to authorize instantaneous onboarding setup.</p>
+                {/* Section B: Google Sheets Sync Panel */}
+                <GoogleSheetsSync
+                  config={activeIndustry}
+                  leads={currentLeads}
+                />
+
+                {/* Section C: AIPredictor Model Panel */}
+                <AIPredictor
+                  config={activeIndustry}
+                  leads={currentLeads}
+                  onAddSimulatedLead={async (simulatedLead) => {
+                    try {
+                      const leadDocRef = doc(db, 'workspaces', userWorkspace.id, 'leads', simulatedLead.id);
+                      await setDoc(leadDocRef, { ...simulatedLead, files: [] });
+                      alert('Simulated agent lead successfully added to real-time Firestore database!');
+                    } catch (err) {
+                      console.error('Failed simulation lead insertion:', err);
+                    }
+                  }}
+                />
+
+                {/* Section D: Raw terminology config payload sandbox */}
+                <div className="bg-white rounded-3xl p-6 border border-gray-150/40 space-y-4 shadow-3xs">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-[10px] font-bold text-[#10b981] bg-emerald-50 px-2.5 py-0.5 rounded">CONFIG EXPORTER</span>
+                      <h4 className="text-base font-bold text-slate-900 mt-1">Industry Wordings Payload Sandbox</h4>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Below is the raw, fully detailed JSON dictionary representing custom fields, pipeline configurations, terminology parameters, and metric aggregates for your current {activeIndustry.name} configuration:
+                  </p>
+
+                  <div className="relative group bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify(activeIndustry, null, 2));
+                        alert('Configuration parameters payload copied safely to clipboard!');
+                      }}
+                      className="absolute top-3 right-3 text-[10px] bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all"
+                    >
+                      Copy JSON Parameters
+                    </button>
+                    <pre className="text-[10px] text-emerald-400 font-mono leading-relaxed h-[150px] overflow-y-auto whitespace-pre font-sans no-scrollbar">
+                      {JSON.stringify(activeIndustry, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ================= tab: SETTINGS & TEAM MANAGEMENT (Owner-Only Settings, Agent viewing assignment checklist) ================= */}
+            {activeTab === 'settings' && (
+              <div className="space-y-6 animate-fade-in" id="settings-tab-content">
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                  {/* COLUMN 1: Workspace branding specifications */}
+                  <div className="lg:col-span-1 space-y-5">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
+                      <div className="border-b border-gray-100 pb-2">
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                          <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
+                          <span>Workspace Branding Specs</span>
+                        </h4>
+                        <p className="text-[11px] text-gray-500 mt-0.5">Control company name, business scope, or terminology parameters.</p>
+                      </div>
+
+                      {userProfile.role === 'owner' ? (
+                        <form onSubmit={handleSettingsUpdate} className="space-y-4 text-xs font-medium">
+                          <div className="space-y-1">
+                            <label className="text-slate-600 block">Workspace Display Name</label>
+                            <input
+                              type="text"
+                              required
+                              value={editWorkspaceName}
+                              onChange={(e) => setEditWorkspaceName(e.target.value)}
+                              className="w-full text-xs font-bold border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500"
+                            />
                           </div>
 
-                          <form onSubmit={handleSendTeamInvitation} className="flex gap-2 text-xs">
-                            <input 
-                              type="email"
-                              required
-                              placeholder="e.g. agent.smith@gmail.com"
-                              value={inviteEmail}
-                              onChange={(e) => setInviteEmail(e.target.value)}
-                              className="flex-1 text-xs font-semibold border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500"
-                            />
-                            <button
-                              type="submit"
-                              disabled={isSendingInvite}
-                              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shrink-0"
+                          <div className="space-y-1">
+                            <label className="text-slate-600 block">Business Operations Mode</label>
+                            <select
+                              value={editWorkspaceMode}
+                              onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
+                              className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
                             >
-                              {isSendingInvite ? 'Sending...' : 'Authorize Invite'}
-                            </button>
-                          </form>
+                              <option value="solo">Solo CRM Mode ("Just Me")</option>
+                              <option value="team">Team CRM Mode ("Small Team")</option>
+                            </select>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isSavingSettings}
+                            className="w-full mt-2 py-2.5 bg-slate-900 hover:bg-slate-950 text-white rounded-xl font-bold transition-all disabled:bg-gray-300 disabled:cursor-not-allowed shrink-0 flex items-center justify-center"
+                          >
+                            {isSavingSettings ? 'Writing database...' : 'Update Workspace Specs'}
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="p-4 bg-gray-50 border rounded-2xl text-[11px] text-gray-500 leading-normal font-medium speak-none">
+                          ⚠️ Agent View Limit: only the Workspace Owner may alter branding or industry metadata formats.
                         </div>
                       )}
+                    </div>
+                  </div>
 
-                      {/* Members List */}
-                      <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
-                        <div className="border-b border-gray-100 pb-2">
-                          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                            <LucideIcons.Users className="w-4 h-4 text-indigo-600" />
-                            <span>Team Workspace Members</span>
-                          </h4>
-                          <p className="text-[11px] text-gray-500 mt-0.5">Authorised agents authorized to view and coordinate assigned leads.</p>
-                        </div>
+                  {/* COLUMN 2: TEAM MEMBERS ROSTER (Only displays in TEAM CRM mode) */}
+                  <div className="lg:col-span-2 space-y-5">
+                    {userWorkspace?.mode === 'team' ? (
+                      <div className="space-y-5">
 
-                        {/* Active members */}
-                        <div className="space-y-3">
-                          <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block font-mono">ACTIVE TEAM MEMBERS ({workspaceMembers.length})</span>
-                          {workspaceMembers.map((member) => (
-                            <div key={member.uid} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-neutral-50/50 border border-gray-150/45 rounded-2xl gap-3">
-                              <div className="flex items-center gap-3">
-                                <div className="p-3 bg-white border rounded-xl text-slate-700 font-bold text-xs select-none shadow-3xs">
-                                  {member.displayName ? member.displayName[0].toUpperCase() : 'A'}
-                                </div>
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-800">{member.displayName || member.email}</span>
-                                    <span className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${member.role === 'owner' ? 'bg-indigo-100 text-indigo-800 font-sans' : 'bg-gray-100 text-gray-700 font-sans'}`}>
-                                      {member.role === 'owner' ? 'Owner' : 'Agent'}
-                                    </span>
-                                    {member.status === 'disabled' && (
-                                      <span className="text-[9px] font-black bg-red-100 text-red-650 px-2 py-0.5 rounded-full uppercase">Disabled</span>
-                                    )}
-                                  </div>
-                                  <p className="text-[10px] text-gray-400 font-mono italic">{member.email}</p>
-                                </div>
-                              </div>
-
-                              {/* Member actions (Owner Only, can't toggle self) */}
-                              {userProfile.role === 'owner' && member.uid !== user.uid && (
-                                <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
-                                  <button
-                                    onClick={() => handleToggleAgentStatus(member.uid, member.status)}
-                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all shrink-0 ${
-                                      member.status === 'disabled'
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
-                                        : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100'
-                                    }`}
-                                  >
-                                    {member.status === 'disabled' ? 'Enable Agent' : 'Disable Agent'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleRemoveAgent(member.uid)}
-                                    className="p-1.5 text-gray-500 hover:text-red-500 bg-white border border-gray-200 rounded-lg shrink-0 transition-colors"
-                                    title="Revoke and remove member allocation"
-                                  >
-                                    <LucideIcons.Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Pending invite list (Owner Only) */}
+                        {/* Inviter Console (Owner Only) */}
                         {userProfile.role === 'owner' && (
-                          <div className="space-y-3 pt-3 border-t border-gray-100">
-                            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block font-mono">PENDING INVITATION CODES ({workspaceInvitations.length})</span>
-                            {workspaceInvitations.length === 0 ? (
-                              <p className="text-[10px] text-gray-400 italic">No pending invitations. Authorize email above to invite newly recruited agents.</p>
-                            ) : (
-                              <div className="grid grid-cols-1 gap-2.5">
-                                {workspaceInvitations.map((invite) => (
-                                  <div key={invite.email} className="flex items-center justify-between p-3 bg-white border border-dashed rounded-2xl">
-                                    <div className="space-y-0.5">
-                                      <span className="text-xs font-bold text-gray-700">{invite.email}</span>
-                                      <p className="text-[9px] text-gray-400 font-sans">Created on {new Date(invite.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                    <button
-                                      onClick={() => handleDeleteInvitation(invite.email)}
-                                      className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg border border-transparent hover:border-red-100 transition-colors shrink-0"
-                                      title="Revoke code and cancel authorization"
-                                    >
-                                      <LucideIcons.X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                          <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
+                            <div className="border-b border-gray-100 pb-2">
+                              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                                <LucideIcons.UserPlus className="w-4 h-4 text-[#10b981]" />
+                                <span>Invite Agent to Team Workspace</span>
+                              </h4>
+                              <p className="text-[11px] text-gray-500 mt-0.5">Enter their Google Account email to authorize instantaneous onboarding setup.</p>
+                            </div>
+
+                            <form onSubmit={handleSendTeamInvitation} className="flex gap-2 text-xs">
+                              <input
+                                type="email"
+                                required
+                                placeholder="e.g. agent.smith@gmail.com"
+                                value={inviteEmail}
+                                onChange={(e) => setInviteEmail(e.target.value)}
+                                className="flex-1 text-xs font-semibold border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500"
+                              />
+                              <button
+                                type="submit"
+                                disabled={isSendingInvite}
+                                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shrink-0"
+                              >
+                                {isSendingInvite ? 'Sending...' : 'Authorize Invite'}
+                              </button>
+                            </form>
                           </div>
                         )}
 
-                      </div>
+                        {/* Members List */}
+                        <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
+                          <div className="border-b border-gray-100 pb-2">
+                            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                              <LucideIcons.Users className="w-4 h-4 text-indigo-600" />
+                              <span>Team Workspace Members</span>
+                            </h4>
+                            <p className="text-[11px] text-gray-500 mt-0.5">Authorised agents authorized to view and coordinate assigned leads.</p>
+                          </div>
 
-                    </div>
-                  ) : (
-                    <div className="bg-white rounded-3xl p-8 border border-gray-150/40 text-center shadow-3xs space-y-4">
-                      <LucideIcons.Users className="w-12 h-12 text-gray-300 mx-auto" />
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled under Solo CRM</h4>
-                        <p className="text-xs text-gray-450 leading-relaxed max-w-sm mx-auto mt-1">
-                          Your workspace is currently set to <strong className="text-slate-800">Solo CRM mode</strong>. Agent tracking, security isolates, 
-                          members allocations settings, and invitations controls are locked out.
-                        </p>
+                          {/* Active members */}
+                          <div className="space-y-3">
+                            <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block font-mono">ACTIVE TEAM MEMBERS ({workspaceMembers.length})</span>
+                            {workspaceMembers.map((member) => (
+                              <div key={member.uid} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-neutral-50/50 border border-gray-150/45 rounded-2xl gap-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-3 bg-white border rounded-xl text-slate-700 font-bold text-xs select-none shadow-3xs">
+                                    {member.displayName ? member.displayName[0].toUpperCase() : 'A'}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-bold text-slate-800">{member.displayName || member.email}</span>
+                                      <span className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${member.role === 'owner' ? 'bg-indigo-100 text-indigo-800 font-sans' : 'bg-gray-100 text-gray-700 font-sans'}`}>
+                                        {member.role === 'owner' ? 'Owner' : 'Agent'}
+                                      </span>
+                                      {member.status === 'disabled' && (
+                                        <span className="text-[9px] font-black bg-red-100 text-red-650 px-2 py-0.5 rounded-full uppercase">Disabled</span>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 font-mono italic">{member.email}</p>
+                                  </div>
+                                </div>
+
+                                {/* Member actions (Owner Only, can't toggle self) */}
+                                {userProfile.role === 'owner' && member.uid !== user.uid && (
+                                  <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+                                    <button
+                                      onClick={() => handleToggleAgentStatus(member.uid, member.status)}
+                                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all shrink-0 ${member.status === 'disabled'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                                        : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100'
+                                        }`}
+                                    >
+                                      {member.status === 'disabled' ? 'Enable Agent' : 'Disable Agent'}
+                                    </button>
+                                    <button
+                                      onClick={() => handleRemoveAgent(member.uid)}
+                                      className="p-1.5 text-gray-500 hover:text-red-500 bg-white border border-gray-200 rounded-lg shrink-0 transition-colors"
+                                      title="Revoke and remove member allocation"
+                                    >
+                                      <LucideIcons.Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Pending invite list (Owner Only) */}
+                          {userProfile.role === 'owner' && (
+                            <div className="space-y-3 pt-3 border-t border-gray-100">
+                              <span className="text-[10px] font-extrabold text-slate-400 tracking-wider block font-mono">PENDING INVITATION CODES ({workspaceInvitations.length})</span>
+                              {workspaceInvitations.length === 0 ? (
+                                <p className="text-[10px] text-gray-400 italic">No pending invitations. Authorize email above to invite newly recruited agents.</p>
+                              ) : (
+                                <div className="grid grid-cols-1 gap-2.5">
+                                  {workspaceInvitations.map((invite) => (
+                                    <div key={invite.email} className="flex items-center justify-between p-3 bg-white border border-dashed rounded-2xl">
+                                      <div className="space-y-0.5">
+                                        <span className="text-xs font-bold text-gray-700">{invite.email}</span>
+                                        <p className="text-[9px] text-gray-400 font-sans">Created on {new Date(invite.createdAt).toLocaleDateString()}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteInvitation(invite.email)}
+                                        className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg border border-transparent hover:border-red-100 transition-colors shrink-0"
+                                        title="Revoke code and cancel authorization"
+                                      >
+                                        <LucideIcons.X className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                        </div>
+
                       </div>
-                      {userProfile.role === 'owner' && (
-                        <button 
-                          onClick={() => {
-                            setEditWorkspaceMode('team');
-                            alert('Operations format set to Team CRM. Click "Update Workspace Specs" to apply instantly.');
-                          }}
-                          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-xs"
-                        >
-                          Enable Team Operations format
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    ) : (
+                      <div className="bg-white rounded-3xl p-8 border border-gray-150/40 text-center shadow-3xs space-y-4">
+                        <LucideIcons.Users className="w-12 h-12 text-gray-300 mx-auto" />
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 uppercase">Lead allocations disabled under Solo CRM</h4>
+                          <p className="text-xs text-gray-450 leading-relaxed max-w-sm mx-auto mt-1">
+                            Your workspace is currently set to <strong className="text-slate-800">Solo CRM mode</strong>. Agent tracking, security isolates,
+                            members allocations settings, and invitations controls are locked out.
+                          </p>
+                        </div>
+                        {userProfile.role === 'owner' && (
+                          <button
+                            onClick={() => {
+                              setEditWorkspaceMode('team');
+                              alert('Operations format set to Team CRM. Click "Update Workspace Specs" to apply instantly.');
+                            }}
+                            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-xs"
+                          >
+                            Enable Team Operations format
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {/* Communication Templates */}
+                  <div className="bg-white rounded-3xl p-6 border border-gray-150/40 mt-6">
+                    <h3 className="text-lg font-bold mb-4">
+                      Communication Templates
+                    </h3>
+
+                    <TemplateManager
+                      templates={templates}
+                      onSaveTemplate={async (template) => {
+                        setTemplates(prev => ({
+                          ...prev,
+                          [template.type]: [
+                            ...(prev[template.type] || []),
+                            template
+                          ]
+                        }));
+                      }}
+                      onDeleteTemplate={async (templateId, type) => {
+                        setTemplates(prev => ({
+                          ...prev,
+                          [type]: prev[type].filter(t => t.id !== templateId)
+                        }));
+                      }}
+                      onClose={() => { }}
+                    />
+                  </div>
                 </div>
-{/* Communication Templates */}
-<div className="bg-white rounded-3xl p-6 border border-gray-150/40 mt-6">
-  <h3 className="text-lg font-bold mb-4">
-    Communication Templates
-  </h3>
 
- <TemplateManager
-  templates={templates}
-  onSaveTemplate={async (template) => {
-    setTemplates(prev => ({
-      ...prev,
-      [template.type]: [
-        ...(prev[template.type] || []),
-        template
-      ]
-    }));
-  }}
-  onDeleteTemplate={async (templateId, type) => {
-    setTemplates(prev => ({
-      ...prev,
-      [type]: prev[type].filter(t => t.id !== templateId)
-    }));
-  }}
-  onClose={() => {}}
-/>
-</div>
               </div>
+            )}
 
-            </div>
-          )}
+            {activeTab === 'checklist' && (
+              <div id="checklist-tab-content" className="animate-fade-in">
+                <ProductionReadinessChecklist />
+              </div>
+            )}
 
-          {activeTab === 'checklist' && (
-            <div id="checklist-tab-content" className="animate-fade-in">
-              <ProductionReadinessChecklist />
-            </div>
-          )}
-
-        </AnimatePresence>
+          </AnimatePresence>
       </main>
 
       {/* Sub-modals & Overlay views */}
       <AnimatePresence>
-        
+
         {/* Detail Modal Overlay */}
         {selectedLead && (
-         <LeadDetailModal 
-  lead={selectedLead}
-  config={activeIndustry}
-  onClose={() => setSelectedLead(null)}
-  onUpdate={handleUpdateLead}
-  templates={templates}
+          <LeadDetailModal
+            lead={selectedLead}
+            config={activeIndustry}
+            onClose={() => setSelectedLead(null)}
+            onUpdate={handleUpdateLead}
+            templates={templates}
             marketRegion={marketRegion}
             isTeamMode={userWorkspace?.mode === 'team'}
             teamAgents={workspaceMembers.filter(m => m.role === 'agent' && m.status === 'active')}
@@ -2806,23 +2830,23 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
 
         {/* Lead Insertion Panel Form Overlay */}
         {isFormOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in"
             id="lead-intake-modal-canvas"
           >
             <div className="bg-white rounded-3xl border border-gray-150 shadow-2xl p-6 max-w-md w-full relative">
-              <button 
+              <button
                 onClick={() => setIsFormOpen(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-slate-700 transition"
               >
                 <LucideIcons.X className="w-5 h-5" />
               </button>
 
-              <LeadForm 
-                config={activeIndustry} 
+              <LeadForm
+                config={activeIndustry}
                 initialStageId={formInitialStageId}
                 onClose={() => setIsFormOpen(false)}
-                onSubmit={handleAddLiveLead} 
+                onSubmit={handleAddLiveLead}
                 marketRegion={marketRegion}
               />
             </div>
@@ -2834,7 +2858,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
       {/* Mobile Bottom Navigation */}
       {!isDemoMode || userProfile.role !== 'super_admin' ? (
         <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-150/40 px-2 py-2 flex items-center justify-between gap-1 shrink-0 z-30">
-          <button 
+          <button
             onClick={() => { setDashboardFilter('all'); setActiveTab('home'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'home' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
             title="Dashboard"
@@ -2843,7 +2867,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <span>Dashboard</span>
           </button>
 
-          <button 
+          <button
             onClick={() => { setDashboardFilter('all'); setActiveTab('leads'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'leads' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
             title="Pipelines"
@@ -2852,7 +2876,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <span>Pipelines</span>
           </button>
 
-          <button 
+          <button
             onClick={() => { setDashboardFilter('all'); setActiveTab('funnel'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'funnel' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
             title="Conversion Funnel"
@@ -2861,7 +2885,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <span>Funnel</span>
           </button>
 
-          <button 
+          <button
             onClick={() => { setDashboardFilter('all'); setActiveTab('business'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'business' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
             title="Copilot & AI Tools"
@@ -2870,7 +2894,7 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <span>AI</span>
           </button>
 
-          <button 
+          <button
             onClick={() => { setDashboardFilter('all'); setActiveTab('settings'); }}
             className={`flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold transition-all ${activeTab === 'settings' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800'}`}
             title="Team & Settings"
@@ -2879,13 +2903,13 @@ className="bg-amber-50/50 hover:bg-amber-50 border border-amber-150/50 p-5 round
             <span>Settings</span>
           </button>
           <button
-  onClick={handleLogout}
-  className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold text-red-500"
-  title="Logout"
->
-  <LucideIcons.LogOut className="w-5 h-5" />
-  <span>Logout</span>
-</button>
+            onClick={handleLogout}
+            className="flex flex-col items-center gap-1 px-3 py-2.5 rounded-xl text-[10px] font-bold text-red-500"
+            title="Logout"
+          >
+            <LucideIcons.LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
         </nav>
       ) : null}
 
