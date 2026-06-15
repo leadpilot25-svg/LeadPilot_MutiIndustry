@@ -668,12 +668,17 @@ className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-bl
 console.log('LEAD ID:', selectedLeadForAction?.id);
 console.log('DATE:', nextFollowUpDate);
   const updatedLead = {
-    ...selectedLeadForAction,
-    customFields: {
-      ...selectedLeadForAction.customFields,
-      nextFollowUpDate
-    }
-  };
+  ...selectedLeadForAction,
+
+  lastContacted: new Date().toISOString(),
+
+  lastContactMethod: selectedActionType,
+
+  customFields: {
+    ...selectedLeadForAction.customFields,
+    nextFollowUpDate
+  }
+};
 
   console.log('UPDATED LEAD:', updatedLead);
 

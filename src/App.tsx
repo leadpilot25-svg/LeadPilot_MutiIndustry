@@ -2590,17 +2590,19 @@ export default function App() {
                             />
                           </div>
 
-                          <div className="space-y-1">
-                            <label className="text-slate-600 block">Business Operations Mode</label>
-                            <select
-                              value={editWorkspaceMode}
-                              onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
-                              className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
-                            >
-                              <option value="solo">Solo CRM Mode ("Just Me")</option>
-                              <option value="team">Team CRM Mode ("Small Team")</option>
-                            </select>
-                          </div>
+                         {userProfile?.role === 'super_admin' && (
+  <div className="space-y-1">
+    <label className="text-slate-600 block">Business Operations Mode</label>
+    <select
+      value={editWorkspaceMode}
+      onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
+      className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
+    >
+      <option value="solo">Solo CRM Mode ("Just Me")</option>
+      <option value="team">Team CRM Mode ("Small Team")</option>
+    </select>
+  </div>
+)}
 
                           <button
                             type="submit"

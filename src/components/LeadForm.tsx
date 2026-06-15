@@ -235,48 +235,7 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
                 </div>
               ))}
 
-              {/* Optional region-specific India localizations */}
-              {marketRegion === 'IND' && (
-                <>
-                  <div className="">
-                    <label className="block text-[11px] font-semibold text-indigo-900 mb-1.5">
-                      🇮🇳 India State
-                    </label>
-                    <select
-                      value={String(customFields.indiaState ?? 'Delhi')}
-                      onChange={e => handleCustomFieldChange('indiaState', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-indigo-50/50 border border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
-                    >
-                      <option value="Delhi">Delhi NCR</option>
-                      <option value="Maharashtra">Maharashtra (Mumbai/Pune)</option>
-                      <option value="Karnataka">Karnataka (Bengaluru)</option>
-                      <option value="Telangana">Telangana (Hyderabad)</option>
-                      <option value="Tamil Nadu">Tamil Nadu (Chennai)</option>
-                      <option value="Haryana">Haryana (Gurugram)</option>
-                      <option value="Uttar Pradesh">Uttar Pradesh (Noida)</option>
-                      <option value="Gujarat">Gujarat (Ahmedabad/GIFT City)</option>
-                      <option value="West Bengal">West Bengal (Kolkata)</option>
-                    </select>
-                  </div>
-
-                  <div className="">
-                    <label className="block text-[11px] font-semibold text-indigo-900 mb-1.5">
-                      🇮🇳 GST Status
-                    </label>
-                    <select
-                      value={String(customFields.indiaGst ?? 'Unregistered')}
-                      onChange={e => handleCustomFieldChange('indiaGst', e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-indigo-50/50 border border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
-                    >
-                      <option value="Unregistered">Unregistered Business Client</option>
-                      <option value="Regular Taxpayer">Regular GST Taxpayer (18% Service Invoice)</option>
-                      <option value="Composition Scheme">Composition scheme (Lower Levy Rate)</option>
-                      <option value="Exempt Entity">Exempt / Govt / NGO Entity</option>
-                      <option value="SEZ Client">SEZ developer (Zero Rated Export)</option>
-                    </select>
-                  </div>
-                </>
-              )}
+              
             </div>
           </div>
 

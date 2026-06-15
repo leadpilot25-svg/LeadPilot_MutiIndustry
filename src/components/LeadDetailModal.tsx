@@ -111,17 +111,20 @@ const handleSaveChanges = () => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
       <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-auto flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-start justify-between gap-4">
+<div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">{lead.name}</h2>
-            <p className="text-sm text-gray-600 mt-1">{lead.company}</p>
+    
+           <h2 className="text-xl font-bold text-gray-900">{lead.name}</h2>
+           {lead.company && (
+  <p className="text-xs text-gray-500">{lead.company}</p>
+)}
 
             {/* Quick Actions Buttons */}
-            <div className="flex gap-2 flex-wrap mt-4">
+           <div className="flex gap-1 mt-2">
               <button
                 onClick={() => onQuickAction?.('call')}
                 disabled={!lead.phone}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center p-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LucideIcons.Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Call</span>
@@ -181,53 +184,22 @@ setShowTemplateModal(true);
             <LucideIcons.X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
+         <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    <LucideIcons.Edit className="w-4 h-4" />
+                    📞 Update After Call
+                  </button>
 
-        {/* Follow-up Information */}
-        <div className="bg-indigo-50 border-b border-indigo-200 px-6 py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-xs text-indigo-700 font-semibold">FOLLOW-UP STAGE</p>
-              <p className="text-lg font-bold text-indigo-900 mt-1">
-                {getFollowUpStageName(lead.followUpStage)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-indigo-700 font-semibold">LAST CONTACT</p>
-              <p className="text-lg font-bold text-indigo-900 mt-1">
-                {lead.lastContactDate
-                  ? new Date(lead.lastContactDate).toLocaleDateString()
-                  : 'Never'}
-              </p>
-            </div>
-            {lead.nextFollowUpDate && (
-              <div>
-                <p className="text-xs text-indigo-700 font-semibold">NEXT FOLLOW-UP</p>
-                <p className={`text-lg font-bold mt-1 ${
-                  daysUntilFollowUp && daysUntilFollowUp <= 0
-                    ? 'text-red-600'
-                    : daysUntilFollowUp && daysUntilFollowUp <= 2
-                    ? 'text-orange-600'
-                    : 'text-green-600'
-                }`}>
-                  {new Date(lead.nextFollowUpDate).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-indigo-700 font-semibold">COMMUNICATIONS</p>
-              <p className="text-lg font-bold text-indigo-900 mt-1">
-                {(lead.communicationHistory || []).length}
-              </p>
-            </div>
-          </div>
-        </div>
+      
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 px-6 flex gap-4">
+        <div className="border-b border-gray-200 px-4 flex gap-2">
           <button
             onClick={() => setCurrentTab('details')}
-            className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-              currentTab === 'details'
+className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
+            currentTab === 'details'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
@@ -237,8 +209,8 @@ setShowTemplateModal(true);
           
           <button
             onClick={() => setCurrentTab('history')}
-            className={`py-4 px-2 border-b-2 font-medium transition-colors ${
-              currentTab === 'history'
+className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
+            currentTab === 'history'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
@@ -255,22 +227,7 @@ setShowTemplateModal(true);
                 <>
                   {/* Display Mode */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold">NAME</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold">EMAIL</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold">PHONE</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold">COMPANY</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.company || '-'}</p>
-                    </div>
+                    
                     <div>
                       <p className="text-xs text-gray-600 font-semibold">SERVICE</p>
                       <p className="text-lg font-semibold text-gray-900 mt-1">{lead.service || '-'}</p>
@@ -296,10 +253,7 @@ setShowTemplateModal(true);
                         {lead.status?.charAt(0).toUpperCase() + lead.status?.slice(1)}
                       </span>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold">SOURCE</p>
-                      <p className="text-lg font-semibold text-gray-900 mt-1">{lead.source || '-'}</p>
-                    </div>
+                    
                   </div>
 
                   <div>
@@ -322,63 +276,72 @@ setShowTemplateModal(true);
                     </div>
                   )}
 
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    <LucideIcons.Edit className="w-4 h-4" />
-                    Edit Lead
-                  </button>
+                 
                 </>
               ) : (
                 <>
                   {/* Edit Mode */}
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Name</label>
-                      <input
-                        type="text"
-                        value={editData.name}
-                        onChange={e => setEditData({ ...editData, name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Email</label>
-                      <input
-                        type="email"
-                        value={editData.email}
-                        onChange={e => setEditData({ ...editData, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Phone</label>
-                      <input
-                        type="tel"
-                        value={editData.phone}
-                        onChange={e => setEditData({ ...editData, phone: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Company</label>
-                      <input
-                        type="text"
-                        value={editData.company}
-                        onChange={e => setEditData({ ...editData, company: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
-                    </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-1">Service</label>
-                      <input
-                        type="text"
-                        value={editData.service}
-                        onChange={e => setEditData({ ...editData, service: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
+                      
+                      <select
+  value={editData.service}
+  onChange={e =>
+    setEditData({
+      ...editData,
+      service: e.target.value
+    })
+  }
+  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+>
+  <option value="">Select Service</option>
+<option value="2D Animation">2D Animation</option>
+<option value="3D Animation">3D Animation</option>
+<option value="Motion Graphics">Motion Graphics</option>
+<option value="Explainer Videos">Explainer Videos</option>
+<option value="Character Animation">Character Animation</option>
+<option value="Product Animation">Product Animation</option>
+<option value="Video Editing">Video Editing</option>
+<option value="Branding">Branding</option>
+<option value="Website Development">Website Development</option>
+<option value="Social Media Management">Social Media Management</option>
+<option value="Meta Ads">Meta Ads</option>
+<option value="Google Ads">Google Ads</option>
+<option value="SEO">SEO</option>
+</select>
                     </div>
+                    <div>
+  <label className="block text-sm font-medium text-gray-900 mb-1">
+    Client Notes
+  </label>
+  <textarea
+    value={editData.callNotes || ''}
+    onChange={e => setEditData({
+      ...editData,
+      callNotes: e.target.value
+    })}
+    rows={4}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+    placeholder="What did the client say?"
+  />
+</div>
+<div>
+  <label className="block text-sm font-medium text-gray-900 mb-1">
+    Business Type
+  </label>
+  <input
+    type="text"
+    value={editData.businessType || ''}
+    onChange={e => setEditData({
+      ...editData,
+      businessType: e.target.value
+    })}
+    placeholder="Doctor, Realtor, Restaurant..."
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+  />
+</div>
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-1">Value</label>
                       <input
@@ -388,6 +351,21 @@ setShowTemplateModal(true);
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
                       />
                   </div>
+                  <div>
+  <label className="block text-sm font-medium text-gray-900 mb-1">
+    Monthly Marketing Budget
+  </label>
+  <input
+    type="text"
+    value={editData.monthlyBudget || ''}
+    onChange={e => setEditData({
+      ...editData,
+      monthlyBudget: e.target.value
+    })}
+    placeholder="₹50,000"
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+  />
+</div>
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
                       <select
@@ -400,16 +378,7 @@ setShowTemplateModal(true);
                         <option value="lost">Lost</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Source</label>
-                      <input
-                        type="text"
-                        value={editData.source}
-                        onChange={e => setEditData({ ...editData, source: e.target.value })}
-                        placeholder="e.g., Website, Referral, Cold Call"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      />
-                    </div>
+                  
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">

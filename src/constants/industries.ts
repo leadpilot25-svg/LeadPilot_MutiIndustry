@@ -307,7 +307,27 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         key: 'serviceType',
         label: 'Service Required',
         type: 'select',
-        options: ['Graphic Design', 'Logo Design', 'Branding', 'Web Design', 'SEO', 'Google Ads', 'Facebook Ads', 'Social Media Management', 'Content Marketing', 'Video Editing', '2D Animation', '3D Animation', 'Motion Graphics', 'Explainer Videos'],
+    options: [
+  '2D Animation',
+  '3D Animation',
+  'Motion Graphics',
+  'Explainer Videos',
+  'Character Animation',
+  'Product Animation',
+  'Architectural Animation',
+  'Whiteboard Animation',
+  'Corporate Animation',
+
+  'Video Editing',
+  'Branding',
+  'Graphic Design',
+  'Social Media Management',
+
+  'Meta Ads',
+  'Google Ads',
+  'SEO',
+  'Website Development'
+],
         required: false,
         placeholder: 'Select service type'
       },
