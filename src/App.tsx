@@ -13,6 +13,7 @@ import AIPredictor from './components/AIPredictor';
 import GoogleSheetsSync from './components/GoogleSheetsSync';
 import PublicLeadCaptureForm from './components/PublicLeadCaptureForm';
 import * as LucideIcons from 'lucide-react';
+import OutreachTemplatesManager from './components/OutreachTemplatesManager';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Env and Checklist Modules
@@ -581,7 +582,12 @@ export default function App() {
   };
 
   const activeIndustry = INDUSTRY_CONFIGS.find(i => i.id === activeTenant.industryId) || INDUSTRY_CONFIGS[0];
-
+console.log('ACTIVE TENANT:', activeTenant);
+console.log('ACTIVE INDUSTRY:', activeIndustry);
+console.log(
+  'MATCH FOUND:',
+  INDUSTRY_CONFIGS.find(i => i.id === activeTenant.industryId)
+);
   // 4. Onboarding Workspace Init
   const handleOnboardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2565,6 +2571,13 @@ export default function App() {
               <div className="space-y-6 animate-fade-in" id="settings-tab-content">
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="bg-white rounded-3xl p-6 border border-gray-200">
+  <OutreachTemplatesManager
+    workspaceId={userWorkspace?.id || 'default'}
+    industryId={userWorkspace?.industryId || 'real-estate'}
+   
+  />
+</div>
 
                   {/* COLUMN 1: Workspace branding specifications */}
                   <div className="lg:col-span-1 space-y-5">

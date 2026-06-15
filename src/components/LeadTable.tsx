@@ -106,60 +106,55 @@ const [showQuickActionModal, setShowQuickActionModal] = useState(false);
   }, [filteredLeads, sortField, sortOrder]);
 
   // ✅ SAFE: Handle CSV import with null-safe parsing
-  const handleCsvImport = () => {
-    if (!csvInput.trim() || !onAddMultiLeads) return;
+ const handleCsvFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
 
-    try {
-      const lines = csvInput.trim().split('\n');
-      if (lines.length < 2) {
-        alert('CSV must have header row and at least one data row');
-        return;
-      }
+  if (!file) return;
 
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const newLeads: Lead[] = [];
+  const reader = new FileReader();
 
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        if (values.length < 2) continue;
+  reader.onload = (e) => {
+    const text = e.target?.result as string;
 
-        const lead: Lead = {
-          id: `import-${Date.now()}-${i}`,
-          name: values[headers.indexOf('name')] || `Lead ${i}`,
-          phone: values[headers.indexOf('phone')] || '',
-          email: values[headers.indexOf('email')] || '',
-          source: values[headers.indexOf('source')] || 'manual',
-          status: values[headers.indexOf('status')] || 'active',
-          stageId: config.stages[0]?.id || 'stage_1',
-          value: parseInt(values[headers.indexOf('value')] || '0', 10) || 0,
-          createdAt: new Date().toISOString().split('T')[0],
-          lastContacted: new Date().toISOString().split('T')[0],
-          notes: [],
-          tasks: [],
-          files: [],
-          customFields: {
-            followUpStage: 0,
-            nextFollowUpDate: ''
-          },
-          assignedTo: '',
-          assignedToName: ''
-        };
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
 
-        newLeads.push(lead);
-      }
+    const newLeads: Lead[] = [];
 
-      if (newLeads.length > 0) {
-        onAddMultiLeads(newLeads);
-        setCsvInput('');
-        setShowCsvImport(false);
-      } else {
-        alert('No valid leads parsed from CSV');
-      }
-    } catch (err) {
-      alert(`CSV Parse Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(/,|\t/).map(v => v.trim());
+
+      newLeads.push({
+        id: `import-${Date.now()}-${i}`,
+        name: values[headers.indexOf('name')] || '',
+        phone: values[headers.indexOf('phone')] || '',
+        email: values[headers.indexOf('email')] || '',
+        source: 'CSV Import',
+        status: 'active',
+        stageId: config.stages[0]?.id || 'stage_1',
+        value: 0,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastContacted: new Date().toISOString().split('T')[0],
+        notes: [],
+        tasks: [],
+        files: [],
+        customFields: {
+          followUpStage: 0,
+          nextFollowUpDate: ''
+        },
+        assignedTo: '',
+        assignedToName: ''
+      });
     }
+
+    onAddMultiLeads?.(newLeads);
+    alert(`${newLeads.length} leads imported successfully`);
   };
 
+  reader.readAsText(file);
+};
+
+ 
   // ✅ SAFE: Get status color with null-safe access
   const getStatusColor = (status: string | undefined) => {
     const safeStatus = (status || '').toLowerCase();
@@ -239,15 +234,23 @@ const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
   <div className="space-y-4">
       {/* CSV Import Controls */}
       {onAddMultiLeads && (
-        <div className="flex gap-2 items-center">
-          <button
-            onClick={() => setShowCsvImport(!showCsvImport)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2"
-          >
-            <LucideIcons.Upload className="w-4 h-4" />
-            <span>Bulk Import CSV</span>
-          </button>
-        </div>
+     <div className="flex gap-2 items-center">
+  <input
+    type="file"
+    accept=".csv"
+    onChange={handleCsvFileUpload}
+    id="csv-upload"
+    className="hidden"
+  />
+
+  <label
+    htmlFor="csv-upload"
+    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
+  >
+    <LucideIcons.Upload className="w-4 h-4" />
+    <span>Bulk Import CSV</span>
+  </label>
+</div>
       )}
 
       {/* CSV Import Form */}
@@ -255,12 +258,21 @@ const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
         <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-3">
           <div>
             <label className="text-xs font-bold text-emerald-900 block mb-2">
-              Paste CSV (name, phone, email, source, status, value)
+              <div className="bg-blue-50 p-3 rounded-lg text-xs text-slate-700 mb-3">
+  <strong>Example:</strong><br/>
+  Name,Phone,Email<br/>
+  John Doe,917736037807,john@test.com
+</div>
+             📥 Import Leads from Excel / CSV
             </label>
+           
             <textarea
               value={csvInput}
               onChange={(e) => setCsvInput(e.target.value)}
-              placeholder="name,phone,email,source,status,value&#10;John Doe,555-1234,john@example.com,website,active,5000"
+             placeholder="Name,Phone,Email
+John Doe,917736037807,john@test.com
+Jane Smith,9876543210,jane@test.com"
+
               className="w-full text-xs border border-emerald-200 rounded-xl p-3 font-mono focus:outline-none focus:border-emerald-500 h-24"
             />
           </div>
@@ -280,6 +292,11 @@ const handleViewDetails = (e: React.MouseEvent, lead: Lead) => {
           </div>
         </div>
       )}
+      <p className="text-xs text-slate-500 mt-2">
+✅ Copy rows directly from Excel<br/>
+Required: Name, Phone<br/>
+Optional: Email
+</p>
 
       {/* ===== DESKTOP TABLE VIEW (md and up) ===== */}
       <div className="hidden md:block overflow-x-auto bg-white rounded-3xl border border-gray-150/40 shadow-3xs">

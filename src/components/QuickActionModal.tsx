@@ -42,6 +42,8 @@ export default function QuickActionModal({
   error,
 }: QuickActionModalProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedStage, setSelectedStage] =
+  useState('introduction');
  const [editedContent, setEditedContent] = useState(
   template?.content ||
   `Hi ${lead.name},
@@ -69,13 +71,16 @@ const setFollowUpDays = (days: number) => {
     date.toISOString().split('T')[0]
   );
 };
+
 const replacedContent = isEditing
   ? editedContent
   : replaceTemplateVariables(
-      template?.content || '',
+      editedContent || '',
       lead,
       'Agent'
     );
+ 
+console.log("replacedContent =", replacedContent);
   const typeIcon = {
     whatsapp: { icon: LucideIcons.MessageCircle, label: 'WhatsApp', color: 'green' },
     email: { icon: LucideIcons.Mail, label: 'Email', color: 'blue' },
@@ -91,6 +96,8 @@ const handleSend = async () => {
     const messageContent = isEditing
       ? editedContent
       : replacedContent;
+     console.log("messageContent =", messageContent);
+console.log("replacedContent =", replacedContent);
 
     // SAVE FOLLOW-UP FIRST
     if (onSend) {
@@ -109,15 +116,37 @@ const handleSend = async () => {
         `https://wa.me/${phone}?text=${encodeURIComponent(messageContent)}`,
         '_blank'
       );
+   console.log("EMAIL SUBJECT:", replacedSubject);
+console.log("EMAIL BODY:", messageContent);
+
+const mailtoUrl =
+  `mailto:${lead.email}` +
+  `?subject=${encodeURIComponent(replacedSubject)}` +
+  `&body=${encodeURIComponent(messageContent)}`;
+
+console.log(mailtoUrl);
     } else if (actionType === 'email') {
       window.location.href =
         `mailto:${lead.email}` +
         `?subject=${encodeURIComponent('Follow Up')}` +
         `&body=${encodeURIComponent(messageContent)}`;
-    } else if (actionType === 'sms') {
-      window.location.href =
-        `sms:${lead.phone}?body=${encodeURIComponent(messageContent)}`;
-    }
+    } else if (actionType === 'email') {
+
+  const emailSubject =
+    selectedStage === 'introduction'
+      ? 'Introduction'
+      : selectedStage === 'firstFollowUp'
+      ? 'First Follow-Up'
+      : selectedStage === 'secondFollowUp'
+      ? 'Second Follow-Up'
+      : 'Final Follow-Up';
+console.log('editedContent =', editedContent);
+console.log('replacedContent =', replacedContent);
+  window.location.href =
+    `mailto:${lead.email}` +
+    `?subject=${encodeURIComponent(emailSubject)}` +
+    `&body=${encodeURIComponent(editedContent || replacedContent)}`;
+}
 
     onClose();
 
@@ -157,6 +186,7 @@ const handleSend = async () => {
             <LucideIcons.X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
+        
 
         {/* Content */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -246,6 +276,23 @@ const handleSend = async () => {
               </div>
             </div>
           )}
+          {/* Template Stage */}
+<div className="mb-4">
+  <label className="block text-sm font-semibold mb-2">
+    Template Stage
+  </label>
+
+  <select
+    value={selectedStage}
+    onChange={(e) => setSelectedStage(e.target.value)}
+    className="w-full border rounded-lg px-3 py-2"
+  >
+    <option value="introduction">👋 Introduction</option>
+    <option value="firstFollowUp">📞 First Follow-Up</option>
+    <option value="secondFollowUp">🔔 Second Follow-Up</option>
+    <option value="finalFollowUp">⏰ Final Follow-Up</option>
+  </select>
+</div>
 
           {/* Message Preview/Editor */}
           <div>
@@ -259,28 +306,20 @@ const handleSend = async () => {
               </button>
             </div>
 
-            {isEditing ? (
-              <textarea
-                value={editedContent}
-                onChange={e => setEditedContent(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 font-mono text-sm resize-none"
-                rows={6}
-              />
-            ) : (
-              <div
-                className={`p-4 rounded-lg whitespace-pre-wrap break-words text-sm leading-relaxed border ${
-                  actionType === 'whatsapp'
-                    ? 'bg-green-50 border-green-200 text-gray-900'
-                    : actionType === 'email'
-                    ? 'bg-blue-50 border-blue-200 text-gray-900'
-                    : actionType === 'sms'
-                    ? 'bg-purple-50 border-purple-200 text-gray-900'
-                    : 'bg-gray-50 border-gray-200 text-gray-900'
-                }`}
-              >
-                {replacedContent}
-              </div>
-            )}
+          {isEditing ? (
+  <textarea
+    value={editedContent}
+    onChange={(e) => setEditedContent(e.target.value)}
+    className="w-full p-3 border border-slate-300 rounded-lg"
+    rows={6}
+  />
+) : (
+  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 max-h-40 overflow-y-auto">
+    <p className="text-sm text-slate-700 whitespace-pre-wrap">
+      {editedContent || replacedContent}
+    </p>
+  </div>
+)}
           </div>
 
           {/* SMS Stats */}

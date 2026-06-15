@@ -62,3 +62,25 @@ export interface FollowUpStatus {
   daysOverdue?: number;
   communicationCount: number;
 }
+export interface EmailTemplate {
+  subject: string;
+  body: string;
+}
+
+export interface StageTemplate {
+  whatsapp: string;
+  email: EmailTemplate;
+}
+
+export interface OutreachTemplates {
+  introduction: StageTemplate;
+  firstFollowUp: StageTemplate;
+  secondFollowUp: StageTemplate;
+  finalFollowUp: StageTemplate;
+}
+export const TEMPLATE_STAGES = [
+  'Introduction',
+  'First Follow Up',
+  'Second Follow Up',
+  'Final Follow Up'
+];
