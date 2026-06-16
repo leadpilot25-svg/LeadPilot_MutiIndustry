@@ -466,18 +466,18 @@ className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounde
 onClick={(e) => handleSMS(e, lead)}
 className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg border border-transparent hover:border-blue-200 transition-all"
                         title="Send SMS"
-                      >
-                        <LucideIcons.Mail className="w-4 h-4" />
-                      </button>
+>
+  <LucideIcons.MessageSquare className="w-4 h-4" />
+</button>
 
                       {/* Email Button */}
                       <button
                       onClick={(e) => handleEmail(e, lead)}
                         className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg border border-transparent hover:border-purple-200 transition-all"
-                        title="Send email"
-                      >
-                        <LucideIcons.Send className="w-4 h-4" />
-                      </button>
+                      title="Send email"
+>
+  <LucideIcons.Mail className="w-4 h-4" />
+</button>
 
                       {/* View Details Button */}
                       <button
