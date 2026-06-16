@@ -2181,8 +2181,8 @@ console.log(
               {/* Card 2: Missed follow-ups */}
              <div
   onClick={() => handleDashboardFilterClick('missed_followups')}
-  className="bg-red-50/40 hover:bg-red-50/80 ..."
-  id="kpi-missed-followups"
+className="bg-red-50/50 hover:bg-red-50 border border-black p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+id="kpi-missed-followups"
 >
   <div className="text-red-500 group-hover:scale-110 transition-transform">
     <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
@@ -2534,34 +2534,7 @@ console.log(
                   }}
                 />
 
-                {/* Section D: Raw terminology config payload sandbox */}
-                <div className="bg-white rounded-3xl p-6 border border-gray-150/40 space-y-4 shadow-3xs">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#10b981] bg-emerald-50 px-2.5 py-0.5 rounded">CONFIG EXPORTER</span>
-                      <h4 className="text-base font-bold text-slate-900 mt-1">Industry Wordings Payload Sandbox</h4>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Below is the raw, fully detailed JSON dictionary representing custom fields, pipeline configurations, terminology parameters, and metric aggregates for your current {activeIndustry.name} configuration:
-                  </p>
-
-                  <div className="relative group bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(activeIndustry, null, 2));
-                        alert('Configuration parameters payload copied safely to clipboard!');
-                      }}
-                      className="absolute top-3 right-3 text-[10px] bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all"
-                    >
-                      Copy JSON Parameters
-                    </button>
-                    <pre className="text-[10px] text-emerald-400 font-mono leading-relaxed h-[150px] overflow-y-auto whitespace-pre font-sans no-scrollbar">
-                      {JSON.stringify(activeIndustry, null, 2)}
-                    </pre>
-                  </div>
-                </div>
+          
 
               </div>
             )}

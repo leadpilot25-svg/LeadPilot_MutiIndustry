@@ -18,11 +18,12 @@ export default function OutreachTemplatesManager({
   onTemplatesSaved
 }: OutreachTemplatesManagerProps) {
   const [selectedStage, setSelectedStage] = useState<StageKey>('introduction');
-  const [templates, setTemplates] = useState<OutreachTemplates>(defaultTemplates);
+const [templates, setTemplates] = useState(defaultTemplates || {});
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState('');
 
   // Load templates from localStorage on mount
+  console.log('defaultTemplates=', defaultTemplates);
   useEffect(() => {
     const storageKey = `leadpilot_outreach_templates_${workspaceId}`;
     const saved = localStorage.getItem(storageKey);
@@ -105,14 +106,17 @@ export default function OutreachTemplatesManager({
       setTimeout(() => setSavedMessage(''), 3000);
     }
   };
+  const currentStage =
+  templates?.[selectedStage] ||
+  templates?.introduction;
 
-const currentStage = templates?.[selectedStage];
+console.log('templates =', templates);
+console.log('selectedStage =', selectedStage);
+console.log('templates =', templates);
+console.log('selectedStage =', selectedStage);
+console.log('currentStage =', currentStage);
 if (!currentStage) {
-  return (
-    <div className="p-6">
-      Loading templates...
-    </div>
-  );
+  return null;
 }
   return (
     <div className="space-y-6">

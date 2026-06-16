@@ -116,21 +116,13 @@ console.log("replacedContent =", replacedContent);
         `https://wa.me/${phone}?text=${encodeURIComponent(messageContent)}`,
         '_blank'
       );
-   console.log("EMAIL SUBJECT:", replacedSubject);
-console.log("EMAIL BODY:", messageContent);
-
-const mailtoUrl =
-  `mailto:${lead.email}` +
-  `?subject=${encodeURIComponent(replacedSubject)}` +
-  `&body=${encodeURIComponent(messageContent)}`;
-
-console.log(mailtoUrl);
+   
     } else if (actionType === 'email') {
       window.location.href =
         `mailto:${lead.email}` +
         `?subject=${encodeURIComponent('Follow Up')}` +
         `&body=${encodeURIComponent(messageContent)}`;
-    } else if (actionType === 'email') {
+  
 
   const emailSubject =
     selectedStage === 'introduction'

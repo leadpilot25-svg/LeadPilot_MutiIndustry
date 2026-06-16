@@ -11,7 +11,7 @@ import * as LucideIcons from 'lucide-react';
 import { GlobalTemplates, FollowUpTemplate } from '../templateTypes';
 import { DEFAULT_TEMPLATES } from '../defaultTemplates';
 import TemplateEditor from './TemplateEditor';
-import TemplatePreview from './TemplatePreview';
+
 
 interface TemplateManagerProps {
   templates: GlobalTemplates | null;
@@ -30,25 +30,27 @@ export default function TemplateManager({
   const [searchQuery, setSearchQuery] = useState('');
   const [editingTemplate, setEditingTemplate] = useState<FollowUpTemplate | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [previewingTemplate, setPreviewingTemplate] = useState<FollowUpTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-const currentTemplates = useMemo(() => {
-  console.log('templates=', templates);
-  console.log('activeTab=', activeTab);
 
-  if (!templates) return [];
+  const currentTemplates = useMemo(() => {
+    console.log('templates=', templates);
+    console.log('activeTab=', activeTab);
+    
 
-  const typeTemplates = templates[activeTab] || [];
+    if (!templates) return [];
 
-  console.log('typeTemplates=', typeTemplates);
+    const typeTemplates = templates[activeTab] || [];
 
-  return typeTemplates.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-}, [templates, activeTab, searchQuery]);
+    console.log('typeTemplates=', typeTemplates);
+
+    return typeTemplates.filter(t =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.content.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [templates, activeTab, searchQuery]);
+
   const handleSaveTemplate = async (template: FollowUpTemplate) => {
     try {
       setIsLoading(true);
@@ -132,19 +134,6 @@ const currentTemplates = useMemo(() => {
     );
   }
 
-  if (previewingTemplate) {
-    return (
-      <TemplatePreview
-        template={previewingTemplate}
-        onClose={() => setPreviewingTemplate(null)}
-        onEdit={() => {
-          setEditingTemplate(previewingTemplate);
-          setPreviewingTemplate(null);
-        }}
-      />
-    );
-  }
-
   return (
     <div className="w-full h-full bg-gray-50 overflow-auto">
       {/* Header */}
@@ -152,11 +141,11 @@ const currentTemplates = useMemo(() => {
         <div className="w-full px-4 md:px-6 py-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-  <h1 className="text-2xl font-bold text-gray-900">Template Manager</h1>
-  <p className="text-sm text-gray-600 mt-1">
-    Create and manage communication templates
-  </p>
-</div>
+              <h1 className="text-2xl font-bold text-gray-900">Template Manager</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Create and manage communication templates
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -230,17 +219,7 @@ const currentTemplates = useMemo(() => {
         </div>
 
         {/* Templates Grid */}
-        {currentTemplates.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <LucideIcons.FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-600 font-medium">No templates found</p>
-            <p className="text-sm text-gray-500 mt-1">
-              {searchQuery
-                ? 'Try adjusting your search criteria'
-                : 'Create your first template to get started'}
-            </p>
-          </div>
-        ) : (
+   {currentTemplates.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentTemplates.map(template => (
               <div
@@ -252,8 +231,8 @@ const currentTemplates = useMemo(() => {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">{template.name}</h3>
                     <p className="text-xs text-gray-600 mt-0.5">
-  {template.stage ? stageLabel(template.stage) : 'General Template'}
-</p>
+                      {template.stage ? stageLabel(template.stage) : 'General Template'}
+                    </p>
                   </div>
                   {template.isDefault && (
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium whitespace-nowrap">
@@ -266,34 +245,24 @@ const currentTemplates = useMemo(() => {
                 <p className="text-sm text-gray-600 mb-4 line-clamp-3">{template.content}</p>
 
                 {/* Variables */}
-{template.variables?.length > 0 && (
-  <div className="mb-4">
-    <p className="text-xs text-gray-500 font-medium mb-2">
-      Variables:
-    </p>
-
-    <div className="flex flex-wrap gap-1">
-      {template.variables.map((variable, idx) => (
-        <span
-          key={idx}
-          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono"
-        >
-          {variable}
-        </span>
-      ))}
-    </div>
-  </div>
-)}
+                {template.variables?.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 font-medium mb-2">Variables:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {template.variables.map((variable, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono"
+                        >
+                          {variable}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setPreviewingTemplate(template)}
-                    className="flex-1 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                  >
-                    <LucideIcons.Eye className="w-4 h-4 inline mr-1" />
-                    Preview
-                  </button>
                   <button
                     onClick={() => setEditingTemplate(template)}
                     className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"

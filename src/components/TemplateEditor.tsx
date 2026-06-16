@@ -14,9 +14,7 @@ import {
 import {
   extractTemplateVariables,
   validateTemplate,
-  createTemplatePreview,
 } from '../utils/templateEngine';
-import TemplatePreview from './TemplatePreview';
 
 interface TemplateEditorProps {
   template: FollowUpTemplate | null;
@@ -40,7 +38,6 @@ export default function TemplateEditor({
   const [name, setName] = useState(template?.name || '');
   const [stage, setStage] = useState<0 | 1 | 2 | 3>(template?.stage || 0);
   const [content, setContent] = useState(template?.content || '');
-  const [showPreview, setShowPreview] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const stageOptions = [
@@ -53,17 +50,7 @@ export default function TemplateEditor({
   const variables = useMemo(() => extractTemplateVariables(content), [content]);
   const validation = useMemo(() => validateTemplate(content), [content]);
 
-  const previewTemplate: FollowUpTemplate = {
-    id: template?.id || 'preview',
-    type,
-    stage,
-    name: name || 'Preview',
-    content,
-    variables,
-    isDefault: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  
 
   const handleSave = async () => {
     setValidationError(null);
@@ -117,15 +104,17 @@ export default function TemplateEditor({
     { key: '{agentName}', description: 'Agent name' },
   ];
 
-  if (showPreview) {
-    return (
-      <TemplatePreview
-        template={previewTemplate}
-        onClose={() => setShowPreview(false)}
-        onEdit={() => setShowPreview(false)}
-      />
-    );
-  }
+/*
+if (showPreview) {
+  return (
+    <TemplatePreview
+      template={previewTemplate}
+      onClose={() => setShowPreview(false)}
+      onEdit={() => setShowPreview(false)}
+    />
+  );
+}
+*/
 
   return (
     <div className="w-full h-full bg-gray-50 overflow-auto">
@@ -250,39 +239,34 @@ export default function TemplateEditor({
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleSave}
-                disabled={isLoading || !name.trim() || !content.trim()}
-                className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <LucideIcons.Loader className="w-4 h-4 inline mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <LucideIcons.Save className="w-4 h-4 inline mr-2" />
-                    Save Template
-                  </>
-                )}
-              </button>
-              <button
-                onClick={onCancel}
-                disabled={isLoading}
-                className="flex-1 px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowPreview(true)}
-                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              >
-                <LucideIcons.Eye className="w-4 h-4" />
-              </button>
-            </div>
+           {/* Actions */}
+<div className="flex gap-3">
+  <button
+    onClick={handleSave}
+    disabled={isLoading || !name.trim() || !content.trim()}
+    className="flex-1 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {isLoading ? (
+      <>
+        <LucideIcons.Loader className="w-4 h-4 inline mr-2 animate-spin" />
+        Saving...
+      </>
+    ) : (
+      <>
+        <LucideIcons.Save className="w-4 h-4 inline mr-2" />
+        Save Template
+      </>
+    )}
+  </button>
+
+  <button
+    onClick={onCancel}
+    disabled={isLoading}
+    className="flex-1 px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+  >
+    Cancel
+  </button>
+</div>
           </div>
 
           {/* Sidebar */}
