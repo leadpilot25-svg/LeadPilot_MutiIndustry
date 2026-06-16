@@ -154,7 +154,7 @@ export default function App() {
     } catch (e) { }
     return null;
   });
-  const [userWorkspace, setUserWorkspace] = useState<any>(() => {
+ const [userWorkspace, setUserWorkspace] = useState<any>(() => {
     try {
       if (isDemoSandboxAllowed() && localStorage.getItem('leadpilot_demo_mode') === 'true') {
         if (localStorage.getItem('leadpilot_demo_super_admin') === 'true') {
@@ -170,6 +170,11 @@ export default function App() {
           ownerUid: 'demo-sandbox-id',
           createdAt: new Date().toISOString()
         };
+      }
+      // Try to load saved workspace preference for non-demo mode
+      const savedWorkspaceId = localStorage.getItem('leadpilot_selected_workspace_id');
+      if (savedWorkspaceId) {
+        return { id: savedWorkspaceId, _loading: true };
       }
     } catch (e) { }
     return null;
@@ -421,13 +426,28 @@ const [templates, setTemplates] = useState(() => {
           return;
         }
 
-        const wsRef = doc(db, 'workspaces', profile.workspaceId);
+   const wsRef = doc(db, 'workspaces', profile.workspaceId);
         const wsSnap = await getDoc(wsRef);
         if (wsSnap.exists()) {
           const wsData = { id: wsSnap.id, ...wsSnap.data() } as any;
-          setUserWorkspace(wsData);
-          setEditWorkspaceName(wsData.name || '');
-          setEditWorkspaceMode(wsData.mode || 'solo');
+          
+          // Ensure all required fields are present
+          const completeWsData = {
+            id: wsData.id,
+            name: wsData.name || 'Workspace',
+            industryId: wsData.industryId || 'real-estate', // Prevent undefined
+            mode: wsData.mode || 'solo',
+            ownerUid: wsData.ownerUid,
+            createdAt: wsData.createdAt,
+            status: wsData.status,
+            ...wsData // Spread all other fields
+          };
+          
+          setUserWorkspace(completeWsData);
+          // SAVE workspace preference to localStorage
+          localStorage.setItem('leadpilot_selected_workspace_id', completeWsData.id);
+          setEditWorkspaceName(completeWsData.name || '');
+          setEditWorkspaceMode(completeWsData.mode || 'solo');
         }
         setAuthLoading(false);
       } else {
@@ -814,7 +834,7 @@ console.log(
         return;
       }
 
-      const wsRef = doc(db, 'workspaces', userWorkspace.id);
+    const wsRef = doc(db, 'workspaces', userWorkspace.id);
       await updateDoc(wsRef, {
         name: editWorkspaceName.trim(),
         mode: editWorkspaceMode
@@ -826,6 +846,9 @@ console.log(
         name: editWorkspaceName.trim(),
         mode: editWorkspaceMode
       }));
+
+      // SAVE workspace preference to localStorage
+      localStorage.setItem('leadpilot_selected_workspace_id', userWorkspace.id);
 
       alert('Workspace preferences successfully updated instantly in Firestore!');
     } catch (err) {
@@ -844,19 +867,18 @@ console.log(
     setIsSendingInvite(true);
     const lowerEmail = inviteEmail.toLowerCase().trim();
     try {
-      if (isDemoMode) {
-        const newInvite = {
-          email: lowerEmail,
-          workspaceId: userWorkspace.id,
-          role: 'agent',
-          ownerEmail: userProfile.email || 'demo@leadpilot.co',
-          companyName: userWorkspace.name,
-          createdAt: new Date().toISOString()
+    if (isDemoMode) {
+        const updatedWs = {
+          ...userWorkspace,
+          name: editWorkspaceName.trim(),
+          mode: editWorkspaceMode
         };
-        setWorkspaceInvitations(prev => [...prev, newInvite]);
-        setInviteEmail('');
-        alert(`Successfully sent pending agent invite code model to ${lowerEmail}! (Demo Sandbox Mode)`);
-        setIsSendingInvite(false);
+        setUserWorkspace(updatedWs);
+        localStorage.setItem('leadpilot_demo_workspace', JSON.stringify(updatedWs));
+        // SAVE workspace preference to localStorage
+        localStorage.setItem('leadpilot_selected_workspace_id', updatedWs.id);
+        alert('Workspace preferences successfully updated instantly in local sandbox!');
+        setIsSavingSettings(false);
         return;
       }
 
