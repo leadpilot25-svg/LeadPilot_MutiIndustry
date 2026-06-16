@@ -186,14 +186,14 @@ const [showQuickActionModal, setShowQuickActionModal] = useState(false);
 const handleWhatsApp = (e: React.MouseEvent, lead: Lead) => {
   e.stopPropagation();
 
-  const phone = lead.phone?.replace(/\D/g, '');
-
-  if (!phone) {
+  if (!lead.phone) {
     alert('No phone number available');
     return;
   }
 
-  window.open(`https://wa.me/${phone}`, '_blank');
+  setSelectedLeadForAction(lead);
+  setSelectedActionType('whatsapp');
+  setShowQuickActionModal(true);
 };
 
 const handleSMS = (e: React.MouseEvent, lead: Lead) => {
@@ -204,9 +204,10 @@ const handleSMS = (e: React.MouseEvent, lead: Lead) => {
     return;
   }
 
-  window.location.href = `sms:${lead.phone}`;
+  setSelectedLeadForAction(lead);
+  setSelectedActionType('sms');
+  setShowQuickActionModal(true);
 };
-  
 
 const handleEmail = (e: React.MouseEvent, lead: Lead) => {
   e.stopPropagation();
