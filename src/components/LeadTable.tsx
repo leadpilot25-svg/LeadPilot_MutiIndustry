@@ -12,6 +12,7 @@ type SortField = 'name' | 'phone' | 'value' | 'createdAt' | 'nextFollowUpDate';
 type SortOrder = 'asc' | 'desc';
 
 interface LeadTableProps {
+  templates?: any;
   config: IndustryConfig;
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
@@ -28,6 +29,7 @@ interface LeadTableProps {
 export default function LeadTable({
   config,
   leads,
+  templates,
   onSelectLead,
   onUpdateLead,
   onDeleteLead,
@@ -672,6 +674,7 @@ className="flex items-center justify-center gap-1.5 p-2.5 bg-blue-50 hover:bg-bl
   <QuickActionModal
     lead={selectedLeadForAction}
     actionType={selectedActionType}
+    templates={templates}
     onClose={() => setShowQuickActionModal(false)}
   onSend={async (content, notes, nextFollowUpDate) => {
 

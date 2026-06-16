@@ -5,8 +5,8 @@
  * Quick Action Modal Component
  * Preview and edit templates before sending via WhatsApp, Email, SMS
  */
+import React, { useState, useMemo, useEffect } from 'react';
 
-import React, { useState } from 'react';
 import * as LucideIcons from 'lucide-react';
 import {
   Lead,
@@ -22,6 +22,7 @@ interface QuickActionModalProps {
   lead: Lead;
   actionType: QuickActionType;
   template?: FollowUpTemplate;
+    templates?: any;
   onClose: () => void;
  onSend?: (
   content: string,
@@ -36,27 +37,40 @@ export default function QuickActionModal({
   lead,
   actionType,
   template,
+  templates,
   onClose,
   onSend,
   isLoading,
   error,
 }: QuickActionModalProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedStage, setSelectedStage] =
+
+const [selectedStage, setSelectedStage] =
   useState('introduction');
- const [editedContent, setEditedContent] = useState(
-  template?.content ||
-  `Hi ${lead.name},
 
-Thank you for your interest.
+const [editedContent, setEditedContent] = useState('');
 
-Just checking in to see if you have any questions.
+const [notes, setNotes] = useState('');
 
-Regards,
-LeadPilot Team`
-);
-  const [notes, setNotes] = useState('');
-  const [nextFollowUpDate, setNextFollowUpDate] = useState(
+useEffect(() => {
+  if (!templates || !selectedStage) return;
+  
+  const stage = templates[selectedStage];
+  if (!stage) return;
+  
+  let content = '';
+  if (actionType === 'email') {
+    content = stage.email?.body || '';
+  } else if (actionType === 'whatsapp') {
+    content = stage.whatsapp || '';
+  } else if (actionType === 'sms') {
+    content = stage.whatsapp || '';
+  }
+  
+  setEditedContent(content);
+}, [selectedStage, actionType, templates]);
+
+const [nextFollowUpDate, setNextFollowUpDate] = useState(
   actionType === 'email'
     ? new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
         .toISOString()
@@ -116,21 +130,13 @@ console.log("replacedContent =", replacedContent);
         `https://wa.me/${phone}?text=${encodeURIComponent(messageContent)}`,
         '_blank'
       );
-   console.log("EMAIL SUBJECT:", replacedSubject);
-console.log("EMAIL BODY:", messageContent);
-
-const mailtoUrl =
-  `mailto:${lead.email}` +
-  `?subject=${encodeURIComponent(replacedSubject)}` +
-  `&body=${encodeURIComponent(messageContent)}`;
-
-console.log(mailtoUrl);
+   
     } else if (actionType === 'email') {
       window.location.href =
         `mailto:${lead.email}` +
         `?subject=${encodeURIComponent('Follow Up')}` +
         `&body=${encodeURIComponent(messageContent)}`;
-    } else if (actionType === 'email') {
+  
 
   const emailSubject =
     selectedStage === 'introduction'
@@ -283,15 +289,18 @@ console.log('replacedContent =', replacedContent);
   </label>
 
   <select
-    value={selectedStage}
-    onChange={(e) => setSelectedStage(e.target.value)}
-    className="w-full border rounded-lg px-3 py-2"
-  >
-    <option value="introduction">👋 Introduction</option>
-    <option value="firstFollowUp">📞 First Follow-Up</option>
-    <option value="secondFollowUp">🔔 Second Follow-Up</option>
-    <option value="finalFollowUp">⏰ Final Follow-Up</option>
-  </select>
+  value={selectedStage}
+  onChange={(e) => {
+    setSelectedStage(e.target.value);
+    setIsEditing(false);
+  }}
+  className="w-full border rounded-lg px-3 py-2"
+>
+  <option value="introduction">👋 Introduction</option>
+  <option value="firstFollowUp">📞 First Follow-Up</option>
+  <option value="secondFollowUp">🔔 Second Follow-Up</option>
+  <option value="finalFollowUp">⏰ Final Follow-Up</option>
+</select>
 </div>
 
           {/* Message Preview/Editor */}

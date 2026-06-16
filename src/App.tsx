@@ -22,6 +22,36 @@ import ProductionReadinessChecklist from './components/ProductionReadinessCheckl
 import SuperAdminDashboard from './components/SuperAdminDashboard';
 import TemplateManager from './components/TemplateManager';
 import { DEFAULT_TEMPLATES } from './defaultTemplates';
+const DEFAULT_OUTREACH_TEMPLATES = {
+  introduction: {
+    whatsapp: 'Hi {name}, I hope this message finds you well! I wanted to introduce myself and explore how we might work together. Looking forward to connecting!',
+    email: {
+      subject: 'Let\'s Connect - {name}',
+      body: 'Hi {name},\n\nI hope you\'re having a great day! I came across your profile and thought it would be valuable to connect.\n\nI specialize in helping professionals like you achieve their goals. Would you be open to a brief conversation?\n\nLooking forward to hearing from you!\n\nBest regards'
+    }
+  },
+  firstFollowUp: {
+    whatsapp: 'Hi {name}, just wanted to follow up on my previous message. Did you get a chance to review it? Happy to answer any questions!',
+    email: {
+      subject: 'Following Up - {name}',
+      body: 'Hi {name},\n\nI wanted to follow up on my previous message to see if you\'d be interested in connecting.\n\nI believe there\'s a great opportunity for us to work together. Let me know your thoughts!\n\nBest regards'
+    }
+  },
+  secondFollowUp: {
+    whatsapp: 'Hi {name}, checking in one more time! I really think we could achieve great things together. Would love to hear from you soon.',
+    email: {
+      subject: 'Second Follow-Up - {name}',
+      body: 'Hi {name},\n\nThis is my second follow-up regarding the opportunity I mentioned earlier.\n\nI\'m confident this could be beneficial for you. Would you be open to a quick call this week?\n\nLooking forward to connecting!\n\nBest regards'
+    }
+  },
+  finalFollowUp: {
+    whatsapp: 'Hi {name}, this is my final attempt to connect! I genuinely believe we could create value together. Hope to hear from you!',
+    email: {
+      subject: 'Final Opportunity - {name}',
+      body: 'Hi {name},\n\nThis is my final follow-up. I truly believe there\'s a great opportunity for collaboration here.\n\nIf you\'re interested in exploring this further, please let me know. I\'d love to connect!\n\nBest regards'
+    }
+  }
+};
 
 // Firebase Modules
 import { auth, db, storage, OperationType, handleFirestoreError } from './lib/firebase';
@@ -177,10 +207,36 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('home');
 
   // Templates state
-  const [templates, setTemplates] = useState(() => {
-    const saved = localStorage.getItem('leadpilot_templates');
-    return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
-  });
+ const DEFAULT_OUTREACH_TEMPLATES = {
+  introduction: {
+    whatsapp: 'Hi {name}, thank you for your interest! How can I help you today?',
+    email: { subject: 'Introduction', body: 'Hi {name},\n\nThank you for reaching out.\n\nBest regards' }
+  },
+  firstFollowUp: {
+    whatsapp: 'Hi {name}, just following up! Do you have any questions?',
+    email: { subject: 'Follow-Up', body: 'Hi {name},\n\nFollowing up on my previous message.\n\nBest regards' }
+  },
+  secondFollowUp: {
+    whatsapp: 'Hi {name}, checking in again. Still interested?',
+    email: { subject: 'Second Follow-Up', body: 'Hi {name},\n\nSecond follow-up message.\n\nBest regards' }
+  },
+  finalFollowUp: {
+    whatsapp: 'Hi {name}, final attempt to connect. Hope to hear from you!',
+    email: { subject: 'Final Follow-Up', body: 'Hi {name},\n\nFinal follow-up.\n\nBest regards' }
+  }
+};
+
+const [templates, setTemplates] = useState(() => {
+  const saved = localStorage.getItem('leadpilot_outreach_templates_demo-ws-id');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return DEFAULT_OUTREACH_TEMPLATES;
+    }
+  }
+  return DEFAULT_OUTREACH_TEMPLATES;
+});
   // Leads sub-view state
   const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -2389,6 +2445,7 @@ id="kpi-missed-followups"
                   <LeadTable
                     config={activeIndustry}
                     leads={tableLeads}
+                    templates={templates}
                     dashboardFilter={dashboardFilter}
                     onSelectLead={setSelectedLead}
                     onUpdateLead={handleUpdateLead}
@@ -2541,25 +2598,29 @@ id="kpi-missed-followups"
 
             {/* ================= tab: SETTINGS & TEAM MANAGEMENT (Owner-Only Settings, Agent viewing assignment checklist) ================= */}
             {activeTab === 'settings' && (
-              <div className="space-y-6 animate-fade-in" id="settings-tab-content">
+           
+<div className="space-y-6 animate-fade-in" id="settings-tab-content">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    {/* COLUMN 1: Outreach Templates */}
+    <div className="lg:col-span-1 bg-white rounded-3xl p-6 border border-gray-200">
+      <OutreachTemplatesManager
+        workspaceId={userWorkspace?.id || 'default'}
+        industryId={userWorkspace?.industryId || 'real-estate'}
+        defaultTemplates={templates}
+        onTemplatesSaved={(savedTemplates) => setTemplates(savedTemplates)}
+      />
+    </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="bg-white rounded-3xl p-6 border border-gray-200">
-  <OutreachTemplatesManager
-    workspaceId={userWorkspace?.id || 'default'}
-    industryId={userWorkspace?.industryId || 'real-estate'}
-   
-  />
-</div>
+    {/* COLUMN 2: Workspace Branding */}
+    <div className="lg:col-span-1 space-y-5">
+      <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
+        <div className="border-b border-gray-100 pb-2">
+          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
+            <span>Workspace Branding Specs</span>
+          </h4>
 
-                  {/* COLUMN 1: Workspace branding specifications */}
-                  <div className="lg:col-span-1 space-y-5">
-                    <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
-                      <div className="border-b border-gray-100 pb-2">
-                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                          <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
-                          <span>Workspace Branding Specs</span>
-                        </h4>
                         <p className="text-[11px] text-gray-500 mt-0.5">Control company name, business scope, or terminology parameters.</p>
                       </div>
 
@@ -2755,32 +2816,8 @@ id="kpi-missed-followups"
                       </div>
                     )}
                   </div>
-                  {/* Communication Templates */}
-                  <div className="bg-white rounded-3xl p-6 border border-gray-150/40 mt-6">
-                    <h3 className="text-lg font-bold mb-4">
-                      Communication Templates
-                    </h3>
-
-                    <TemplateManager
-                      templates={templates}
-                      onSaveTemplate={async (template) => {
-                        setTemplates(prev => ({
-                          ...prev,
-                          [template.type]: [
-                            ...(prev[template.type] || []),
-                            template
-                          ]
-                        }));
-                      }}
-                      onDeleteTemplate={async (templateId, type) => {
-                        setTemplates(prev => ({
-                          ...prev,
-                          [type]: prev[type].filter(t => t.id !== templateId)
-                        }));
-                      }}
-                      onClose={() => { }}
-                    />
-                  </div>
+                  
+                  
                 </div>
 
               </div>

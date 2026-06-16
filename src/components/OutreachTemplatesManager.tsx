@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { OutreachTemplates, TEMPLATE_STAGES } from '../types';
 import * as LucideIcons from 'lucide-react';
 
+
 interface OutreachTemplatesManagerProps {
   workspaceId: string;
   industryId: string;
@@ -106,17 +107,37 @@ const [templates, setTemplates] = useState(defaultTemplates || {});
       setTimeout(() => setSavedMessage(''), 3000);
     }
   };
+  
+  const handleStageChange = (stageId: StageKey) => {
+    console.log('Changing stage to:', stageId);
+    setSelectedStage(stageId);
+  };
+
   const currentStage =
   templates?.[selectedStage] ||
-  templates?.introduction;
+  templates?.introduction ||
+  {
+    whatsapp: '',
+    email: { subject: '', body: '' }
+  };
 
 console.log('templates =', templates);
 console.log('selectedStage =', selectedStage);
 console.log('templates =', templates);
 console.log('selectedStage =', selectedStage);
 console.log('currentStage =', currentStage);
-if (!currentStage) {
-  return null;
+if (!currentStage || !templates || Object.keys(templates).length === 0) {
+  return (
+    <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-2xl">
+      <div className="flex gap-3">
+        <LucideIcons.AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-yellow-700">
+          <strong>Templates Loading...</strong>
+          <p className="text-xs mt-1">Creating default templates for your workspace.</p>
+        </div>
+      </div>
+    </div>
+  );
 }
   return (
     <div className="space-y-6">
@@ -134,28 +155,31 @@ if (!currentStage) {
         </div>
       </div>
 
-      {/* Stage Selector */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Select Stage</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {TEMPLATE_STAGES.map((stage) => (
-            <button
-              key={stage.id}
-              onClick={() => setSelectedStage(stage.id as StageKey)}
-              className={`p-3 rounded-xl text-center border-2 transition-all ${
-                selectedStage === stage.id
-                  ? 'border-indigo-600 bg-indigo-50'
-                  : 'border-slate-200 bg-white hover:border-indigo-300'
-              }`}
-            >
-              <span className="text-lg block mb-1">{stage.icon}</span>
-              <span className="text-xs font-bold text-slate-900 block leading-tight">
-                {stage.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+     {/* Stage Selector */}
+<div className="space-y-2">
+  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Select Stage</label>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+  {TEMPLATE_STAGES.map((stage) => (
+    <button
+      key={stage.id}
+      onClick={() => {
+        console.log('Selected stage:', stage.id);
+        setSelectedStage(stage.id as StageKey);
+      }}
+      className={`p-4 rounded-xl text-center border-2 transition-all h-full min-h-[120px] flex flex-col items-center justify-center ${
+        selectedStage === stage.id
+          ? 'border-indigo-600 bg-indigo-50'
+          : 'border-slate-200 bg-white hover:border-indigo-300'
+      }`}
+    >
+      <span className="text-2xl block mb-2">{stage.icon}</span>
+      <span className="text-[11px] font-bold text-slate-900 block leading-snug">
+        {stage.label}
+      </span>
+    </button>
+  ))}
+</div>
+</div>
 
       {/* WhatsApp Template Editor */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
@@ -164,9 +188,9 @@ if (!currentStage) {
           <h5 className="text-sm font-bold text-slate-900">WhatsApp Template</h5>
         </div>
 
-        <textarea
-          value={currentStage.whatsapp}
-          onChange={(e) => handleWhatsAppChange(e.target.value)}
+      <textarea
+  value={currentStage?.whatsapp || ''}
+  onChange={(e) => handleWhatsAppChange(e.target.value)}
           className="w-full p-3 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           rows={5}
           placeholder="Enter WhatsApp message template..."
@@ -180,44 +204,44 @@ if (!currentStage) {
         </div>
       </div>
 
-      {/* Email Template Editor */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-          <span className="text-lg">📧</span>
-          <h5 className="text-sm font-bold text-slate-900">Email Template</h5>
-        </div>
+   {/* Email Template Editor */}
+<div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+    <span className="text-lg">📧</span>
+    <h5 className="text-sm font-bold text-slate-900">Email Template</h5>
+  </div>
 
-        {/* Email Subject */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-700">Subject Line</label>
-          <input
-            type="text"
-            value={currentStage.email.subject}
-            onChange={(e) => handleEmailSubjectChange(e.target.value)}
-            className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            placeholder="Enter email subject..."
-          />
-        </div>
+  {/* Email Subject */}
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-slate-700">Subject Line</label>
+    <input
+      type="text"
+      value={currentStage?.email?.subject || ''}
+      onChange={(e) => handleEmailSubjectChange(e.target.value)}
+      className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+      placeholder="Enter email subject..."
+    />
+  </div>
 
-        {/* Email Body */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-700">Email Body</label>
-          <textarea
-            value={currentStage.email.body}
-            onChange={(e) => handleEmailBodyChange(e.target.value)}
-            className="w-full p-3 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            rows={8}
-            placeholder="Enter email body template..."
-          />
-        </div>
+  {/* Email Body */}
+  <div className="space-y-2">
+    <label className="text-xs font-bold text-slate-700">Email Body</label>
+    <textarea
+      value={currentStage?.email?.body || ''}
+      onChange={(e) => handleEmailBodyChange(e.target.value)}
+      className="w-full p-3 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+      rows={8}
+      placeholder="Enter email body template..."
+    />
+  </div>
 
-        <div className="bg-slate-50 p-3 rounded-lg text-[10px] text-slate-600 leading-relaxed">
-          <strong className="text-slate-900 block mb-1">Available placeholders:</strong>
-          <code className="font-mono text-slate-700">
-            {'{name}'} {'{email}'} {'{phone}'} {'{company}'} {'{city}'} {'{source}'}
-          </code>
-        </div>
-      </div>
+  <div className="bg-slate-50 p-3 rounded-lg text-[10px] text-slate-600 leading-relaxed">
+    <strong className="text-slate-900 block mb-1">Available placeholders:</strong>
+    <code className="font-mono text-slate-700">
+      {'{name}'} {'{email}'} {'{phone}'} {'{company}'} {'{city}'} {'{source}'}
+    </code>
+  </div>
+</div>
 
       {/* Action Buttons */}
       <div className="flex gap-2 pt-4 border-t border-slate-200">

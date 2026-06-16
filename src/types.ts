@@ -79,8 +79,8 @@ export interface OutreachTemplates {
   finalFollowUp: StageTemplate;
 }
 export const TEMPLATE_STAGES = [
-  'Introduction',
-  'First Follow Up',
-  'Second Follow Up',
-  'Final Follow Up'
-];
+  { id: 'introduction', label: 'Introduction', icon: '👋' },
+  { id: 'firstFollowUp', label: 'First Follow-Up', icon: '📞' },
+  { id: 'secondFollowUp', label: 'Second Follow-Up', icon: '🔔' },
+  { id: 'finalFollowUp', label: 'Final Follow-Up', icon: '⏰' }
+] as const;
