@@ -14,11 +14,13 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     leadLabel: 'Client Prospect',
     valueLabel: 'Property Budget',
     stages: [
-      { id: 'new_inquiry', label: 'New Inquiries', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-      { id: 'viewing_scheduled', label: 'Showings / Viewings', color: 'bg-purple-100 text-purple-800 border-purple-200' },
-      { id: 'offer_made', label: 'Offers Submitted', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-      { id: 'under_contract', label: 'Under Contract', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-      { id: 'closed', label: 'Deals Closed', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+      { id: 'contacted', name: 'Contacted' },
+      { id: 'meeting', name: 'Meeting' },
+      { id: 'site_visit_scheduled', name: 'Site Visit Scheduled' },
+      { id: 'site_visit_postponed', name: 'Site Visit Postponed' },
+      { id: 'booked', name: 'Booked' },
+      { id: 'closed', name: 'Closed' },
+      { id: 'lost', name: 'Lost' }
     ],
     customFields: [
       {
@@ -36,24 +38,18 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         required: false,
         placeholder: 'e.g. Westside, Downtown, Oak Creek'
       },
-      {
-        key: 'isPreApproved',
-        label: 'Mortgage Pre-Approved Check',
-        type: 'select',
-        options: ['Pre-Approved (Verified)', 'Self-Funded / Cash Buyer', 'Not Pre-Approved', 'Negotiating Financing'],
-        required: false
-      }
+     
     ],
-  statuses: ['Active', 'Closed', 'Lost', 'Under Contract'],
+    statuses: [
+      'Contacted',
+      'Meeting',
+      'Site Visit Scheduled',
+      'Site Visit Postponed',
+      'Booked',
+      'Closed',
+      'Lost'
+    ],
     metrics: [
-      {
-        key: 'pipeline_total',
-        label: 'Active Pipeline Value',
-        prefix: '$',
-        type: 'sum',
-        sourceField: 'value',
-        description: 'Aggregate budget value across all active properties.'
-      },
       {
         key: 'avg_deal_size',
         label: 'Average Client Budget',
@@ -90,69 +86,69 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     closedDealsLabel: "Closed sales"
   },
   {
-  id: 'insurance',
-  name: 'Insurance Marketing',
-  iconName: 'ShieldAlert',
-  tagline: 'Underwriting pipelines, policy quotes, and coverage lead acceleration.',
-  leadLabel: 'Coverage Applicant',
-  valueLabel: 'Est. Annual Premium',
-  stages: [
-    { id: 'quote_requested', label: 'Quote Requested', color: 'bg-sky-100 text-sky-800 border-sky-200' },
-    { id: 'needs_analysis', label: 'Needs Assessment', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-    { id: 'policy_quoted', label: 'Underwriting / Quote', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-    { id: 'paperwork_sent', label: 'Documents Sent', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-    { id: 'policy_active', label: 'Policies Activated', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
-  ],
-  customFields: [
-    {
-      key: 'policyType',
-      label: 'Insurance Category',
-      type: 'select',
-      options: ['Health', 'Life', 'Auto', 'Home', 'Business Liability', 'Disability'],
-      required: false,
-      placeholder: 'Select policy type'
-    },
-    {
-      key: 'coverageCapacity',
-      label: 'Coverage Limit (₹)',
-      type: 'number',
-      required: false,
-      placeholder: '1000000'
-    }
-  ],
-  statuses: ['Active', 'Closed', 'Lost', 'Policy Activated', 'Policy Issued'],
-  metrics: [
-    {
-      key: 'premium_pipeline',
-      label: 'Premium Pipeline Value',
-      prefix: '$',
-      type: 'sum',
-      sourceField: 'value',
-      description: 'Total estimated annual premiums in active pipeline.'
-    },
-    {
-      key: 'policies_activated_count',
-      label: 'Policies Activated',
-      type: 'count',
-      description: 'Count of leads that reached policy activation stage.'
-    }
-  ],
-  suggestedSources: [
-    'Website Lead Form',
-    'Google Ads',
-    'Facebook Ads',
-    'Insurance Referral Portal',
-    'Direct Call',
-    'Email Campaign',
-    'Broker Network',
-    'Existing Customer Referral',
-    'Other'
-  ],
-  todayFollowupsLabel: "Follow-up Calls",
-  missedFollowupsLabel: "Overdue Callbacks",
-  meetingsTodayLabel: "Consultations Today",
-  closedDealsLabel: "Policies Activated"
-},
+    id: 'insurance',
+    name: 'Insurance Marketing',
+    iconName: 'ShieldAlert',
+    tagline: 'Underwriting pipelines, policy quotes, and coverage lead acceleration.',
+    leadLabel: 'Coverage Applicant',
+    valueLabel: 'Est. Annual Premium',
+    stages: [
+      { id: 'quote_requested', label: 'Quote Requested', color: 'bg-sky-100 text-sky-800 border-sky-200' },
+      { id: 'needs_analysis', label: 'Needs Assessment', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+      { id: 'policy_quoted', label: 'Underwriting / Quote', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+      { id: 'paperwork_sent', label: 'Documents Sent', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+      { id: 'policy_active', label: 'Policies Activated', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+    ],
+    customFields: [
+      {
+        key: 'policyType',
+        label: 'Insurance Category',
+        type: 'select',
+        options: ['Health', 'Life', 'Auto', 'Home', 'Business Liability', 'Disability'],
+        required: false,
+        placeholder: 'Select policy type'
+      },
+      {
+        key: 'coverageCapacity',
+        label: 'Coverage Limit (₹)',
+        type: 'number',
+        required: false,
+        placeholder: '1000000'
+      }
+    ],
+    statuses: ['Active', 'Closed', 'Lost', 'Policy Activated', 'Policy Issued'],
+    metrics: [
+      {
+        key: 'premium_pipeline',
+        label: 'Premium Pipeline Value',
+        prefix: '$',
+        type: 'sum',
+        sourceField: 'value',
+        description: 'Total estimated annual premiums in active pipeline.'
+      },
+      {
+        key: 'policies_activated_count',
+        label: 'Policies Activated',
+        type: 'count',
+        description: 'Count of leads that reached policy activation stage.'
+      }
+    ],
+    suggestedSources: [
+      'Website Lead Form',
+      'Google Ads',
+      'Facebook Ads',
+      'Insurance Referral Portal',
+      'Direct Call',
+      'Email Campaign',
+      'Broker Network',
+      'Existing Customer Referral',
+      'Other'
+    ],
+    todayFollowupsLabel: "Follow-up Calls",
+    missedFollowupsLabel: "Overdue Callbacks",
+    meetingsTodayLabel: "Consultations Today",
+    closedDealsLabel: "Policies Activated"
+  },
   {
     id: 'tarot-coaching',
     name: 'Tarot Coaching Hub',
@@ -311,27 +307,25 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         key: 'serviceType',
         label: 'Service Required',
         type: 'select',
-    options: [
-  '2D Animation',
-  '3D Animation',
-  'Motion Graphics',
-  'Explainer Videos',
-  'Character Animation',
-  'Product Animation',
-  'Architectural Animation',
-  'Whiteboard Animation',
-  'Corporate Animation',
-
-  'Video Editing',
-  'Branding',
-  'Graphic Design',
-  'Social Media Management',
-
-  'Meta Ads',
-  'Google Ads',
-  'SEO',
-  'Website Development'
-],
+        options: [
+          '2D Animation',
+          '3D Animation',
+          'Motion Graphics',
+          'Explainer Videos',
+          'Character Animation',
+          'Product Animation',
+          'Architectural Animation',
+          'Whiteboard Animation',
+          'Corporate Animation',
+          'Video Editing',
+          'Branding',
+          'Graphic Design',
+          'Social Media Management',
+          'Meta Ads',
+          'Google Ads',
+          'SEO',
+          'Website Development'
+        ],
         required: false,
         placeholder: 'Select service type'
       },
@@ -352,7 +346,6 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
       }
     ],
     statuses: ['Active', 'Closed', 'Lost', 'Won'],
-
     metrics: [
       {
         key: 'followups_today',
@@ -461,10 +454,11 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-04',
       status: 'active',
       value: 15000,
-      customFields: {
-        policyType: 'Health',
-        coverageCapacity: 500000
-      },
+     customFields: {
+  policyType: 'Health',
+  coverageCapacity: 500000,
+  nextFollowUpDate: '2026-06-21'
+},
       notes: [
         { id: 'n-3', content: 'Looking for comprehensive health insurance for family of 4. High coverage requirements.', createdAt: '2026-06-04', author: 'Insurance Agent' }
       ],
@@ -484,10 +478,11 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-01',
       status: 'active',
       value: 45000,
-      customFields: {
-        policyType: 'Business Liability',
-        coverageCapacity: 1000000
-      },
+     customFields: {
+  policyType: 'Business Liability',
+  coverageCapacity: 1000000,
+  nextFollowUpDate: '2026-06-22'
+},
       notes: [
         { id: 'n-4', content: 'Business owner. Policy activated. Premium paid. Coverage active for 12 months.', createdAt: '2026-04-15', author: 'Insurance Agent' }
       ],
@@ -508,10 +503,11 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-05',
       status: 'active',
       value: 180,
-      customFields: {
-        divineFocus: 'Romantic Connection & Love',
-        cosmicZodiacSign: 'Scorpio'
-      },
+     customFields: {
+  divineFocus: 'Romantic Connection & Love',
+  cosmicZodiacSign: 'Scorpio',
+  nextFollowUpDate: '2026-06-20'
+},
       notes: [
         { id: 'n-7', content: 'Diana is feeling a intense energetic block around career decisions and emotional boundaries. Seeking a Celtic Cross spread.', createdAt: '2026-06-04', author: 'Tarot Steward' }
       ],
@@ -532,9 +528,10 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       status: 'active',
       value: 450,
       customFields: {
-        divineFocus: 'Wealth Alignment & Abundance',
-        cosmicZodiacSign: 'Taurus'
-      },
+  divineFocus: 'Wealth Alignment & Abundance',
+  cosmicZodiacSign: 'Taurus',
+  nextFollowUpDate: '2026-06-19'
+},
       notes: [
         { id: 'n-8', content: 'Scheduled for 90-minute Lunar Alchemy session. Focused on abundance mindset and launching her creative business.', createdAt: '2026-05-15', author: 'Tarot Steward' }
       ],
@@ -554,10 +551,11 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-05',
       status: 'active',
       value: 2400,
-      customFields: {
-        divineFocus: 'Ancestral Healing & Karma',
-        cosmicZodiacSign: 'Pisces'
-      },
+    customFields: {
+  divineFocus: 'Ancestral Healing & Karma',
+  cosmicZodiacSign: 'Pisces',
+  nextFollowUpDate: '2026-06-17'
+},
       notes: [
         { id: 'n-9', content: 'Upgraded to the 6-Month Cosmic Mentorship Retainer program. Completed Session 4 of 12. Healing ancestral blockages around expression.', createdAt: '2026-04-10', author: 'Tarot Steward' }
       ],
@@ -579,13 +577,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-05',
       status: 'active',
       value: 850,
-      customFields: {
-        pickupAddress: 'Manhattan Office',
-        destinationAddress: 'JFK Airport',
-        vehicleClass: 'Luxury',
-        distanceKm: 25,
-        ratePerKm: 34
-      },
+    customFields: {
+  pickupAddress: 'Manhattan Office',
+  destinationAddress: 'JFK Airport',
+  vehicleClass: 'Luxury',
+  distanceKm: 25,
+  ratePerKm: 34,
+  nextFollowUpDate: '2026-06-18'
+},
       notes: [
         { id: 'n-10', content: 'Frequent corporate traveler. Executive transportation. Multiple monthly bookings.', createdAt: '2026-06-05', author: 'Dispatch' }
       ],
@@ -605,13 +604,14 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       lastContacted: '2026-06-04',
       status: 'active',
       value: 420,
-      customFields: {
-        pickupAddress: 'Kochi Central Station',
-        destinationAddress: 'Infopark Kakkanad',
-        vehicleClass: 'Sedan',
-        distanceKm: 30,
-        ratePerKm: 14
-      },
+    customFields: {
+  pickupAddress: 'Kochi Central Station',
+  destinationAddress: 'Infopark Kakkanad',
+  vehicleClass: 'Sedan',
+  distanceKm: 30,
+  ratePerKm: 14,
+  nextFollowUpDate: '2026-06-19'
+},
       notes: [
         { id: 'n-11', content: 'Regular commute booking. 4-star rating. Reliable passenger.', createdAt: '2026-05-01', author: 'Dispatch' }
       ],
@@ -621,53 +621,55 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
     }
   ],
   'creative-agency': [
-    {
-      id: 'ca-1',
-      name: 'Luxury Fashion Boutique',
-      email: 'brand@luxuryboutique.com',
-      phone: '(91) 9876543210',
-      source: 'LinkedIn',
-      stageId: 'new_lead',
-      createdAt: '2026-06-03',
-      lastContacted: '2026-06-04',
-      status: 'active',
-      value: 250000,
-      customFields: {
-        serviceType: 'Branding',
-        followUpType: '',
-        companyName: 'Luxury Fashion Boutique'
-      },
-      notes: [
-        { id: 'n-12', content: 'High-end fashion brand rebranding project. Complete brand identity overhaul. Timeline: 10 weeks.', createdAt: '2026-06-03', author: 'Creative Lead' }
-      ],
-      tasks: [
-        { id: 't-22', title: 'Send branding proposal document', completed: false },
-        { id: 't-23', title: 'Schedule creative briefing call', completed: false }
-      ]
+  {
+    id: 'ca-1',
+    name: 'Luxury Fashion Boutique',
+    email: 'brand@luxuryboutique.com',
+    phone: '(91) 9876543210',
+    source: 'LinkedIn',
+    stageId: 'new_lead',
+    createdAt: '2026-06-03',
+    lastContacted: '2026-06-04',
+    status: 'active',
+    value: 250000,
+    customFields: {
+      serviceType: 'Branding',
+      followUpType: 'Email',
+      companyName: 'Luxury Fashion Boutique',
+      nextFollowUpDate: '2026-06-18'
     },
-    {
-      id: 'ca-2',
-      name: 'Tech Startup XYZ',
-      email: 'marketing@techxyz.io',
-      phone: '(91) 9012345678',
-      source: 'Upwork / Freelance Platform',
-      stageId: 'won_client',
-      createdAt: '2026-04-01',
-      lastContacted: '2026-06-01',
-      status: 'active',
-      value: 120000,
-      customFields: {
-        serviceType: 'Web Design',
-        followUpType: '',
-        companyName: 'Tech Startup XYZ'
-      },
-      notes: [
-        { id: 'n-13', content: 'Website redesign project completed successfully. Client satisfied. 5-star feedback received.', createdAt: '2026-04-01', author: 'Creative Lead' }
-      ],
-      tasks: [
-        { id: 't-24', title: 'Send final invoice and payment terms', completed: true },
-        { id: 't-25', title: 'Request detailed feedback for case study', completed: false }
-      ]
-    }
-  ]
+    notes: [
+      { id: 'n-12', content: 'High-end fashion brand rebranding project. Complete brand identity overhaul. Timeline: 10 weeks.', createdAt: '2026-06-03', author: 'Creative Lead' }
+    ],
+    tasks: [
+      { id: 't-22', title: 'Send branding proposal document', completed: false },
+      { id: 't-23', title: 'Schedule creative briefing call', completed: false }
+    ]
+  },
+  {
+    id: 'ca-2',
+    name: 'Tech Startup XYZ',
+    email: 'marketing@techxyz.io',
+    phone: '(91) 9012345678',
+    source: 'Upwork / Freelance Platform',
+    stageId: 'won_client',
+    createdAt: '2026-04-01',
+    lastContacted: '2026-06-01',
+    status: 'active',
+    value: 120000,
+    customFields: {
+      serviceType: 'Web Design',
+      followUpType: 'Call',
+      companyName: 'Tech Startup XYZ',
+      nextFollowUpDate: '2026-06-16'
+    },
+    notes: [
+      { id: 'n-13', content: 'Website redesign project completed successfully. Client satisfied. 5-star feedback received.', createdAt: '2026-04-01', author: 'Creative Lead' }
+    ],
+    tasks: [
+      { id: 't-24', title: 'Send final invoice and payment terms', completed: true },
+      { id: 't-25', title: 'Request detailed feedback for case study', completed: false }
+    ]
+  }
+]   
 };

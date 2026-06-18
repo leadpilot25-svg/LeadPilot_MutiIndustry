@@ -14,6 +14,7 @@ import GoogleSheetsSync from './components/GoogleSheetsSync';
 import PublicLeadCaptureForm from './components/PublicLeadCaptureForm';
 import * as LucideIcons from 'lucide-react';
 import OutreachTemplatesManager from './components/OutreachTemplatesManager';
+import PipelineStatusDashboard from './components/PipelineStatusDashboard';
 import { motion, AnimatePresence } from 'motion/react';
 
 // Env and Checklist Modules
@@ -154,7 +155,7 @@ export default function App() {
     } catch (e) { }
     return null;
   });
- const [userWorkspace, setUserWorkspace] = useState<any>(() => {
+  const [userWorkspace, setUserWorkspace] = useState<any>(() => {
     try {
       if (isDemoSandboxAllowed() && localStorage.getItem('leadpilot_demo_mode') === 'true') {
         if (localStorage.getItem('leadpilot_demo_super_admin') === 'true') {
@@ -211,26 +212,25 @@ export default function App() {
   // Navigation state (home, leads, funnel, business, settings, checklist)
   const [activeTab, setActiveTab] = useState<string>('home');
 
- 
 
-const [templates, setTemplates] = useState(() => {
-  const saved = localStorage.getItem('leadpilot_outreach_templates_demo-ws-id');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return DEFAULT_OUTREACH_TEMPLATES;
+
+  const [templates, setTemplates] = useState(() => {
+    const saved = localStorage.getItem('leadpilot_outreach_templates_demo-ws-id');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return DEFAULT_OUTREACH_TEMPLATES;
+      }
     }
-  }
-  return DEFAULT_OUTREACH_TEMPLATES;
-});
+    return DEFAULT_OUTREACH_TEMPLATES;
+  });
   // Leads sub-view state
   const [currentView, setCurrentView] = useState<'kanban' | 'table'>('table');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Interactive Dashboard Click/Filter state
-  const [dashboardFilter, setDashboardFilter] = useState<'all' | 'today_followups' | 'missed_followups' | 'meetings_today' | 'closed_deals' | 'total' | 'open' | 'closed' | 'today'>('all');
-
+  const [dashboardFilter, setDashboardFilter] = useState<string>('all');
   // Intake Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formInitialStageId, setFormInitialStageId] = useState('');
@@ -408,11 +408,11 @@ const [templates, setTemplates] = useState(() => {
           return;
         }
 
-   const wsRef = doc(db, 'workspaces', profile.workspaceId);
+        const wsRef = doc(db, 'workspaces', profile.workspaceId);
         const wsSnap = await getDoc(wsRef);
         if (wsSnap.exists()) {
           const wsData = { id: wsSnap.id, ...wsSnap.data() } as any;
-          
+
           // Ensure all required fields are present
           const completeWsData = {
             id: wsData.id,
@@ -424,7 +424,7 @@ const [templates, setTemplates] = useState(() => {
             status: wsData.status,
             ...wsData // Spread all other fields
           };
-          
+
           setUserWorkspace(completeWsData);
           // SAVE workspace preference to localStorage
           localStorage.setItem('leadpilot_selected_workspace_id', completeWsData.id);
@@ -640,12 +640,12 @@ const [templates, setTemplates] = useState(() => {
   };
 
   const activeIndustry = INDUSTRY_CONFIGS.find(i => i.id === activeTenant.industryId) || INDUSTRY_CONFIGS[0];
-console.log('ACTIVE TENANT:', activeTenant);
-console.log('ACTIVE INDUSTRY:', activeIndustry);
-console.log(
-  'MATCH FOUND:',
-  INDUSTRY_CONFIGS.find(i => i.id === activeTenant.industryId)
-);
+  console.log('ACTIVE TENANT:', activeTenant);
+  console.log('ACTIVE INDUSTRY:', activeIndustry);
+  console.log(
+    'MATCH FOUND:',
+    INDUSTRY_CONFIGS.find(i => i.id === activeTenant.industryId)
+  );
   // 4. Onboarding Workspace Init
   const handleOnboardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -816,7 +816,7 @@ console.log(
         return;
       }
 
-    const wsRef = doc(db, 'workspaces', userWorkspace.id);
+      const wsRef = doc(db, 'workspaces', userWorkspace.id);
       await updateDoc(wsRef, {
         name: editWorkspaceName.trim(),
         mode: editWorkspaceMode
@@ -849,7 +849,7 @@ console.log(
     setIsSendingInvite(true);
     const lowerEmail = inviteEmail.toLowerCase().trim();
     try {
-    if (isDemoMode) {
+      if (isDemoMode) {
         const updatedWs = {
           ...userWorkspace,
           name: editWorkspaceName.trim(),
@@ -1492,48 +1492,50 @@ console.log(
   const meetingsCount = upcomingFollowupLeads.length;
 
   // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
-  const closedDealsLeads = currentLeads.filter(
-  l => isCompletedLead(l)
-);
-
-const repeatClientsLeads = currentLeads.filter(l => {
-  const status = l.status
-    ? String(l.status).toLowerCase().trim()
-    : '';
-
-  return (
-    status === 'returning client' ||
-    status === 'repeat client'
+  const closedDealsLeads = currentLeads.filter(lead =>
+    isCompletedLead(lead) ||
+    lead.status?.toLowerCase() === 'lost' ||
+    lead.status?.toLowerCase() === 'closed'  // ← ADD THIS
   );
-});
 
-const repeatClientsCount = repeatClientsLeads.length;
+  const repeatClientsLeads = currentLeads.filter(l => {
+    const status = l.status
+      ? String(l.status).toLowerCase().trim()
+      : '';
 
-// INSURANCE CRM
-const policiesActivatedLeads = currentLeads.filter(l => {
-  const status = l.status ? String(l.status).toLowerCase().trim() : '';
-  const stageId = l.stageId ? String(l.stageId).toLowerCase().trim() : '';
+    return (
+      status === 'returning client' ||
+      status === 'repeat client'
+    );
+  });
 
-  return status === 'policy activated' || stageId === 'policy_active';
-});
+  const repeatClientsCount = repeatClientsLeads.length;
 
-const policiesActivatedCount = policiesActivatedLeads.length;
+  // INSURANCE CRM
+  const policiesActivatedLeads = currentLeads.filter(l => {
+    const status = l.status ? String(l.status).toLowerCase().trim() : '';
+    const stageId = l.stageId ? String(l.stageId).toLowerCase().trim() : '';
+
+    return status === 'policy activated' || stageId === 'policy_active';
+  });
+
+  const policiesActivatedCount = policiesActivatedLeads.length;
 
 
-// Debug: Check what's being counted
-console.log('All Leads Status Values:', currentLeads.map(l => l.status));
-console.log('Policies Activated Leads:', policiesActivatedLeads.map(l => ({ 
-  name: l.name, 
-  status: l.status, 
-  stageId: l.stageId 
-})));
-console.log('Policies Activated Count:', policiesActivatedCount);
+  // Debug: Check what's being counted
+  console.log('All Leads Status Values:', currentLeads.map(l => l.status));
+  console.log('Policies Activated Leads:', policiesActivatedLeads.map(l => ({
+    name: l.name,
+    status: l.status,
+    stageId: l.stageId
+  })));
+  console.log('Policies Activated Count:', policiesActivatedCount);
 
-const closedDealsCount = closedDealsLeads.length;
-console.log('TOTAL:', totalLeadsCount);
-console.log('OPEN:', openLeadsCount);
-console.log('CLOSED:', closedDealsCount);
-console.log('FINAL STAGE ID:', finalStageId);
+  const closedDealsCount = closedDealsLeads.length;
+  console.log('TOTAL:', totalLeadsCount);
+  console.log('OPEN:', openLeadsCount);
+  console.log('CLOSED:', closedDealsCount);
+  console.log('FINAL STAGE ID:', finalStageId);
 
 
   // Follow-Up Stage Metrics
@@ -1558,6 +1560,32 @@ console.log('FINAL STAGE ID:', finalStageId);
     console.log('dashboardFilter=', dashboardFilter);
     console.log('todayFollowupLeads=', todayFollowupLeads.length);
     console.log('missedFollowupLeads=', missedFollowupLeads.length);
+
+
+    if (
+      typeof dashboardFilter === 'string' &&
+      dashboardFilter.startsWith('status_')
+    ) {
+      const statusName = dashboardFilter.replace('status_', '');
+
+      console.log('📋 STATUS FILTER:', statusName);
+
+      return currentLeads.filter(
+        lead =>
+          lead.status?.toLowerCase().trim() ===
+          statusName.toLowerCase().trim()
+      );
+    }
+    if (
+      typeof dashboardFilter === 'string' &&
+      dashboardFilter.startsWith('stage_')
+    ) {
+      const stageId = dashboardFilter.replace('stage_', '');
+
+      return currentLeads.filter(
+        lead => lead.stageId === stageId
+      );
+    }
 
     switch (dashboardFilter) {
       case 'today_followups':
@@ -2259,7 +2287,7 @@ console.log('FINAL STAGE ID:', finalStageId);
                 </div>
                 <div>
                   <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                   {todayFollowupsCount}
+                    {todayFollowupsCount}
                   </span>
 
                   <div className="h-10 flex items-center">
@@ -2272,232 +2300,249 @@ console.log('FINAL STAGE ID:', finalStageId);
               </div>
 
               {/* Card 2: Missed follow-ups */}
-             <div
-  onClick={() => handleDashboardFilterClick('missed_followups')}
-className="bg-red-50/50 hover:bg-red-50 border border-black p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-id="kpi-missed-followups"
->
-  <div className="text-red-500 group-hover:scale-110 transition-transform">
-    <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
-  </div>
-
-  <div>
-    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-      {missedFollowupsCount}
-    </span>
-
-    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-      {activeIndustry.missedFollowupsLabel || "Expired tasks"}
-    </span>
-  </div>
-</div>
-
-                {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
-                <div
-                  onClick={() => handleDashboardFilterClick('scheduled_followups')}
-                  className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-                  id="kpi-meetings-today"
-                >
-                  <div className="text-orange-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Calendar className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {scheduledFollowupsCount}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                      Follow-Ups Scheduled
-                    </span>
-                  </div>
+              <div
+                onClick={() => handleDashboardFilterClick('missed_followups')}
+                className="bg-red-50/50 hover:bg-red-50 border border-black p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                id="kpi-missed-followups"
+              >
+                <div className="text-red-500 group-hover:scale-110 transition-transform">
+                  <LucideIcons.ShieldAlert className="w-6 h-6 stroke-[2.2]" />
                 </div>
+
+                <div>
+                  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                    {missedFollowupsCount}
+                  </span>
+
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    {activeIndustry.missedFollowupsLabel || "Expired tasks"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Trips Today / Site Visits Today / Consults Today (Today's Items) */}
+              <div
+                onClick={() => handleDashboardFilterClick('scheduled_followups')}
+                className="bg-orange-50/40 hover:bg-orange-50/80 border border-orange-150/45 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                id="kpi-meetings-today"
+              >
+                <div className="text-orange-500 group-hover:scale-110 transition-transform">
+                  <LucideIcons.Calendar className="w-6 h-6 stroke-[2.2]" />
+                </div>
+                <div>
+                  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                    {scheduledFollowupsCount}
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    Follow-Ups Scheduled
+                  </span>
+                </div>
+              </div>
 
               {/* Card 4: Closed deals */}
-            <div
-              onClick={() => handleDashboardFilterClick('closed_deals')}
-              className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-              id="kpi-closed-deals"
-            >
-              <div className="text-emerald-500 group-hover:scale-110 transition-transform">
-                <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
-              </div>
-              <div>
-              <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-{activeIndustry.closedDealsLabel === 'Policies Activated'
-  ? policiesActivatedCount
-  : activeIndustry.closedDealsLabel === 'Repeat Clients'
-  ? repeatClientsCount
-  : closedDealsCount}
-</span>
+              <div
+                onClick={() => handleDashboardFilterClick('closed_deals')}
+                className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+                id="kpi-closed-deals"
+              >
+                <div className="text-emerald-500 group-hover:scale-110 transition-transform">
+                  <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
+                </div>
+                <div>
+                  <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+                    {activeIndustry.closedDealsLabel === 'Policies Activated'
+                      ? policiesActivatedCount
+                      : activeIndustry.closedDealsLabel === 'Repeat Clients'
+                        ? repeatClientsCount
+                        : closedDealsCount}
+                  </span>
 
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                  {activeIndustry.closedDealsLabel || "Closed deals"}
-                </span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                    {activeIndustry.closedDealsLabel || "Closed deals"}
+                  </span>
+                </div>
+
               </div>
 
             </div>
 
-         
 
 
+            {/* Section: LEAD OVERVIEW Breakdown parameters */}
+            <div className="space-y-3 pt-2" id="lead-overview-block">
+              <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
+<div className={`grid gap-4 ${activeIndustry.id === 'real-estate' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
+
+                {/* Total */}
+                <div
+                  onClick={() => handleDashboardFilterClick('total')}
+                  className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                >
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
+                  <span className="text-2xl font-black text-slate-900 mt-1">{totalLeadsCount}</span>
+                </div>
+
+                {/* Open */}
+                <div
+                  onClick={() => handleDashboardFilterClick('open')}
+                  className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                >
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Open</span>
+                  <span className="text-2xl font-black text-slate-900 mt-1">{openLeadsCount}</span>
+                </div>
+{/* CLOSED - Hide for Real Estate */}
+{activeIndustry.id !== 'real-estate' && (
+  <div
+    onClick={() => handleDashboardFilterClick('closed')}
+    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+  >
+    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Closed</span>
+    <span className="text-2xl font-black text-slate-900 mt-1">{closedDealsLeads.length}</span>
+  </div>
+)}
+                {/* Today */}
+                <div
+                  onClick={() => handleDashboardFilterClick('today')}
+                  className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
+                >
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Today</span>
+                  <span className="text-2xl font-black text-slate-900 mt-1">{todayCreatedCount}</span>
+                </div>
 
               </div>
-
-              {/* Section: LEAD OVERVIEW Breakdown parameters */}
-              <div className="space-y-3 pt-2" id="lead-overview-block">
-                <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-                  {/* Total */}
-                  <div
-                    onClick={() => handleDashboardFilterClick('total')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
-                  >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{totalLeadsCount}</span>
-                  </div>
-
-                  {/* Open */}
-                  <div
-                    onClick={() => handleDashboardFilterClick('open')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
-                  >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Open</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{openLeadsCount}</span>
-                  </div>
-
-                  {/* Closed */}
-                  <div
-                    onClick={() => handleDashboardFilterClick('closed')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
-                  >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Closed</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{closedDealsCount}</span>
-                  </div>
-
-                  {/* Today */}
-                  <div
-                    onClick={() => handleDashboardFilterClick('today')}
-                    className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
-                  >
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Today</span>
-                    <span className="text-2xl font-black text-slate-900 mt-1">{todayCreatedCount}</span>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Quick Industry Summary Card */}
-              <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-6 rounded-3xl text-white my-4 relative overflow-hidden shadow-md">
-                <div className="absolute right-0 bottom-0 select-none opacity-10 font-black text-8xl -mr-6 -mb-6">
-                  {activeIndustry.leadLabel[0]}
-                </div>
-                <div className="relative z-10 space-y-2">
-                  <span className="text-[9px] bg-indigo-800 text-indigo-100 px-2.5 py-0.5 rounded font-extrabold uppercase tracking-widest font-mono">WORKSPACE METADATA</span>
-                  <h3 className="text-lg font-bold">{activeIndustry.tagline}</h3>
-                  <p className="text-xs text-indigo-200 leading-relaxed max-w-xl">
-                    Calculations on this screen are tailored dynamically for <strong className="text-white">{activeIndustry.leadLabel}s</strong> with value-based monitoring configured under the <strong className="text-white">{activeIndustry.valueLabel}</strong> matrix.
-                  </p>
-                  <div className="pt-2 flex items-center gap-3">
-                    <button
-                      onClick={() => setActiveTab('leads')}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold transition-all text-white flex items-center gap-1.5"
-                    >
-                      <LucideIcons.ArrowRight className="w-3.5 h-3.5" />
-                      <span>Open Interactive Pipeline</span>
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('business')}
-                      className="px-4 py-2 bg-slate-900/40 hover:bg-slate-900/60 rounded-xl text-xs font-semibold text-indigo-100"
-                    >
-                      View Live Advisor Tools
-                    </button>
-                  </div>
-                </div>
-              </div>
-
             </div>
-          )}
+            {/* Pipeline Status Distribution */}
+            <PipelineStatusDashboard
+              config={activeIndustry}
+              leads={currentLeads}
+              onFilterClick={handleDashboardFilterClick}
+              activeFilter={dashboardFilter}
+            />
 
-            {/* ================= tab: LEADS (PIPELINE & BOARD) ================= */}
-            {activeTab === 'leads' && (
-              <div className="space-y-6 animate-fade-in" id="leads-tab-content">
+          
 
-                <div className="bg-white p-4.5 rounded-3xl border border-gray-150/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-3xs justify-start leading-none mb-2">
-                  <div className="space-y-1 self-start sm:self-auto">
-                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Active {activeIndustry.leadLabel} Leads Roster</h4>
-                    <p className="text-xs text-gray-500">Track and advance lead stages in real-time. System sync is active.</p>
-                  </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    {/* View Form toggle panel */}
-                    <div className="bg-slate-100 p-1 rounded-xl flex items-center shrink-0 border">
-                      <button
-                        onClick={() => setCurrentView('kanban')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'kanban' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
-                      >
-                        <LucideIcons.Layout className="w-3.5 h-3.5" />
-                        <span>Kanban</span>
-                      </button>
-                      <button
-                        onClick={() => setCurrentView('table')}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'table' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
-                      >
-                        <LucideIcons.List className="w-3.5 h-3.5" />
-                        <span>Table</span>
-                      </button>
-                    </div>
+            {/* Quick Industry Summary Card */}
+            <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-6 rounded-3xl text-white my-4 relative overflow-hidden shadow-md">
+              <div className="absolute right-0 bottom-0 select-none opacity-10 font-black text-8xl -mr-6 -mb-6">
+                {activeIndustry.leadLabel[0]}
+              </div>
+              <div className="relative z-10 space-y-2">
+                <span className="text-[9px] bg-indigo-800 text-indigo-100 px-2.5 py-0.5 rounded font-extrabold uppercase tracking-widest font-mono">WORKSPACE METADATA</span>
+                <h3 className="text-lg font-bold">{activeIndustry.tagline}</h3>
+                <p className="text-xs text-indigo-200 leading-relaxed max-w-xl">
+                  Calculations on this screen are tailored dynamically for <strong className="text-white">{activeIndustry.leadLabel}s</strong> with value-based monitoring configured under the <strong className="text-white">{activeIndustry.valueLabel}</strong> matrix.
+                </p>
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    onClick={() => setActiveTab('leads')}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-bold transition-all text-white flex items-center gap-1.5"
+                  >
+                    <LucideIcons.ArrowRight className="w-3.5 h-3.5" />
+                    <span>Open Interactive Pipeline</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('business')}
+                    className="px-4 py-2 bg-slate-900/40 hover:bg-slate-900/60 rounded-xl text-xs font-semibold text-indigo-100"
+                  >
+                    View Live Advisor Tools
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                    <button
-                      onClick={() => setIsFormOpen(true)}
-                      className="px-4.5 py-2 bg-slate-950 text-white rounded-xl text-xs font-bold hover:bg-indigo-900 transition-colors flex items-center gap-1 border shrink-0 cursor-pointer"
-                    >
-                      <LucideIcons.Plus className="w-4 h-4 text-emerald-400 stroke-[3]" />
-                      <span>Create Lead</span>
-                    </button>
-                  </div>
+          </div>
+        )}
+
+        {/* ================= tab: LEADS (PIPELINE & BOARD) ================= */}
+        {activeTab === 'leads' && (
+          <div className="space-y-6 animate-fade-in" id="leads-tab-content">
+
+            <div className="bg-white p-4.5 rounded-3xl border border-gray-150/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-3xs justify-start leading-none mb-2">
+              <div className="space-y-1 self-start sm:self-auto">
+                <h4 className="text-sm font-bold text-slate-900 uppercase tracking-tight">Active {activeIndustry.leadLabel} Leads Roster</h4>
+                <p className="text-xs text-gray-500">Track and advance lead stages in real-time. System sync is active.</p>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto">
+                {/* View Form toggle panel */}
+                <div className="bg-slate-100 p-1 rounded-xl flex items-center shrink-0 border">
+                  <button
+                    onClick={() => setCurrentView('kanban')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'kanban' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
+                  >
+                    <LucideIcons.Layout className="w-3.5 h-3.5" />
+                    <span>Kanban</span>
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('table')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${currentView === 'table' ? 'bg-white text-slate-800 shadow-2xs' : 'text-slate-500'}`}
+                  >
+                    <LucideIcons.List className="w-3.5 h-3.5" />
+                    <span>Table</span>
+                  </button>
                 </div>
 
-                {/* Dynamic selection helper note if active */}
-                {dashboardFilter !== 'all' && (
-                  <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
-                    <div className="flex items-center gap-2">
-                      <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
-                      <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
-                    </div>
-                    <button
-                      onClick={() => setDashboardFilter('all')}
-                      className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
-                    >
-                      Clear Filter
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  className="px-4.5 py-2 bg-slate-950 text-white rounded-xl text-xs font-bold hover:bg-indigo-900 transition-colors flex items-center gap-1 border shrink-0 cursor-pointer"
+                >
+                  <LucideIcons.Plus className="w-4 h-4 text-emerald-400 stroke-[3]" />
+                  <span>Create Lead</span>
+                </button>
+              </div>
+            </div>
 
-                {/* Core Viewport Rendering */}
+           {/* Dynamic selection helper note if active */}
+            {dashboardFilter !== 'all' && (
+              <div className="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs text-indigo-900">
+                <div className="flex items-center gap-2">
+                  <LucideIcons.SlidersHorizontal className="w-4 h-4 text-indigo-700" />
+                  <span>Interactive filter active: <strong className="font-bold text-indigo-950 uppercase">{dashboardFilter.replace('_', ' ')}</strong></span>
+                </div>
+                <button
+                  onClick={() => setDashboardFilter('all')}
+                  className="text-[10px] bg-white border hover:bg-neutral-50 px-2 py-1 rounded-lg font-bold text-slate-700"
+                >
+                  Clear Filter
+                </button>
+              </div>
+            )}
 
-                {currentView === 'kanban' ? (
-                  <PipelineBoard
-                    config={activeIndustry}
-                    leads={tableLeads}
-                    onMoveLead={handleMoveLead}
-                    onSelectLead={setSelectedLead}
-                    onQuickAdd={triggerQuickAdd}
-                    marketRegion={marketRegion}
-                  />
-                ) : (
-                  <LeadTable
-                    config={activeIndustry}
-                    leads={tableLeads}
-                    templates={templates}
-                    dashboardFilter={dashboardFilter}
-                    onSelectLead={setSelectedLead}
-                    onUpdateLead={handleUpdateLead}
-                    onDeleteLead={handleDeleteLead}
-                    marketRegion={marketRegion}
-                    onAddMultiLeads={handleBatchImportLeads}
-                  />
-                )}
+            {/* Core Viewport Rendering - Kanban, Pipeline Status, LeadTable */}
+            
+            {/* Kanban/Pipeline Board - conditionally hidden for Real Estate */}
+{activeIndustry.id !== 'real-estate' && activeIndustry.id !== 'creative-agency' ? (            <PipelineBoard
+  config={activeIndustry}
+  leads={currentLeads}
+  onMoveLead={handleMoveLead}
+  onSelectLead={setSelectedLead}  // ← CORRECT
+  onQuickAdd={triggerQuickAdd}
+  marketRegion={marketRegion}
+/>
+            ) : (
+              <div className="p-8 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                <h3 className="text-gray-800 font-semibold mb-2">Pipeline Status View</h3>
+                <p className="text-gray-600 text-sm">
+                  Real Estate uses the Pipeline Status Distribution below for stage tracking.
+                </p>
+              </div>
+            )}
 
+          
+
+            {/* Lead Table */}
+            <LeadTable
+              config={activeIndustry}
+              leads={tableLeads}
+              templates={templates}
+              dashboardFilter={dashboardFilter}
+              onSelectLead={setSelectedLead}
+              onUpdateLead={handleUpdateLead}
+              onDeleteLead={handleDeleteLead}
+              marketRegion={marketRegion}
+              onAddMultiLeads={handleBatchImportLeads}
+            />
               </div>
             )}
             {/* ================= tab: FUNNEL ================= */}
@@ -2634,35 +2679,35 @@ id="kpi-missed-followups"
                   }}
                 />
 
-          
+
 
               </div>
             )}
 
             {/* ================= tab: SETTINGS & TEAM MANAGEMENT (Owner-Only Settings, Agent viewing assignment checklist) ================= */}
             {activeTab === 'settings' && (
-           
-<div className="space-y-6 animate-fade-in" id="settings-tab-content">
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    
-    {/* COLUMN 1: Outreach Templates */}
-    <div className="lg:col-span-1 bg-white rounded-3xl p-6 border border-gray-200">
-      <OutreachTemplatesManager
-        workspaceId={userWorkspace?.id || 'default'}
-        industryId={userWorkspace?.industryId || 'real-estate'}
-        defaultTemplates={templates}
-        onTemplatesSaved={(savedTemplates) => setTemplates(savedTemplates)}
-      />
-    </div>
 
-    {/* COLUMN 2: Workspace Branding */}
-    <div className="lg:col-span-1 space-y-5">
-      <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
-        <div className="border-b border-gray-100 pb-2">
-          <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
-            <span>Workspace Branding Specs</span>
-          </h4>
+              <div className="space-y-6 animate-fade-in" id="settings-tab-content">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                  {/* COLUMN 1: Outreach Templates */}
+                  <div className="lg:col-span-1 bg-white rounded-3xl p-6 border border-gray-200">
+                    <OutreachTemplatesManager
+                      workspaceId={userWorkspace?.id || 'default'}
+                      industryId={userWorkspace?.industryId || 'real-estate'}
+                      defaultTemplates={templates}
+                      onTemplatesSaved={(savedTemplates) => setTemplates(savedTemplates)}
+                    />
+                  </div>
+
+                  {/* COLUMN 2: Workspace Branding */}
+                  <div className="lg:col-span-1 space-y-5">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-150/40 shadow-3xs space-y-4">
+                      <div className="border-b border-gray-100 pb-2">
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                          <LucideIcons.Briefcase className="w-4 h-4 text-indigo-600" />
+                          <span>Workspace Branding Specs</span>
+                        </h4>
 
                         <p className="text-[11px] text-gray-500 mt-0.5">Control company name, business scope, or terminology parameters.</p>
                       </div>
@@ -2680,19 +2725,19 @@ id="kpi-missed-followups"
                             />
                           </div>
 
-                         {userProfile?.role === 'super_admin' && (
-  <div className="space-y-1">
-    <label className="text-slate-600 block">Business Operations Mode</label>
-    <select
-      value={editWorkspaceMode}
-      onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
-      className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
-    >
-      <option value="solo">Solo CRM Mode ("Just Me")</option>
-      <option value="team">Team CRM Mode ("Small Team")</option>
-    </select>
-  </div>
-)}
+                          {userProfile?.role === 'super_admin' && (
+                            <div className="space-y-1">
+                              <label className="text-slate-600 block">Business Operations Mode</label>
+                              <select
+                                value={editWorkspaceMode}
+                                onChange={(e) => setEditWorkspaceMode(e.target.value as any)}
+                                className="w-full text-xs font-bold border border-gray-200 rounded-xl px-2.5 py-2.5 bg-white"
+                              >
+                                <option value="solo">Solo CRM Mode ("Just Me")</option>
+                                <option value="team">Team CRM Mode ("Small Team")</option>
+                              </select>
+                            </div>
+                          )}
 
                           <button
                             type="submit"
@@ -2859,8 +2904,8 @@ id="kpi-missed-followups"
                       </div>
                     )}
                   </div>
-                  
-                  
+
+
                 </div>
 
               </div>
