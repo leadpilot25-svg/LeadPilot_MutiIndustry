@@ -376,11 +376,11 @@ className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
   >
     <option value="">Select Status</option>
-    {config?.statuses?.map((status: string) => (
-      <option key={status} value={status.toLowerCase()}>
-        {status}
-      </option>
-    ))}
+   {config?.statuses?.map((status: string) => (
+  <option key={status} value={status}>
+    {status}
+  </option>
+))}
   </select>
 </div>          
                   </div>

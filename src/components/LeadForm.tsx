@@ -56,8 +56,8 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
 
     // Provide premium default values depending on mock scenarios
     if (config.id === 'real-estate') {
-      setValue(750000);
-      defaults.preferredLocation = 'Grandview Heights';
+      setValue();
+      defaults.preferredLocation = '';
     } else if (config.id === 'insurance') {
       setValue(4500);
       defaults.coverageCapacity = 1000000;
@@ -241,71 +241,76 @@ export default function LeadForm({ config, initialStageId, onClose, onSubmit, ma
 
           <hr className="border-gray-100" />
 
-          {/* Section 3: CRM pipeline values & notes */}
-          <div className="space-y-3">
-            <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
-              3. Channel & Estimated Pipeline
-            </h5>
+    {/* Section 3: CRM pipeline values & notes - Hide for Real Estate */}
+{config.id !== 'real-estate' && (
+  <div className="space-y-3">
+    <h5 className="text-xs font-bold uppercase text-gray-500 tracking-wider">
+      3. Channel & Estimated Pipeline
+    </h5>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
-                  Target Pipeline Stage
-                </label>
-                <select
-                  value={stageId}
-                  onChange={e => setStageId(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
-                >
-                  {config.stages.map(st => (
-                    <option key={st.id} value={st.id}>{st.label}</option>
-                  ))}
-                </select>
-              </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+      <div>
+        <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
+          Target Pipeline Stage
+        </label>
+        <select
+          value={stageId}
+          onChange={e => setStageId(e.target.value)}
+          className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+        >
+          {config.stages.map(st => (
+            <option key={st.id} value={st.id}>{st.label}</option>
+          ))}
+        </select>
+      </div>
 
-              <div>
-                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
-                  {config.valueLabel} ({getCurrencySymbol(marketRegion)})
-                </label>
-                <input
-                  type="number"
-                  value={value}
-                  onChange={e => setValue(Number(e.target.value))}
-                  placeholder="Projected numeric value"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-mono font-medium"
-                />
-              </div>
+      <div>
+        <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
+          {config.valueLabel} ({getCurrencySymbol(marketRegion)})
+        </label>
+        <input
+          type="number"
+          value={value}
+          onChange={e => setValue(Number(e.target.value))}
+          placeholder="Projected numeric value"
+          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-mono font-medium"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
-              <div className="col-span-1 md:col-span-2">
-                <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
-                  Lead Referrer / Source
-                </label>
-                <select
-                  value={source}
-                  onChange={e => setSource(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
-                >
-                  {config.suggestedSources.map(src => (
-                    <option key={src} value={src}>{src}</option>
-                  ))}
-                  <option value="Manual Addition">Manual Addition</option>
-                </select>
-              </div>
-            </div>
+{/* Lead Referrer / Source - Show for ALL */}
+<div className="space-y-3">
+  <div className="col-span-1 md:col-span-2">
+    <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
+      Lead Referrer / Source
+    </label>
+    <select
+      value={source}
+      onChange={e => setSource(e.target.value)}
+      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium"
+    >
+      {config.suggestedSources.map(src => (
+        <option key={src} value={src}>{src}</option>
+      ))}
+      <option value="Manual Addition">Manual Addition</option>
+    </select>
+  </div>
 
-            <div>
-              <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
-                Initial Consultant Notes
-              </label>
-              <textarea
-                value={noteText}
-                onChange={e => setNoteText(e.target.value)}
-                placeholder="Write any background notes, customer demands, or initial conversations..."
-                rows={3}
-                className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium resize-none"
-              />
-            </div>
-          </div>
+  <div>
+    <label className="block text-[11px] font-semibold text-gray-700 mb-1.5">
+      Initial Consultant Notes
+    </label>
+    <textarea
+      value={noteText}
+      onChange={e => setNoteText(e.target.value)}
+      placeholder="Write any background notes, customer demands, or initial conversations..."
+      rows={3}
+      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 text-gray-800 font-medium resize-none"
+    />
+  </div>
+</div>
 
           <hr className="border-gray-100" />
 
