@@ -20,14 +20,22 @@ interface LeadDetailModalProps {
   onUpdate: (leadData: Partial<Lead>) => void;
   onQuickAction?: (action: QuickActionType) => void;
   templates?: any;
+  config?: any;
+  marketRegion?: 'USA' | 'IND';
+  isTeamMode?: boolean;
+  teamAgents?: any[];
+  currentUserRole?: string;
+  isUploadingFile?: boolean;
+  onUploadFile?: (leadId: string, file: File) => void;
+  onDeleteFile?: (leadId: string, fileIndex: number, fileUrl: string) => void;
 }
-
 export default function LeadDetailModal({
   lead,
   onClose,
   onUpdate,
   onQuickAction,
   templates,
+  config,
 }: LeadDetailModalProps) {
   const [currentTab, setCurrentTab] = useState<'details' | 'communications' | 'history'>('details');
   const [isEditing, setIsEditing] = useState(false);
@@ -283,35 +291,29 @@ className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
                   {/* Edit Mode */}
                   <div className="space-y-4">
                     
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Service</label>
-                      
-                      <select
-  value={editData.service}
-  onChange={e =>
-    setEditData({
-      ...editData,
-      service: e.target.value
-    })
-  }
-  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
->
-  <option value="">Select Service</option>
-<option value="2D Animation">2D Animation</option>
-<option value="3D Animation">3D Animation</option>
-<option value="Motion Graphics">Motion Graphics</option>
-<option value="Explainer Videos">Explainer Videos</option>
-<option value="Character Animation">Character Animation</option>
-<option value="Product Animation">Product Animation</option>
-<option value="Video Editing">Video Editing</option>
-<option value="Branding">Branding</option>
-<option value="Website Development">Website Development</option>
-<option value="Social Media Management">Social Media Management</option>
-<option value="Meta Ads">Meta Ads</option>
-<option value="Google Ads">Google Ads</option>
-<option value="SEO">SEO</option>
-</select>
-                    </div>
+                    
+     {(() => {
+  const typeField = config?.customFields?.find(f => f.type === 'select' && f.options?.length > 0);
+  if (!typeField) return null;
+  
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-900 mb-1">
+        {typeField.label}
+      </label>
+      <select
+        value={editData.service}
+        onChange={e => setEditData({ ...editData, service: e.target.value })}
+        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+      >
+        <option value="">Select {typeField.label}</option>
+        {typeField.options?.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+})()}
                     <div>
   <label className="block text-sm font-medium text-gray-900 mb-1">
     Client Notes
@@ -366,19 +368,21 @@ className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
   />
 </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
-                      <select
-                        value={editData.status}
-                        onChange={e => setEditData({ ...editData, status: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                      >
-                        <option value="active">Active</option>
-                        <option value="closed">Closed</option>
-                        <option value="lost">Lost</option>
-                      </select>
-                    </div>
-                  
+            <div>
+  <label className="block text-sm font-medium text-gray-900 mb-1">Status</label>
+  <select
+    value={editData.status}
+    onChange={e => setEditData({ ...editData, status: e.target.value })}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+  >
+    <option value="">Select Status</option>
+    {config?.statuses?.map((status: string) => (
+      <option key={status} value={status.toLowerCase()}>
+        {status}
+      </option>
+    ))}
+  </select>
+</div>          
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">

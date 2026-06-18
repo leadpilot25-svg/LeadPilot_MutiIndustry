@@ -44,6 +44,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         required: false
       }
     ],
+  statuses: ['Active', 'Closed', 'Lost', 'Under Contract'],
     metrics: [
       {
         key: 'pipeline_total',
@@ -89,68 +90,69 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     closedDealsLabel: "Closed sales"
   },
   {
-    id: 'insurance',
-    name: 'Insurance Marketing',
-    iconName: 'ShieldAlert',
-    tagline: 'Underwriting pipelines, policy quotes, and coverage lead acceleration.',
-    leadLabel: 'Coverage Applicant',
-    valueLabel: 'Est. Annual Premium',
-    stages: [
-      { id: 'quote_requested', label: 'Quote Requested', color: 'bg-sky-100 text-sky-800 border-sky-200' },
-      { id: 'needs_analysis', label: 'Needs Assessment', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-      { id: 'policy_quoted', label: 'Underwriting / Quote', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-      { id: 'paperwork_sent', label: 'Documents Sent', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
-      { id: 'policy_active', label: 'Policies Activated', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
-    ],
-    customFields: [
-      {
-        key: 'policyType',
-        label: 'Insurance Category',
-        type: 'select',
-        options: ['Health', 'Life', 'Auto', 'Home', 'Business Liability', 'Disability'],
-        required: false,
-        placeholder: 'Select policy type'
-      },
-      {
-        key: 'coverageCapacity',
-        label: 'Coverage Limit (₹)',
-        type: 'number',
-        required: false,
-        placeholder: '1000000'
-      }
-    ],
-    metrics: [
-      {
-        key: 'premium_pipeline',
-        label: 'Premium Pipeline Value',
-        prefix: '$',
-        type: 'sum',
-        sourceField: 'value',
-        description: 'Total estimated annual premiums in active pipeline.'
-      },
-      {
-        key: 'policies_activated_count',
-        label: 'Policies Activated',
-        type: 'count',
-        description: 'Count of leads that reached policy activation stage.'
-      }
-    ],
-    suggestedSources: [
-      'Website Lead Form',
-      'Google Ads',
-      'Facebook Ads',
-      'Insurance Referral Portal',
-      'Direct Call',
-      'Email Campaign',
-      'Broker Network',
-      'Existing Customer Referral',
-      'Other'
-    ],
-    todayFollowupsLabel: "Follow-up Calls",
-    missedFollowupsLabel: "Overdue Callbacks",
-    meetingsTodayLabel: "Consultations Today",
-    closedDealsLabel: "Policies Activated"
-  },
+  id: 'insurance',
+  name: 'Insurance Marketing',
+  iconName: 'ShieldAlert',
+  tagline: 'Underwriting pipelines, policy quotes, and coverage lead acceleration.',
+  leadLabel: 'Coverage Applicant',
+  valueLabel: 'Est. Annual Premium',
+  stages: [
+    { id: 'quote_requested', label: 'Quote Requested', color: 'bg-sky-100 text-sky-800 border-sky-200' },
+    { id: 'needs_analysis', label: 'Needs Assessment', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+    { id: 'policy_quoted', label: 'Underwriting / Quote', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+    { id: 'paperwork_sent', label: 'Documents Sent', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+    { id: 'policy_active', label: 'Policies Activated', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' }
+  ],
+  customFields: [
+    {
+      key: 'policyType',
+      label: 'Insurance Category',
+      type: 'select',
+      options: ['Health', 'Life', 'Auto', 'Home', 'Business Liability', 'Disability'],
+      required: false,
+      placeholder: 'Select policy type'
+    },
+    {
+      key: 'coverageCapacity',
+      label: 'Coverage Limit (₹)',
+      type: 'number',
+      required: false,
+      placeholder: '1000000'
+    }
+  ],
+  statuses: ['Active', 'Closed', 'Lost', 'Policy Activated', 'Policy Issued'],
+  metrics: [
+    {
+      key: 'premium_pipeline',
+      label: 'Premium Pipeline Value',
+      prefix: '$',
+      type: 'sum',
+      sourceField: 'value',
+      description: 'Total estimated annual premiums in active pipeline.'
+    },
+    {
+      key: 'policies_activated_count',
+      label: 'Policies Activated',
+      type: 'count',
+      description: 'Count of leads that reached policy activation stage.'
+    }
+  ],
+  suggestedSources: [
+    'Website Lead Form',
+    'Google Ads',
+    'Facebook Ads',
+    'Insurance Referral Portal',
+    'Direct Call',
+    'Email Campaign',
+    'Broker Network',
+    'Existing Customer Referral',
+    'Other'
+  ],
+  todayFollowupsLabel: "Follow-up Calls",
+  missedFollowupsLabel: "Overdue Callbacks",
+  meetingsTodayLabel: "Consultations Today",
+  closedDealsLabel: "Policies Activated"
+},
   {
     id: 'tarot-coaching',
     name: 'Tarot Coaching Hub',
@@ -180,6 +182,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         required: false
       }
     ],
+    statuses: ['New Seeker', 'Reading Scheduled', 'Reading Completed', 'Repeat Client', 'Lost'],
     metrics: [
       {
         key: 'session_income',
@@ -254,6 +257,7 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         placeholder: '8'
       }
     ],
+    statuses: ['Active', 'Completed', 'Cancelled', 'Lost'],
     metrics: [
       {
         key: 'total_fare_value',
@@ -347,6 +351,8 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
         placeholder: 'Client company name (optional)'
       }
     ],
+    statuses: ['Active', 'Closed', 'Lost', 'Won'],
+
     metrics: [
       {
         key: 'followups_today',

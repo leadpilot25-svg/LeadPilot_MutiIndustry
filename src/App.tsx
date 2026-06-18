@@ -211,25 +211,7 @@ export default function App() {
   // Navigation state (home, leads, funnel, business, settings, checklist)
   const [activeTab, setActiveTab] = useState<string>('home');
 
-  // Templates state
- const DEFAULT_OUTREACH_TEMPLATES = {
-  introduction: {
-    whatsapp: 'Hi {name}, thank you for your interest! How can I help you today?',
-    email: { subject: 'Introduction', body: 'Hi {name},\n\nThank you for reaching out.\n\nBest regards' }
-  },
-  firstFollowUp: {
-    whatsapp: 'Hi {name}, just following up! Do you have any questions?',
-    email: { subject: 'Follow-Up', body: 'Hi {name},\n\nFollowing up on my previous message.\n\nBest regards' }
-  },
-  secondFollowUp: {
-    whatsapp: 'Hi {name}, checking in again. Still interested?',
-    email: { subject: 'Second Follow-Up', body: 'Hi {name},\n\nSecond follow-up message.\n\nBest regards' }
-  },
-  finalFollowUp: {
-    whatsapp: 'Hi {name}, final attempt to connect. Hope to hear from you!',
-    email: { subject: 'Final Follow-Up', body: 'Hi {name},\n\nFinal follow-up.\n\nBest regards' }
-  }
-};
+ 
 
 const [templates, setTemplates] = useState(() => {
   const saved = localStorage.getItem('leadpilot_outreach_templates_demo-ws-id');
@@ -1511,14 +1493,47 @@ console.log(
 
   // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
   const closedDealsLeads = currentLeads.filter(
-    l => isCompletedLead(l)
-  );
+  l => isCompletedLead(l)
+);
 
-  const closedDealsCount = closedDealsLeads.length;
-  console.log('TOTAL:', totalLeadsCount);
-  console.log('OPEN:', openLeadsCount);
-  console.log('CLOSED:', closedDealsCount);
-  console.log('FINAL STAGE ID:', finalStageId);
+const repeatClientsLeads = currentLeads.filter(l => {
+  const status = l.status
+    ? String(l.status).toLowerCase().trim()
+    : '';
+
+  return (
+    status === 'returning client' ||
+    status === 'repeat client'
+  );
+});
+
+const repeatClientsCount = repeatClientsLeads.length;
+
+// INSURANCE CRM
+const policiesActivatedLeads = currentLeads.filter(l => {
+  const status = l.status ? String(l.status).toLowerCase().trim() : '';
+  const stageId = l.stageId ? String(l.stageId).toLowerCase().trim() : '';
+
+  return status === 'policy activated' || stageId === 'policy_active';
+});
+
+const policiesActivatedCount = policiesActivatedLeads.length;
+
+
+// Debug: Check what's being counted
+console.log('All Leads Status Values:', currentLeads.map(l => l.status));
+console.log('Policies Activated Leads:', policiesActivatedLeads.map(l => ({ 
+  name: l.name, 
+  status: l.status, 
+  stageId: l.stageId 
+})));
+console.log('Policies Activated Count:', policiesActivatedCount);
+
+const closedDealsCount = closedDealsLeads.length;
+console.log('TOTAL:', totalLeadsCount);
+console.log('OPEN:', openLeadsCount);
+console.log('CLOSED:', closedDealsCount);
+console.log('FINAL STAGE ID:', finalStageId);
 
 
   // Follow-Up Stage Metrics
@@ -2296,26 +2311,32 @@ id="kpi-missed-followups"
                   </div>
                 </div>
 
-                {/* Card 4: Closed deals */}
-                <div
-                  onClick={() => handleDashboardFilterClick('closed_deals')}
-                  className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
-                  id="kpi-closed-deals"
-                >
-                  <div className="text-emerald-500 group-hover:scale-110 transition-transform">
-                    <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
-                      {closedDealsCount}
-                    </span>
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
-                      {activeIndustry.closedDealsLabel || "Closed deals"}
-                    </span>
-                  </div>
+              {/* Card 4: Closed deals */}
+            <div
+              onClick={() => handleDashboardFilterClick('closed_deals')}
+              className="bg-emerald-50/40 hover:bg-emerald-50/80 border border-emerald-150/40 p-5 rounded-3xl cursor-pointer transition-all hover:scale-102 flex flex-col justify-between h-[140px] shadow-xs hover:shadow-md relative overflow-hidden group"
+              id="kpi-closed-deals"
+            >
+              <div className="text-emerald-500 group-hover:scale-110 transition-transform">
+                <LucideIcons.Trophy className="w-6 h-6 stroke-[2.2]" />
+              </div>
+              <div>
+              <span className="text-2xl font-extrabold text-slate-900 block font-sans focus:outline-none">
+{activeIndustry.closedDealsLabel === 'Policies Activated'
+  ? policiesActivatedCount
+  : activeIndustry.closedDealsLabel === 'Repeat Clients'
+  ? repeatClientsCount
+  : closedDealsCount}
+</span>
 
-                </div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tight">
+                  {activeIndustry.closedDealsLabel || "Closed deals"}
+                </span>
+              </div>
 
+            </div>
+
+         
 
 
 
