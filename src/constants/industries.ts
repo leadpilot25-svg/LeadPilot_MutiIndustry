@@ -387,7 +387,91 @@ export const INDUSTRY_CONFIGS: IndustryConfig[] = [
     todayFollowupsLabel: "Follow-ups Today",
     missedFollowupsLabel: "Overdue Follow-ups",
     meetingsTodayLabel: "Follow-ups Scheduled",
-    closedDealsLabel: "Clients Won"
+ closedDealsLabel: "Clients Won"
+  },
+  {
+    id: 'professional-training',
+    name: '💼 Professional Training & Coaching',
+    iconName: 'Zap',
+    tagline: 'Manage professional course enrollments, corporate training programs, skill development, and completion tracking.',
+    leadLabel: 'Training Prospect',
+    valueLabel: 'Course Package Value',
+    stages: [
+      { id: 'lead_received', label: 'Lead Received', color: 'bg-slate-100 text-slate-800 border-slate-200' },
+      { id: 'discovery_call', label: 'Discovery Call', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+      { id: 'demo_session', label: 'Demo Session', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
+      { id: 'proposal_sent', label: 'Proposal Sent', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+      { id: 'payment_pending', label: 'Payment Pending', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+      { id: 'enrolled', label: 'Enrolled', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+      { id: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800 border-green-200' },
+      { id: 'lost', label: 'Lost Deal', color: 'bg-red-100 text-red-800 border-red-200' }
+    ],
+    customFields: [
+      {
+        key: 'trainingType',
+        label: 'Training Type',
+        type: 'select',
+        options: ['Digital Marketing', 'SAP', 'Power BI', 'Data Analytics', 'Python', 'AI/ML', 'Coding', 'Corporate Training'],
+        required: false,
+        placeholder: 'Select training type'
+      },
+      {
+        key: 'trainingFormat',
+        label: 'Training Format',
+        type: 'select',
+        options: ['Live Online', 'Self-Paced', 'Hybrid', 'Corporate Onsite', 'Bootcamp', 'Workshop'],
+        required: false,
+        placeholder: 'Select format'
+      },
+      {
+        key: 'courseDuration',
+        label: 'Course Duration (weeks)',
+        type: 'number',
+        required: false,
+        placeholder: '8'
+      },
+      {
+        key: 'participantCount',
+        label: 'Number of Participants',
+        type: 'number',
+        required: false,
+        placeholder: '1'
+      }
+    ],
+statuses: ['Prospect', 'Demo Scheduled', 'Proposal Sent', 'Enrolled', 'Completed', 'Closed', 'Lost'],    metrics: [
+      {
+        key: 'enrollment_pipeline',
+        label: 'Enrollment Pipeline Value',
+        prefix: '₹',
+        type: 'sum',
+        sourceField: 'value',
+        description: 'Total estimated value of all active training prospects.'
+      },
+      {
+        key: 'courses_completed',
+        label: 'Courses Completed',
+        type: 'count',
+        description: 'Count of completed training programs.'
+      }
+    ],
+    suggestedSources: [
+      'Website',
+      'LinkedIn',
+      'Facebook / Instagram',
+      'Google Ads',
+      'Email Campaign',
+      'Industry Portal',
+      'Corporate Referral',
+      'Partner Network',
+      'Job Portal Listing',
+      'YouTube',
+      'Webinar',
+      'Other'
+    ],
+    todayFollowupsLabel: "Demo Sessions Today",
+    missedFollowupsLabel: "Overdue Follow-ups",
+    meetingsTodayLabel: "Discovery Calls",
+    closedDealsLabel: "Courses Completed"
   }
 ];
 
@@ -671,5 +755,110 @@ export const INITIAL_LEADS_BY_INDUSTRY: Record<string, Lead[]> = {
       { id: 't-25', title: 'Request detailed feedback for case study', completed: false }
     ]
   }
-]   
+] , 
+  'professional-training': [
+    {
+      id: 'pt-1',
+      name: 'Abhishek Verma',
+      email: 'abhishek.v@company.com',
+      phone: '(91) 9876543210',
+      source: 'LinkedIn',
+      stageId: 'demo_session',
+      createdAt: '2026-06-03',
+      lastContacted: '2026-06-05',
+      status: 'active',
+      value: 45000,
+      customFields: {
+        trainingType: 'Digital Marketing',
+        trainingFormat: 'Live Online',
+        courseDuration: 8,
+        participantCount: 1,
+        nextFollowUpDate: '2026-06-18'
+      },
+      notes: [
+        { id: 'n-pt1', content: 'Working professional. Demo session scheduled for Wednesday. Interested in advanced Digital Marketing course.', createdAt: '2026-06-03', author: 'Sales Team' }
+      ],
+      tasks: [
+        { id: 't-pt1', title: 'Send demo session link and course syllabus', completed: false },
+        { id: 't-pt2', title: 'Prepare personalized learning path', completed: false }
+      ]
+    },
+    {
+      id: 'pt-2',
+      name: 'Tech Corp Limited',
+      email: 'hr@techcorp.com',
+      phone: '(91) 9012345678',
+      source: 'Corporate Referral',
+      stageId: 'proposal_sent',
+      createdAt: '2026-05-15',
+      lastContacted: '2026-06-02',
+      status: 'active',
+      value: 250000,
+      customFields: {
+        trainingType: 'Data Analytics',
+        trainingFormat: 'Corporate Onsite',
+        courseDuration: 6,
+        participantCount: 25,
+        nextFollowUpDate: '2026-06-17'
+      },
+      notes: [
+        { id: 'n-pt2', content: 'Corporate training for 25 employees. Data Analytics upskilling. Proposal sent with customized curriculum.', createdAt: '2026-05-15', author: 'Corporate Sales' }
+      ],
+      tasks: [
+        { id: 't-pt3', title: 'Follow up on proposal review', completed: false },
+        { id: 't-pt4', title: 'Prepare trainer allocation plan', completed: false }
+      ]
+    },
+    {
+      id: 'pt-3',
+      name: 'Neha Gupta',
+      email: 'neha.ai@email.com',
+      phone: '(91) 8765432109',
+      source: 'Website',
+      stageId: 'enrolled',
+      createdAt: '2026-05-01',
+      lastContacted: '2026-06-04',
+      status: 'active',
+      value: 65000,
+      customFields: {
+        trainingType: 'AI/ML',
+        trainingFormat: 'Live Online',
+        courseDuration: 12,
+        participantCount: 1,
+        nextFollowUpDate: '2026-06-21'
+      },
+      notes: [
+        { id: 'n-pt3', content: 'Enrolled in AI/ML bootcamp. Week 4 of 12 weeks. Attending live sessions regularly. Project work on track.', createdAt: '2026-05-01', author: 'Instructor' }
+      ],
+      tasks: [
+        { id: 't-pt5', title: 'Capstone project guidance session', completed: false },
+        { id: 't-pt6', title: 'Career mentorship call scheduled', completed: false }
+      ]
+    },{
+      id: 'pt-4',
+      name: 'Raj Kumar Singh',
+      email: 'raj.kumar@innovatetech.com',
+      phone: '(91) 9123456789',
+      source: 'Referral',
+      stageId: 'completed',
+      createdAt: '2026-04-01',
+      lastContacted: '2026-06-10',
+      status: 'completed',
+      value: 55000,
+      customFields: {
+        trainingType: 'Python',
+        trainingFormat: 'Self-Paced',
+        courseDuration: 8,
+        participantCount: 1,
+        nextFollowUpDate: '2026-07-15'
+      },
+      notes: [
+        { id: 'n-pt4', content: 'Successfully completed Python bootcamp. Score: 92%. Now pursuing advanced specialization course.', createdAt: '2026-06-10', author: 'Instructor' }
+      ],
+      tasks: [
+        { id: 't-pt7', title: 'Send completion certificate', completed: true },
+        { id: 't-pt8', title: 'Offer alumni community access', completed: false }
+      ]
+    }
+  ]
 };

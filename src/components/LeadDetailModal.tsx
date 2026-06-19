@@ -76,24 +76,26 @@ const handleSaveChanges = () => {
   setIsEditing(false);
 };
 
-  const getFollowUpStageName = (stage: number | undefined): string => {
-    switch (stage) {
-      case 0:
-        return 'New Lead';
-      case 1:
-        return 'Initial Contact Sent';
-      case 2:
-        return 'Follow-up #1 Sent';
-      case 3:
-        return 'Follow-up #2 Sent';
-      case 4:
-        return 'Final Follow-up Sent';
-      case 5:
-        return 'Lost';
-      default:
-        return 'New Lead';
-    }
-  };
+ const getFollowUpStageName = (stage: number | undefined): string => {
+  switch (stage) {
+    case 0:
+      return 'New Lead';
+    case 1:
+      return 'Initial Contact Sent';
+    case 2:
+      return 'Follow-up #1 Sent';
+    case 3:
+      return 'Follow-up #2 Sent';
+    case 4:
+      return 'Final Follow-up Sent';
+    case 5:
+      return 'Won';  // ✅ FIXED
+    case 6:
+      return 'Lost'; // ✅ ADDED
+    default:
+      return 'New Lead';
+  }
+};
 
   const getFollowUpStageBadgeColor = (stage: number | undefined): string => {
     switch (stage) {
@@ -127,63 +129,7 @@ const handleSaveChanges = () => {
   <p className="text-xs text-gray-500">{lead.company}</p>
 )}
 
-            {/* Quick Actions Buttons */}
-           <div className="flex gap-1 mt-2">
-              <button
-                onClick={() => onQuickAction?.('call')}
-                disabled={!lead.phone}
-                className="flex items-center justify-center p-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <LucideIcons.Phone className="w-4 h-4" />
-                <span className="hidden sm:inline">Call</span>
-              </button>
-              <button
-                onClick={() => {
-setSelectedAction('whatsapp');
-setNextFollowUpDate('');
-setShowTemplateModal(true);
-  setShowTemplateModal(true);
-}}
-                disabled={!lead.phone}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <LucideIcons.MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">WhatsApp</span>
-              </button>
-              <button
-               onClick={() => {
-  setSelectedAction('email');
-
-setNextFollowUpDate(
-  new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0]
-);
-
-setShowTemplateModal(true);
-  setShowTemplateModal(true);
-}}
-
-                disabled={!lead.email}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <LucideIcons.Mail className="w-4 h-4" />
-                <span className="hidden sm:inline">Email</span>
-              </button>
-              <button
-                onClick={() => {
-setSelectedAction('sms');
-setNextFollowUpDate('');
-setShowTemplateModal(true);
-  setShowTemplateModal(true);
-}}
-                disabled={!lead.phone}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <LucideIcons.Smartphone className="w-4 h-4" />
-                <span className="hidden sm:inline">SMS</span>
-              </button>
-            </div>
+          
           </div>
           <button
             onClick={onClose}

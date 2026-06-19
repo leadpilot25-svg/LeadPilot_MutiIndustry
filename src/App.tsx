@@ -1427,15 +1427,23 @@ export default function App() {
   const finalStageId =
     activeIndustry.stages[activeIndustry.stages.length - 1]?.id || '';
 
-  const isCompletedLead = (l: Lead) =>
-    l.stageId === 'won_client' ||
-    l.stageId === 'project_delivered' ||
-    l.status === 'won';
+ const isCompletedLead = (l: Lead) =>
+  l.stageId === 'won_client' ||
+  l.stageId === 'project_delivered' ||
+  l.stageId === 'completed' ||
+  l.status === 'won' ||
+  l.status === 'completed';
 
   // NOW use isCompletedLead
-  const openLeadsCount = currentLeads.filter(
-    l => l.status === 'active' && !isCompletedLead(l)
-  ).length;
+ const openLeadsCount = currentLeads.filter(l => {
+  const statusLower = l.status?.toLowerCase().trim() || '';
+  
+  // Open = NOT completed/closed/lost
+  return statusLower !== 'completed' &&
+         statusLower !== 'closed' &&
+         statusLower !== 'lost' &&
+         !isCompletedLead(l);
+}).length;
 
   const todayCreatedCount = currentLeads.filter(
     l => l.createdAt === todayDateStr
@@ -1456,26 +1464,31 @@ export default function App() {
 
 
   // OVERDUE KPI: Count leads where nextFollowUpDate is before today AND lead is not completed/closed.
-  const missedFollowupLeads = currentLeads.filter(l =>
-    l.status === 'active' &&
+ const missedFollowupLeads = currentLeads.filter(l => {
+  const statusLower = l.status?.toLowerCase().trim() || '';
+  
+  return (
+    statusLower !== 'closed' &&
+    statusLower !== 'lost' &&
     !isCompletedLead(l) &&
     l.customFields?.nextFollowUpDate &&
     l.customFields.nextFollowUpDate < todayDateStr
   );
+});
   const missedFollowupsCount = missedFollowupLeads.length;
 
-  const scheduledFollowupLeads = currentLeads.filter((lead) => {
+const scheduledFollowupLeads = currentLeads.filter((lead) => {
     const date = lead.customFields?.nextFollowUpDate;
 
-    if (!date) return false;
+    // If no future follow-up date, exclude
+    if (!date || date <= todayDateStr) return false;
 
-    return (
-      lead.status === 'active' &&
-      !isCompletedLead(lead) &&
-      date > todayDateStr
-    );
+    // Exclude closed, lost, and completed leads
+    const statusLower = lead.status?.toLowerCase().trim() || '';
+    if (statusLower === 'closed' || statusLower === 'lost') return false;
+    
+    return !isCompletedLead(lead);
   });
-
   const scheduledFollowupsCount = scheduledFollowupLeads.length;
   console.log(
     'SCHEDULED FOLLOWUPS:',
@@ -1492,11 +1505,48 @@ export default function App() {
   const meetingsCount = upcomingFollowupLeads.length;
 
   // COMPLETED KPI: Use the industry's final stage instead of hardcoded values.
-  const closedDealsLeads = currentLeads.filter(lead =>
+const closedDealsLeads = currentLeads.filter(lead => {
+  const statusLower = lead.status?.toLowerCase().trim() || '';
+  const stageId = lead.stageId?.toLowerCase().trim() || '';
+
+  // CREATIVE AGENCY: Only "Won"
+  if (activeIndustry.id === 'creative-agency') {
+    return statusLower === 'won' || stageId === 'won_client';
+  }
+
+  // REAL ESTATE: "Closed" or closed stage
+  if (activeIndustry.id === 'real-estate') {
+    return statusLower === 'closed' || stageId === 'closed';
+  }
+
+  // INSURANCE: "Policy Activated" or policy_active stage
+  if (activeIndustry.id === 'insurance') {
+    return statusLower === 'policy activated' || stageId === 'policy_active';
+  }
+
+  // TAROT COACHING: "Repeat Client" status
+  if (activeIndustry.id === 'tarot-coaching') {
+    return statusLower === 'repeat client' || statusLower === 'returning client';
+  }
+
+  // TAXI: "Completed" or trip_completed stage
+  if (activeIndustry.id === 'taxi') {
+    return statusLower === 'completed' || stageId === 'trip_completed';
+  }
+
+  // PROFESSIONAL TRAINING: "Completed" or completed stage
+  if (activeIndustry.id === 'professional-training') {
+    return statusLower === 'completed' || stageId === 'completed';
+  }
+
+  // DEFAULT: Fallback for any other industry
+  return (
     isCompletedLead(lead) ||
-    lead.status?.toLowerCase() === 'lost' ||
-    lead.status?.toLowerCase() === 'closed'  // ← ADD THIS
+    statusLower === 'lost' ||
+    statusLower === 'closed' ||
+    statusLower === 'completed'
   );
+});
 
   const repeatClientsLeads = currentLeads.filter(l => {
     const status = l.status
@@ -1627,9 +1677,13 @@ export default function App() {
         console.log('📋 CASE MATCHED: active_conversations, returning', activeConversationLeads.length, 'leads');
         return activeConversationLeads;
       case 'open':
-        return currentLeads.filter(
-          l => l.status === 'active' && !isCompletedLead(l)
-        );
+  return currentLeads.filter(l => {
+    const statusLower = l.status?.toLowerCase().trim() || '';
+    return statusLower !== 'completed' &&
+           statusLower !== 'closed' &&
+           statusLower !== 'lost' &&
+           !isCompletedLead(l);
+  });
 
       case 'closed':
         return currentLeads.filter(
@@ -2390,8 +2444,8 @@ export default function App() {
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Open</span>
                   <span className="text-2xl font-black text-slate-900 mt-1">{openLeadsCount}</span>
                 </div>
-{/* CLOSED - Hide for Real Estate */}
-{activeIndustry.id !== 'real-estate' && (
+{/* CLOSED - Hide for Real Estate & Professional Training */}
+{activeIndustry.id !== 'real-estate' && activeIndustry.id !== 'professional-training' && activeIndustry.id !== 'creative-agency' && (
   <div
     onClick={() => handleDashboardFilterClick('closed')}
     className="bg-white hover:bg-slate-50/50 border border-gray-150/40 p-4 rounded-2xl cursor-pointer transition-all shadow-3xs flex flex-col justify-center h-[90px]"
@@ -2509,8 +2563,21 @@ export default function App() {
               </div>
             )}
 
-            {/* Core Viewport Rendering - Kanban, Pipeline Status, LeadTable */}
+          {/* Core Viewport Rendering - LeadTable FIRST, then Kanban/Pipeline Status */}
             
+            {/* Lead Table - MOVED TO TOP */}
+            <LeadTable
+              config={activeIndustry}
+              leads={tableLeads}
+              templates={templates}
+              dashboardFilter={dashboardFilter}
+              onSelectLead={setSelectedLead}
+              onUpdateLead={handleUpdateLead}
+              onDeleteLead={handleDeleteLead}
+              marketRegion={marketRegion}
+              onAddMultiLeads={handleBatchImportLeads}
+            />
+
             {/* Kanban/Pipeline Board - conditionally hidden for Real Estate */}
 {activeIndustry.id !== 'real-estate' && activeIndustry.id !== 'creative-agency' ? (            <PipelineBoard
   config={activeIndustry}
@@ -2528,21 +2595,6 @@ export default function App() {
                 </p>
               </div>
             )}
-
-          
-
-            {/* Lead Table */}
-            <LeadTable
-              config={activeIndustry}
-              leads={tableLeads}
-              templates={templates}
-              dashboardFilter={dashboardFilter}
-              onSelectLead={setSelectedLead}
-              onUpdateLead={handleUpdateLead}
-              onDeleteLead={handleDeleteLead}
-              marketRegion={marketRegion}
-              onAddMultiLeads={handleBatchImportLeads}
-            />
               </div>
             )}
             {/* ================= tab: FUNNEL ================= */}
