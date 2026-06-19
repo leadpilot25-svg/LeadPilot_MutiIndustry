@@ -2425,8 +2425,13 @@ const closedDealsLeads = currentLeads.filter(lead => {
             {/* Section: LEAD OVERVIEW Breakdown parameters */}
             <div className="space-y-3 pt-2" id="lead-overview-block">
               <span className="text-xs font-extrabold text-slate-400 tracking-wider block font-mono uppercase">LEAD OVERVIEW</span>
-<div className={`grid gap-4 ${activeIndustry.id === 'real-estate' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
-
+<div className={`grid gap-4 ${
+  (activeIndustry.id === 'real-estate' || 
+   activeIndustry.id === 'creative-agency' || 
+   activeIndustry.id === 'professional-training')
+    ? 'grid-cols-1 sm:grid-cols-3' 
+    : 'grid-cols-2 lg:grid-cols-4'
+}`}>
                 {/* Total */}
                 <div
                   onClick={() => handleDashboardFilterClick('total')}
