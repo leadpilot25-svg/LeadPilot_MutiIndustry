@@ -175,6 +175,24 @@ const [showQuickActionModal, setShowQuickActionModal] = useState(false);
         return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
+const getFollowUpStageLabel = (stage: number | undefined) => {
+  switch (stage) {
+    case 0:
+      return { label: 'New Lead', color: 'bg-blue-50 text-blue-700 border border-blue-200' };
+    case 1:
+      return { label: 'Initial Contact Sent', color: 'bg-blue-50 text-blue-700 border border-blue-200' };
+    case 2:
+      return { label: 'First Follow-Up Sent', color: 'bg-indigo-50 text-indigo-700 border border-indigo-200' };
+    case 3:
+      return { label: 'Second Follow-Up Sent', color: 'bg-indigo-50 text-indigo-700 border border-indigo-200' };
+    case 4:
+      return { label: 'Final Follow-Up Sent', color: 'bg-orange-50 text-orange-700 border border-orange-200' };
+    case 5:
+      return { label: 'Lost / No Response', color: 'bg-red-50 text-red-700 border border-red-200' };
+    default:
+      return { label: 'Not Started', color: 'bg-gray-50 text-gray-700 border border-gray-200' };
+    }
+};
 
   // Quick action handlers
   const handleCall = (e: React.MouseEvent, phone: string | undefined) => {
@@ -336,12 +354,17 @@ Optional: Email
               <th className="px-4 py-3 text-left">
                 <span className="text-xs font-bold text-slate-700">Email</span>
               </th>
-              <th className="px-4 py-3 text-left">
-                <span className="text-xs font-bold text-slate-700">Status</span>
-              </th>
-              <th className="px-4 py-3 text-left">
-                <span className="text-xs font-bold text-slate-700">Source</span>
-              </th>
+             <th className="px-4 py-3 text-left">
+  <span className="text-xs font-bold text-slate-700">Status</span>
+</th>
+
+<th className="px-4 py-3 text-left">
+  <span className="text-xs font-bold text-slate-700">Follow-Up Stage</span>
+</th>
+
+<th className="px-4 py-3 text-left">
+  <span className="text-xs font-bold text-slate-700">Source</span>
+</th>
               <th className="px-4 py-3 text-left">
                 <button
                   onClick={() => {
@@ -410,7 +433,7 @@ Optional: Email
                     </span>
                   </td>
 
-                  {/* Status Column */}
+                {/* Status Column */}
                   <td className="px-4 py-3">
                     <span
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ${getStatusColor(
@@ -420,7 +443,19 @@ Optional: Email
                       {lead.status ? (lead.status.charAt(0).toUpperCase() + lead.status.slice(1)) : 'Unknown'}
                     </span>
                   </td>
-
+ 
+                  {/* Follow-Up Stage Column */}
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const stageInfo = getFollowUpStageLabel(lead.customFields?.followUpStage);
+                      return (
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ${stageInfo.color}`}>
+                          {stageInfo.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
+ 
                   {/* Source Column */}
                   <td className="px-4 py-3">
                     <span className="text-xs text-gray-600">
