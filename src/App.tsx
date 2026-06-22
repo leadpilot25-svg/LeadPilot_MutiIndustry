@@ -1450,14 +1450,17 @@ export default function App() {
   ).length;
 
   // TODAY KPI
-  const todayFollowupLeads = currentLeads.filter(
-    l =>
-      l.status === 'active' &&
-      !isCompletedLead(l) &&
-      l.customFields?.nextFollowUpDate === todayDateStr
-  );
-
+   const todayString = new Date().toISOString().split('T')[0];
+  const todayFollowupLeads = leads.filter(lead => {
+    const matches = lead.customFields?.nextFollowUpDate && lead.customFields.nextFollowUpDate === todayString;
+    if (matches) {
+      console.log('FOLLOWUP CHECK', lead.name, lead.customFields?.nextFollowUpDate, todayString);
+    }
+    return matches;
+  });
+ 
   const todayFollowupsCount = todayFollowupLeads.length;
+ 
 
   // MISSED KPI
 
