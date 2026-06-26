@@ -140,10 +140,10 @@ const handleSaveChanges = () => {
         </div>
          <button
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     <LucideIcons.Edit className="w-4 h-4" />
-                    📞 Update After Call
+                    📝 Update Interaction
                   </button>
 
       
@@ -388,7 +388,7 @@ className={`py-2 px-2 text-sm border-b-2 font-medium transition-colors ${
                     </button>
                     <button
                       onClick={() => setIsEditing(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
                       Cancel
                     </button>

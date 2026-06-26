@@ -75,25 +75,27 @@ export default function DashboardMetrics({
   const followUp2Due = leads.filter(lead => lead.customFields?.followUpStage === 2).length;
   const finalFollowUpDue = leads.filter(lead => lead.customFields?.followUpStage === 4).length;
   
+  // Count all upcoming scheduled activities (from both legacy nextFollowUpDate and new interactions)
   const followUpsScheduled = leads.filter(lead => {
     const today = new Date().toISOString().split('T')[0];
-    return lead.customFields?.nextFollowUpDate && lead.customFields.nextFollowUpDate > today;
+    
+    // Check if lead has nextFollowUpDate in the future
+    if (lead.customFields?.nextFollowUpDate && lead.customFields.nextFollowUpDate > today) {
+      return true;
+    }
+    
+    // Check if lead has any interactions with future scheduled dates
+    if (lead.interactions && lead.interactions.length > 0) {
+      return lead.interactions.some(interaction => 
+        interaction.nextScheduledDate && interaction.nextScheduledDate > today
+      );
+    }
+    
+    return false;
   }).length;
+  
   console.log('TOTAL LEADS:', leads.length);
-console.log('FOLLOWUPS SCHEDULED:', followUpsScheduled);
-
-console.log(
-  'FOLLOWUP DATES:',
-  leads.map(l => ({
-    name: l.name,
-    date: l.customFields?.nextFollowUpDate
-  }))
-);
-
-console.log(
-  'FOLLOWUPS SCHEDULED:',
-  followUpsScheduled
-);
+  console.log('SCHEDULED ACTIVITIES:', followUpsScheduled);
   
   const activeConversations = leads.filter(lead => 
     lead.status === 'active' && lead.communicationHistory && lead.communicationHistory.length > 0
@@ -222,12 +224,12 @@ console.log(
     {
       id: 'followups-scheduled',
       icon: LucideIcons.Calendar,
-      label: 'Follow-Ups Scheduled',
+      label: 'Activities Scheduled',
       value: followUpsScheduled.toString(),
       subtext: 'Upcoming actions',
       color: 'green',
       action: 'scheduled_followups',
-      description: 'Future follow-up dates'
+      description: 'Future scheduled activities'
     },
     {
       id: 'active-conversations',

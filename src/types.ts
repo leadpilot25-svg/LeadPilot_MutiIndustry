@@ -1,8 +1,79 @@
 /**
- * PHASE 10D - EXTEND src/types.ts WITH THESE TYPES
- * 
- * Add these to the end of your existing types.ts file
+ * PHASE 10D - UNIVERSAL INTERACTIONS ENHANCEMENT
+ * Extended types for multi-industry lead management
  */
+
+// ============================================================================
+// LEAD DATA STRUCTURE
+// ============================================================================
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  service?: string;
+  value?: number;
+  status?: 'active' | 'won' | 'lost';
+  source?: string;
+  createdAt: string;
+  updatedAt?: string;
+  notes?: Note[];
+  communicationHistory?: any[];
+  customFields?: Record<string, any>;
+  files?: LeadFile[];
+  assignedTo?: string;
+  workspaceId?: string;
+  nextFollowUpDate?: string;
+  lastContactDate?: string;
+  followUpStage?: number;
+  interactions?: InteractionRecord[];  // NEW: Universal interaction history
+  [key: string]: any; // Allow dynamic fields
+}
+
+export interface Note {
+  id?: string;
+  text: string;
+  timestamp?: string;
+  author?: string;
+}
+
+export interface LeadFile {
+  url: string;
+  name: string;
+  size?: number;
+  uploadedAt?: string;
+}
+
+// ============================================================================
+// PIPELINE & WORKSPACE STRUCTURES
+// ============================================================================
+
+export interface PipelineStage {
+  id: string;
+  name: string;
+  color?: string;
+  order?: number;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  workspaceId?: string;
+  [key: string]: any;
+}
+
+export interface IndustryConfig {
+  id: string;
+  name: string;
+  icon?: string;
+  customFields?: any[];
+  pipelineStages?: PipelineStage[];
+  [key: string]: any;
+}
+
+export type QuickActionType = 'email' | 'whatsapp' | 'sms' | 'call';
 
 // ============================================================================
 // AUTOMATION SETTINGS
@@ -84,3 +155,66 @@ export const TEMPLATE_STAGES = [
   { id: 'secondFollowUp', label: 'Second Follow-Up', icon: '🔔' },
   { id: 'finalFollowUp', label: 'Final Follow-Up', icon: '⏰' }
 ] as const;
+
+// ============================================================================
+// UNIVERSAL INTERACTION TYPES
+// ============================================================================
+
+export type InteractionType = 
+  | 'phone_call'
+  | 'whatsapp'
+  | 'email'
+  | 'sms'
+  | 'meeting'
+  | 'video_meeting'
+  | 'site_visit'
+  | 'property_showing'
+  | 'demo'
+  | 'presentation'
+  | 'proposal_sent'
+  | 'quote_sent'
+  | 'invoice_sent'
+  | 'document_collection'
+  | 'payment_reminder'
+  | 'payment_received'
+  | 'contract_signed'
+  | 'follow_up'
+  | 'task'
+  | 'other';
+
+export interface InteractionRecord {
+  id: string;
+  type: InteractionType;
+  date: string;
+  time?: string;
+  notes?: string;
+  outcome?: string;
+  status?: string;
+  nextScheduledActivity?: string;
+  nextScheduledDate?: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
+export const INTERACTION_TYPES: Array<{ type: InteractionType; label: string; icon: string }> = [
+  { type: 'phone_call', label: 'Phone Call', icon: '📞' },
+  { type: 'whatsapp', label: 'WhatsApp', icon: '💬' },
+  { type: 'email', label: 'Email', icon: '📧' },
+  { type: 'sms', label: 'SMS', icon: '💌' },
+  { type: 'meeting', label: 'Meeting', icon: '🤝' },
+  { type: 'video_meeting', label: 'Video Meeting', icon: '📹' },
+  { type: 'site_visit', label: 'Site Visit', icon: '🏠' },
+  { type: 'property_showing', label: 'Property Showing', icon: '🏘️' },
+  { type: 'demo', label: 'Demo', icon: '🎯' },
+  { type: 'presentation', label: 'Presentation', icon: '📊' },
+  { type: 'proposal_sent', label: 'Proposal Sent', icon: '📄' },
+  { type: 'quote_sent', label: 'Quote Sent', icon: '💵' },
+  { type: 'invoice_sent', label: 'Invoice Sent', icon: '📋' },
+  { type: 'document_collection', label: 'Document Collection', icon: '📁' },
+  { type: 'payment_reminder', label: 'Payment Reminder', icon: '⏰' },
+  { type: 'payment_received', label: 'Payment Received', icon: '✅' },
+  { type: 'contract_signed', label: 'Contract Signed', icon: '✍️' },
+  { type: 'follow_up', label: 'Follow-up', icon: '📌' },
+  { type: 'task', label: 'Task', icon: '✓' },
+  { type: 'other', label: 'Other', icon: '📝' },
+];
